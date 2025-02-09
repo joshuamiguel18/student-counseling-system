@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+	<%- include('includes/head.ejs') %>
+	<title>PetSupport Admin</title>
+	
+</head>
+
+<body class=" bg-surface">
+	<main>
+		<!--start the project-->
+		<div id="main-wrapper" class=" flex p-5 xl:pr-0">
+			<aside id="application-sidebar-brand"
+				class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full  transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0  w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar   transition-all duration-300" >
+
+				<%- include('includes/sidebar.ejs') %>
+			</aside>
+			<div class=" w-full page-wrapper xl:px-6 px-0">
+
+				<!-- Main Content -->
+				<main class="h-full  max-w-full">
+					<div class="container full-container p-0 flex flex-col gap-6">
+					<!--  Header Start -->
+				<header class=" bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+					
+					<%- include('includes/header.ejs') %>
+				</header>
+				<!--  Header End -->
+				<div class="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-2 gap-6">
+					<div class="card">
+						<div class="card-body">
+							<div class="flex gap-6 items-center justify-between">
+							<div class="flex flex-col gap-4">
+								<h4 class="text-gray-500 text-lg font-semibold">Total Users</h4>
+								<div class="flex flex-col gap-4">
+								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_users %></h3>
+								
+							</div>
+							</div>
+							
+								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
+									<i class="ti ti-users text-xl"></i>
+								</div>
+					
+							</div>
+							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
+							href="/users">
+							View
+							<i class="ti ti-chevron-right text-base"></i>
+						</a>
+						</div>
+						
+					</div>
+					<div class="card">
+						<div class="card-body">
+							<div class="flex gap-6 items-center justify-between">
+							<div class="flex flex-col gap-4">
+								<h4 class="text-gray-500 text-lg font-semibold">Total Riders</h4>
+								<div class="flex flex-col gap-4">
+								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_riders %></h3>
+								
+							</div>
+							</div>
+							
+								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
+									<i class="ti ti-motorbike text-xl"></i>
+								</div>
+					
+							</div>
+							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
+							href="/riders">
+							View
+							<i class="ti ti-chevron-right text-base"></i>
+						</a>
+						</div>
+						
+					</div>
+					<div class="card">
+						<div class="card-body">
+							<div class="flex gap-6 items-center justify-between">
+							<div class="flex flex-col gap-4">
+								<h4 class="text-gray-500 text-lg font-semibold">Total Transactions</h4>
+								<div class="flex flex-col gap-4">
+								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_riders %></h3>
+								
+							</div>
+							</div>
+							
+								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
+									<i class="ti ti-wallet text-xl"></i>
+								</div>
+					
+							</div>
+							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
+							href="/transactions">
+							View
+							<i class="ti ti-chevron-right text-base"></i>
+						</a>
+						</div>
+						
+					</div>
+					<div class="card">
+						<div class="card-body">
+							<div class="flex gap-6 items-center justify-between">
+							<div class="flex flex-col gap-4">
+								<h4 class="text-gray-500 text-lg font-semibold">Pending Riders</h4>
+								<div class="flex flex-col gap-4">
+								<h3 class="text-[22px] font-semibold text-gray-500"><%= pending_riders %></h3>
+								
+							</div>
+							</div>
+							
+								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
+									<i class="ti ti-clock-play text-xl"></i>
+								</div>
+					
+							</div>
+							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
+							href="#">
+							View
+							<i class="ti ti-chevron-right text-base"></i>
+						</a>
+						</div>
+						
+					</div>
+				 </div>
+
+                      
+                       <div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-6 gap-x-0 lg:gap-y-0 gap-y-6">
+                          <div class="card">
+							<div class="card-body">
+							<h4 class="text-gray-500 text-lg font-semibold mb-5">Recent Transactions</h4>
+							<ul class="timeline-widget relative">
+                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+                                   <div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
+                                       9:30 am
+								   </div>
+								   <div class="timeline-badge-wrap flex flex-col items-center ">
+                                     <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-600 my-[10px]">
+									 </div>
+									 <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								   </div>
+								   <div class="timeline-desc py-[6px] px-4">
+									<p class="text-gray-500 text-sm font-normal">Payment received from John Doe of $385.90</p>
+								   </div>
+							   </li>
+                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+                                   <div class="timeline-time text-gray-500 min-w-[90px] py-[6px] text-sm pr-4 text-end">
+                                       10:00 am
+								   </div>
+								   <div class="timeline-badge-wrap flex flex-col items-center ">
+                                     <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-300 my-[10px]">
+									 </div>
+									 <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								   </div>
+								   <div class="timeline-desc py-[6px] px-4 text-sm">
+									<p class="text-gray-500  font-semibold">New sale recorded</p>
+									<a href="javascript:void('')" class="text-blue-600">#ML-3467</a>
+								   </div>
+							   </li>
+
+                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+								<div class="timeline-time text-gray-500 min-w-[90px] text-sm py-[6px] pr-4 text-end">
+									12:00 am
+								</div>
+								<div class="timeline-badge-wrap flex flex-col items-center ">
+								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-teal-500 my-[10px]">
+								  </div>
+								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								</div>
+								<div class="timeline-desc py-[6px] px-4">
+								 <p class="text-gray-500 text-sm font-normal">Payment was made of $64.95 to Michael</p>
+								</div>
+							</li>
+							
+							<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+								<div class="timeline-time text-gray-500 min-w-[90px] text-sm py-[6px] pr-4 text-end">
+									9:30 am
+								</div>
+								<div class="timeline-badge-wrap flex flex-col items-center ">
+								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-yellow-500 my-[10px]">
+								  </div>
+								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								</div>
+								<div class="timeline-desc py-[6px] px-4 text-sm">
+								 <p class="text-gray-500 font-semibold">New sale recorded</p>
+								 <a href="javascript:void('')" class="text-blue-600">#ML-3467</a>
+								</div>
+							</li>
+
+							<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+								<div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
+									9:30 am
+								</div>
+								<div class="timeline-badge-wrap flex flex-col items-center ">
+								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-red-500 my-[10px]">
+								  </div>
+								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								</div>
+								<div class="timeline-desc py-[6px] px-4">
+								 <p class="text-gray-500 text-sm font-semibold">New arrival recorded</p>
+								</div>
+							</li>
+							<li class="timeline-item flex relative overflow-hidden">
+								<div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
+									12:00 am
+								</div>
+								<div class="timeline-badge-wrap flex flex-col items-center ">
+								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-teal-500 my-[10px]">
+								  </div>
+								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+								</div>
+								<div class="timeline-desc py-[6px] px-4">
+								 <p class="text-gray-500 text-sm font-normal">Payment Done</p>
+								</div>
+							</li>							
+							   
+							</ul>
+							</div>
+						  </div>
+						  <div class="col-span-2">
+							<div class="card h-full">
+								<div class="card-body">
+									<h4 class="text-gray-500 text-lg font-semibold mb-5">Recent Registered Riders</h4>
+									<div class="relative overflow-x-auto">
+										<!-- table -->
+										<table class="text-left w-full whitespace-nowrap text-sm text-gray-500">
+											<thead>
+												<tr class="text-sm">
+													<th scope="col" class="p-4 font-semibold">ID</th>
+													<th scope="col" class="p-4 font-semibold">Username</th>
+													<th scope="col" class="p-4 font-semibold">Email</th>
+													<th scope="col" class="p-4 font-semibold">Created At</th>
+												</tr>
+											</thead>
+											<tbody>
+												<% recent_users.forEach(user => { %>
+													<tr>
+														<td class="p-4 text-sm"><%= user.id %></td>
+														<td class="p-4 text-sm"><%= user.username %></td>
+														<td class="p-4 text-sm"><%= user.email %></td>
+														<td class="p-4 text-sm"><%= new Date(user.created_at).toLocaleDateString() %></td>
+													</tr>
+												<% }) %>
+											</tbody>
+										</table>
+										
+										
+									</div>									
+								</div>
+							</div>
+						  </div>
+					   </div>
+
+					   <footer>
+						<p class="text-base text-gray-400 font-normal p-3 text-center">
+							&copy 2025 - All Rights Reserved by  <a href="/" target="_blank" class="text-blue-600 underline hover:text-blue-700">PetSupportInc.</a>
+						</p>
+					   </footer>
+					</div>
+
+
+				</main>
+				<!-- Main Content End -->
+				
+			</div>
+		</div>
+		<!--end of project-->
+	</main>
+
+	<%- include('includes/scripts.ejs') %>
+
+</body>
+
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html   lang="en" >
+
+<head>
+    <%- include('includes/head.ejs') %>
+
+	<title>Riders</title>
+</head>
+
+<body class=" bg-surface">
+	<main>
+		<!--start the project-->
+		<div id="main-wrapper" class=" flex p-5 xl:pr-0 min-h-screen">
+			<aside id="application-sidebar-brand"
+				class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full  transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0  w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar   transition-all duration-300" >
+				<%- include('includes/sidebar.ejs') %>
+			</aside>
+			<div class=" w-full page-wrapper xl:px-6 px-0">
+
+				<!-- Main Content -->
+				<main class="h-full  max-w-full">
+					<div class="container full-container p-0 flex flex-col gap-6">
+					<!--  Header Start -->
+				<header class=" bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+					<%- include('includes/header.ejs') %>
+				</header>
+				<!--  Header End -->
+				<div class="card">
+					<div class="card-body">
+						<h4 class="text-gray-500 text-lg font-semibold mb-5">Riders</h4>
+
+                        <div class="relative overflow-x-auto">
+                            <div class="table-settings mb-4"></div>
+                            <!-- table -->
+                            <table class="text-left w-full whitespace-nowrap text-sm text-gray-500" id="myTable">
+                                <thead class="bg-blue-200">
+                                    <tr class="text-sm">
+                                        <th scope="col" class="p-4 font-semibold">Transaction ID</th>
+                                        <th scope="col" class="p-4 font-semibold">Customer Name</th>
+                                        <th scope="col" class="p-4 font-semibold">Rider Name</th>
+                                        <th scope="col" class="p-4 font-semibold">Pet Name</th>
+                                        <th scope="col" class="p-4 font-semibold">Amount Paid</th>
+                                        <th scope="col" class="p-4 font-semibold">Rating</th>
+                                        <th scope="col" class="p-4 font-semibold">Comment</th>
+                                        <th scope="col" class="p-4 font-semibold">Created At</th>
+                                        <th scope="col" class="p-4 font-semibold">Updated At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (transactions.length > 0) { %>
+                                        <% transactions.forEach(transaction => { %>
+                                            <tr>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.transaction_id %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.customer_name || 'N/A' %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.rider_name || 'N/A' %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.pet_name || 'N/A' %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium">₱<%= transaction.amount_paid %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.rating || 'N/A' %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= transaction.comment || 'No comment' %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= new Date(transaction.created_at).toLocaleString() %></h3>
+                                                </td>
+                                                <td class="p-4">
+                                                    <h3 class="font-medium"><%= new Date(transaction.updated_at).toLocaleString() %></h3>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="9" class="p-8 text-center text-gray-500">No transactions found</td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                            
+                        </div>	        
+					</div>
+
+
+				</main>
+				<!-- Main Content End -->
+				
+			</div>
+		</div>
+		<!--end of project-->
+	</main>
+
+
+    <script type="text/javascript">       
+        document.addEventListener('DOMContentLoaded', function () {
+            var tableElement = document.getElementById('myTable');
+            if (tableElement) {
+                var table = new DataTable(tableElement, {
+                    ordering: false,
+                    buttons: ['copy', 'csv', 'excel', 'print']
+                });
+
+                table.buttons().container().appendTo(document.querySelector('.table-settings'));
+            }
+        });
+
+    </script>
+
+    <%- include('includes/scripts.ejs') %>
+
+    
+</body>
+
+</html>
