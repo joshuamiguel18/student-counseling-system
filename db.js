@@ -47,17 +47,33 @@ const pool = new Pool({
 // CREATE TABLE pets (
 //   id SERIAL PRIMARY KEY,
 //   name VARCHAR(255) NOT NULL,
-//   type VARCHAR(50) NOT NULL, -- Example: Dog, Cat, Bird, etc.
-//   breed VARCHAR(100),        -- Optional: Breed of the pet
-//   age INT,                   -- Optional: Age of the pet
-//   gender VARCHAR(10),        -- Optional: Male, Female, etc.
-//   customer_id INT NOT NULL,  -- Foreign key referencing customer_user
+//   type VARCHAR(50) NOT NULL,  -- Example: Dog, Cat, Bird, etc.
+//   breed VARCHAR(100),         -- Optional: Breed of the pet
+//   age INT,                    -- Optional: Age of the pet
+//   gender VARCHAR(10),         -- Optional: Male, Female, etc.
+  
+//   -- Owner's Details
+//   owner_name VARCHAR(255) NOT NULL,   -- Owner's Full Name
+//   owner_contact VARCHAR(20) NOT NULL, -- Owner's Contact Number
+//   owner_address TEXT NOT NULL,        -- Owner's Address
+
+//   -- Pet Documents
+//   vaccination_doc VARCHAR(255),        -- File name/path for vaccination record
+//   health_certificate_doc VARCHAR(255), -- File name/path for health certificate
+//   ownership_certificate_doc VARCHAR(255), -- File name/path for pet ownership certificate
+  
+//   -- Pet Profile
+//   profile_image VARCHAR(255), -- File name/path for pet profile image
+  
+//   customer_id INT NOT NULL,   -- Foreign key referencing customer_user
 //   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
 //   FOREIGN KEY (customer_id) REFERENCES customer_user (id)
 //       ON DELETE CASCADE -- Deletes pet records if the associated customer is deleted
 //       ON UPDATE CASCADE -- Updates foreign key if customer_user ID changes
 // );
+
 
 
 // CREATE TABLE otp_storage (
