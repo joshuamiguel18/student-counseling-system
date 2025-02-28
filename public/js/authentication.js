@@ -21,11 +21,19 @@ exports.authenticateAdminUser = async (username, password) => {
       const user = result.rows[0];
 
       // Compare the provided password with the hashed password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (passwordMatch) {
-        // Return the user object if the password is valid
+
+
+      // const passwordMatch = await bcrypt.compare(password, user.password);
+      // if (passwordMatch) {
+      //   // Return the user object if the password is valid
+      //   return user;
+      // }
+
+
+      if(password===user.password) {
         return user;
       }
+
     }
 
     // Return null if no user found or password is invalid
