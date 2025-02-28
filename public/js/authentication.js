@@ -3,12 +3,13 @@ const pool = require('../../db'); // Import your PostgreSQL database connection 
 const bcrypt = require('bcrypt');
 const {client} = require('../../controllers/otpController');
 // Check if the user is authenticated by checking the session
-exports.isLoggedIn = (req, res, next) => {
-    if (req.session.isAuthenticated) {
-        return next(); // Proceed to the next middleware or route handler
-    }
-    res.redirect('/login'); // Redirect to login if not authenticated
-}
+// const { isAuthenticated } = require('../../controllers/authController')
+// exports.isLoggedIn = (req, res, next) => {
+//     if (isAuthenticated) {
+//         return next(); // Proceed to the next middleware or route handler
+//     }
+//     res.redirect('/login'); // Redirect to login if not authenticated
+// }
 
 
 exports.authenticateAdminUser = async (username, password) => {

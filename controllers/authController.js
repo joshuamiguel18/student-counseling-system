@@ -1,6 +1,9 @@
 const pool = require('../db');
 const { authenticateAdminUser } = require('../public/js/authentication');
 const bcrypt = require('bcrypt')
+
+exports.isAuthenticated;
+exports.userId;
 // Render login page
 exports.getLoginPage = (req, res) => {
     res.render('login');  // Render the login page
@@ -20,8 +23,8 @@ exports.login = async (req, res) => {
         }
 
         // Set session data if authentication is successful
-        req.session.isAuthenticated = true;
-        req.session.userId = user.id;
+        isAuthenticated = true;
+        userId = user.id;
 
         // Redirect to the home page after successful login
         res.redirect('/');
@@ -35,15 +38,15 @@ exports.login = async (req, res) => {
 
 // Handle logout logic
 exports.logout = (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({
-                message: 'Failed to log out',
-            });
-        }
+    // req.session.destroy((err) => {
+    //     if (err) {
+    //         return res.status(500).json({
+    //             message: 'Failed to log out',
+    //         });
+    //     }
         // Redirect to login page after successful logout
         res.redirect('/login');
-    });
+    // });
 };
 
 
