@@ -1,81 +1,75 @@
+
 <!DOCTYPE html>
-<html   lang="en" dir="ltr" >
 
-<head>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
 	<%- include('includes/head.ejs') %>
-	<title>Login</title>
-</head>
 
-<body class="DEFAULT_THEME ">
-	<main>
-				<!-- Main Content -->
-                <div class="flex flex-col w-full  overflow-hidden relative min-h-screen radial-gradient items-center justify-center g-0 px-4">
-                  
-                    <div class="justify-center items-center w-full card lg:flex max-w-md ">
-                        <div class=" w-full card-body">
-                            <div class="flex justify-center gap-2 py-2">
-                                <img src="/images/logos/paw.png" style="width: 35px; height: 35px;">
+  <link rel="stylesheet" href="/css/page-auth.css" />
 
+  </head>
 
-                                <p class="mb-4  text-gray-400 text-lg text-center font-bold">The PetSupport Admin Login</p>
+  <body>
 
-                            </div>
-                            <!-- form -->
-                            <form method="post" action="/login">
-                                <!-- username -->
-                                <div class="mb-4">
-                                    <label for="forUsername"
-                                    class="block text-sm mb-2 text-gray-400">Username</label>
-                                <input type="text" id="forUsername" name="username"
-                                    class="py-3 px-4 block w-full border-gray-200 rounded-sm text-sm focus:border-blue-600 focus:ring-0 " aria-describedby="hs-input-helper-text">
-                                </div>
-                                <!-- password -->
-                                <div class="mb-6">
-                                    <label for="forPassword"
-                                    class="block text-sm  mb-2 text-gray-400">Password</label>
-                                <input type="password" id="forPassword" name="password"
-                                    class="py-3 px-4 block w-full border-gray-200 rounded-sm text-sm focus:border-blue-600 focus:ring-0 " aria-describedby="hs-input-helper-text">
-                                </div>
-                                <% if (typeof error !== 'undefined') { %>
-                                    <div class="mb-4 flex items-center  rounded-sm align">
-                                        <i class="ti ti-exclamation-circle text-xl error-message"></i>
-                                        <span class="error-message"><%= error %></span>
-                                    </div>
-                                <% } %>
-                                    
-                                <!-- checkbox -->
-                                  <div class="flex justify-between">
-                                    <div class="flex">
-                                        <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded-[4px] text-blue-600 focus:ring-blue-500 " id="hs-default-checkbox" checked>
-                                        <label for="hs-default-checkbox" class="text-sm text-gray-500 ms-3">Remeber this Device</label>
-                                      </div>
-                                        <a href="../" class="text-sm font-semibold text-blue-600 hover:text-blue-700">Forgot Password ?</a>
-                                  </div>
-                                    <!-- button -->
-                                      <div class="grid my-6">
-                                        <button
-                                            type="submit"
-                                            class="rounded-sm w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                        >
-                                            Sign in
-                                        </button>
-                                      </div>
-        
-                                    <div class="flex justify-center gap-2 items-center">
-                                        <p class="text-base font-semibold text-gray-400">Don't have an account?</p>
-                                        <a href="/register" class="text-sm font-semibold text-blue-600 hover:text-blue-700">Create an account</a>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-				
-			</div>
-		<!--end of project-->
-	</main>
+    <div class="container-xxl">
+      <div class="authentication-wrapper authentication-basic container-p-y">
+        <div class="authentication-inner">
+          <!-- Login -->
+          <div class="card px-sm-6 px-0">
+            <div class="card-body">
+              <!-- Logo -->
+              <div class="app-brand justify-content-center">
+                <a href="/login" class="app-brand-link gap-2">
+                  <span class="app-brand-text demo menu-text fw-bold ms-2" style="color: green;">Rate<span style="color: white; text-shadow: -1px -1px 0 green, 1px -1px 0 green, -1px 1px 0 green, 1px 1px 0 green;">Smart
+                  </span>
+                </span>
+                </a>
+              </div>
+              <!-- /Logo -->
+              <h4 class="mb-1">Welcome back! 👋</h4>
+              <p class="mb-6">Please sign-in to your account</p>
 
+              <form id="formAuthentication" class="mb-6" action="/login" method="post">
 
-	<%- include('includes/scripts.ejs') %>
-</body>
+                <% if (error) { %>
+                  <div class="alert alert-danger" role="alert">
+                    <%= error %>
+                  </div>
+                <% } %>
+            
+                <div class="mb-6">
+                  <label for="username" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" value="<%= username || '' %>" autofocus>
+                </div>
+            
+                <div class="mb-6 form-password-toggle">
+                  <label class="form-label" for="password">Password</label>
+                  <div class="input-group input-group-merge">
+                    <input type="password" id="password" class="form-control" name="password" placeholder="••••••••••••" aria-describedby="password" />
+                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                  </div>
+                </div>
+            
+                <div class="mb-6">
+                  <button class="btn btn-primary d-grid w-100" style="background:green; color: white;" type="submit">Login</button>
+                </div>
+            </form>
+            
+
+              <p class="text-center">
+                <span>Don't have an account?</span>
+                <a href="/register">
+                  <span>Create an account</span>
+                </a>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </body>
 
 </html>

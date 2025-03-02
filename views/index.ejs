@@ -1,276 +1,155 @@
 <!DOCTYPE html>
-<html lang="en" >
 
-<head>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
 	<%- include('includes/head.ejs') %>
-	<title>PetSupport Admin</title>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
 	
-</head>
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
 
-<body class=" bg-surface">
-	<main>
-		<!--start the project-->
-		<div id="main-wrapper" class=" flex p-5 xl:pr-0">
-			<aside id="application-sidebar-brand"
-				class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full  transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0  w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar   transition-all duration-300" >
-
-				<%- include('includes/sidebar.ejs') %>
-			</aside>
-			<div class=" w-full page-wrapper xl:px-6 px-0">
-
-				<!-- Main Content -->
-				<main class="h-full  max-w-full">
-					<div class="container full-container p-0 flex flex-col gap-6">
-					<!--  Header Start -->
-				<header class=" bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
-					
-					<%- include('includes/header.ejs') %>
-				</header>
-				<!--  Header End -->
-				<div class="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-2 gap-6">
-					<div class="card">
-						<div class="card-body">
-							<div class="flex gap-6 items-center justify-between">
-							<div class="flex flex-col gap-4">
-								<h4 class="text-gray-500 text-lg font-semibold">Total Users</h4>
-								<div class="flex flex-col gap-4">
-								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_users %></h3>
-								
-							</div>
-							</div>
-							
-								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
-									<i class="ti ti-users text-xl"></i>
-								</div>
-					
-							</div>
-							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
-							href="/users">
-							View
-							<i class="ti ti-chevron-right text-base"></i>
-						</a>
-						</div>
-						
-					</div>
-					<div class="card">
-						<div class="card-body">
-							<div class="flex gap-6 items-center justify-between">
-							<div class="flex flex-col gap-4">
-								<h4 class="text-gray-500 text-lg font-semibold">Total Riders</h4>
-								<div class="flex flex-col gap-4">
-								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_riders %></h3>
-								
-							</div>
-							</div>
-							
-								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
-									<i class="ti ti-motorbike text-xl"></i>
-								</div>
-					
-							</div>
-							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
-							href="/riders">
-							View
-							<i class="ti ti-chevron-right text-base"></i>
-						</a>
-						</div>
-						
-					</div>
-					<div class="card">
-						<div class="card-body">
-							<div class="flex gap-6 items-center justify-between">
-							<div class="flex flex-col gap-4">
-								<h4 class="text-gray-500 text-lg font-semibold">Total Transactions</h4>
-								<div class="flex flex-col gap-4">
-								<h3 class="text-[22px] font-semibold text-gray-500"><%= total_riders %></h3>
-								
-							</div>
-							</div>
-							
-								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
-									<i class="ti ti-wallet text-xl"></i>
-								</div>
-					
-							</div>
-							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
-							href="/transactions">
-							View
-							<i class="ti ti-chevron-right text-base"></i>
-						</a>
-						</div>
-						
-					</div>
-					<div class="card">
-						<div class="card-body">
-							<div class="flex gap-6 items-center justify-between">
-							<div class="flex flex-col gap-4">
-								<h4 class="text-gray-500 text-lg font-semibold">Pending Riders</h4>
-								<div class="flex flex-col gap-4">
-								<h3 class="text-[22px] font-semibold text-gray-500"><%= pending_riders %></h3>
-								
-							</div>
-							</div>
-							
-								<div class="w-11 h-11 flex justify-center items-center rounded-full bg-red-500 text-white self-start">
-									<i class="ti ti-clock-play text-xl"></i>
-								</div>
-					
-							</div>
-							<a class="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-700"
-							href="#">
-							View
-							<i class="ti ti-chevron-right text-base"></i>
-						</a>
-						</div>
-						
-					</div>
-				 </div>
-
-                      
-                       <div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-6 gap-x-0 lg:gap-y-0 gap-y-6">
-                          <div class="card">
-							<div class="card-body">
-							<h4 class="text-gray-500 text-lg font-semibold mb-5">Recent Transactions</h4>
-							<ul class="timeline-widget relative">
-                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-                                   <div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
-                                       9:30 am
-								   </div>
-								   <div class="timeline-badge-wrap flex flex-col items-center ">
-                                     <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-600 my-[10px]">
-									 </div>
-									 <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								   </div>
-								   <div class="timeline-desc py-[6px] px-4">
-									<p class="text-gray-500 text-sm font-normal">Payment received from John Doe of $385.90</p>
-								   </div>
-							   </li>
-                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-                                   <div class="timeline-time text-gray-500 min-w-[90px] py-[6px] text-sm pr-4 text-end">
-                                       10:00 am
-								   </div>
-								   <div class="timeline-badge-wrap flex flex-col items-center ">
-                                     <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-300 my-[10px]">
-									 </div>
-									 <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								   </div>
-								   <div class="timeline-desc py-[6px] px-4 text-sm">
-									<p class="text-gray-500  font-semibold">New sale recorded</p>
-									<a href="javascript:void('')" class="text-blue-600">#ML-3467</a>
-								   </div>
-							   </li>
-
-                               <li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-								<div class="timeline-time text-gray-500 min-w-[90px] text-sm py-[6px] pr-4 text-end">
-									12:00 am
-								</div>
-								<div class="timeline-badge-wrap flex flex-col items-center ">
-								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-teal-500 my-[10px]">
-								  </div>
-								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								</div>
-								<div class="timeline-desc py-[6px] px-4">
-								 <p class="text-gray-500 text-sm font-normal">Payment was made of $64.95 to Michael</p>
-								</div>
-							</li>
-							
-							<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-								<div class="timeline-time text-gray-500 min-w-[90px] text-sm py-[6px] pr-4 text-end">
-									9:30 am
-								</div>
-								<div class="timeline-badge-wrap flex flex-col items-center ">
-								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-yellow-500 my-[10px]">
-								  </div>
-								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								</div>
-								<div class="timeline-desc py-[6px] px-4 text-sm">
-								 <p class="text-gray-500 font-semibold">New sale recorded</p>
-								 <a href="javascript:void('')" class="text-blue-600">#ML-3467</a>
-								</div>
-							</li>
-
-							<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-								<div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
-									9:30 am
-								</div>
-								<div class="timeline-badge-wrap flex flex-col items-center ">
-								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-red-500 my-[10px]">
-								  </div>
-								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								</div>
-								<div class="timeline-desc py-[6px] px-4">
-								 <p class="text-gray-500 text-sm font-semibold">New arrival recorded</p>
-								</div>
-							</li>
-							<li class="timeline-item flex relative overflow-hidden">
-								<div class="timeline-time text-gray-500 text-sm min-w-[90px] py-[6px] pr-4 text-end">
-									12:00 am
-								</div>
-								<div class="timeline-badge-wrap flex flex-col items-center ">
-								  <div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-teal-500 my-[10px]">
-								  </div>
-								  <div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-								</div>
-								<div class="timeline-desc py-[6px] px-4">
-								 <p class="text-gray-500 text-sm font-normal">Payment Done</p>
-								</div>
-							</li>							
-							   
-							</ul>
-							</div>
-						  </div>
-						  <div class="col-span-2">
-							<div class="card h-full">
-								<div class="card-body">
-									<h4 class="text-gray-500 text-lg font-semibold mb-5">Recent Registered Riders</h4>
-									<div class="relative overflow-x-auto">
-										<!-- table -->
-										<table class="text-left w-full whitespace-nowrap text-sm text-gray-500">
-											<thead>
-												<tr class="text-sm">
-													<th scope="col" class="p-4 font-semibold">ID</th>
-													<th scope="col" class="p-4 font-semibold">Username</th>
-													<th scope="col" class="p-4 font-semibold">Email</th>
-													<th scope="col" class="p-4 font-semibold">Created At</th>
-												</tr>
-											</thead>
-											<tbody>
-												<% recent_users.forEach(user => { %>
-													<tr>
-														<td class="p-4 text-sm"><%= user.id %></td>
-														<td class="p-4 text-sm"><%= user.username %></td>
-														<td class="p-4 text-sm"><%= user.email %></td>
-														<td class="p-4 text-sm"><%= new Date(user.created_at).toLocaleDateString() %></td>
-													</tr>
-												<% }) %>
-											</tbody>
-										</table>
-										
-										
-									</div>									
-								</div>
-							</div>
-						  </div>
-					   </div>
-
-					   <footer>
-						<p class="text-base text-gray-400 font-normal p-3 text-center">
-							&copy 2025 - All Rights Reserved by  <a href="/" target="_blank" class="text-blue-600 underline hover:text-blue-700">PetSupportInc.</a>
-						</p>
-					   </footer>
-					</div>
-
-
-				</main>
-				<!-- Main Content End -->
 				
+			<div class="row">
+
+				<div class="row mb-6 g-6">
+					
+					<div class="col-12 col-xl-8">
+						<div class="card h-100">
+						<div class="card-header d-flex align-items-center justify-content-between">
+							<h5 class="card-title m-0 me-2">DOH FEEDBACK FORM</h5>
+							<div class="dropdown">
+							<button class="btn text-muted p-0" type="button" id="assignmentProgress" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" fdprocessedid="hjc12q">
+								<i class="bx bx-dots-vertical-rounded bx-lg"></i>
+							</button>
+							<div class="dropdown-menu dropdown-menu-end" aria-labelledby="assignmentProgress">
+								<a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+								<a class="dropdown-item" href="javascript:void(0);">Download</a>
+								<a class="dropdown-item" href="javascript:void(0);">View All</a>
+							</div>
+							</div>
+						</div>
+						<div class="card-body">
+							<ul class="p-0 m-0">
+							<li class="d-flex mb-4 pb-1" style="position: relative;">
+								<div class="chart-progress me-4" data-color="primary" data-series="72" data-progress_variant="true" style="min-height: 62.7px;"><div id="apexcharts2s08n1to" class="apexcharts-canvas apexcharts2s08n1to apexcharts-theme-light" style="width: 58px; height: 62.7px;"><svg id="SvgjsSvg1346" width="58" height="62.7" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev" class="apexcharts-svg" xmlns:data="ApexChartsNS" transform="translate(0, 0)" style="background: transparent;"><g id="SvgjsG1348" class="apexcharts-inner apexcharts-graphical" transform="translate(-18, -12)"><defs id="SvgjsDefs1347"><clipPath id="gridRectMask2s08n1to"><rect id="SvgjsRect1350" width="98" height="91" x="-3" y="-1" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath><clipPath id="forecastMask2s08n1to"></clipPath><clipPath id="nonForecastMask2s08n1to"></clipPath><clipPath id="gridRectMarkerMask2s08n1to"><rect id="SvgjsRect1351" width="96" height="93" x="-2" y="-2" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath></defs><g id="SvgjsG1352" class="apexcharts-radialbar"><g id="SvgjsG1353"><g id="SvgjsG1354" class="apexcharts-tracks"><g id="SvgjsG1355" class="apexcharts-radialbar-track apexcharts-track" rel="1"><path id="apexcharts-radialbarTrack-0" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815" fill="none" fill-opacity="1" stroke="#8592a329" stroke-opacity="1" stroke-linecap="round" stroke-width="5.130353658536585" stroke-dasharray="0" class="apexcharts-radialbar-area" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815"></path></g></g><g id="SvgjsG1357"><g id="SvgjsG1362" class="apexcharts-series apexcharts-radial-series" seriesName="" rel="1" data:realIndex="0"><path id="SvgjsPath1363" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 21.968689153512027 49.171213631324946" fill="none" fill-opacity="0.85" stroke="rgba(105,108,255,0.85)" stroke-opacity="1" stroke-linecap="round" stroke-width="5.2890243902439025" stroke-dasharray="0" class="apexcharts-radialbar-area apexcharts-radialbar-slice-0" data:angle="259" data:value="72" index="0" j="0" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 21.968689153512027 49.171213631324946"></path></g><circle id="SvgjsCircle1358" r="16.915920731707327" cx="46" cy="44.5" class="apexcharts-radialbar-hollow" fill="transparent"></circle><g id="SvgjsG1359" class="apexcharts-datalabels-group" transform="translate(0, 0) scale(1)" style="opacity: 1;"><text id="SvgjsText1360" font-family="Helvetica, Arial, sans-serif" x="46" y="44.5" text-anchor="middle" dominant-baseline="auto" font-size="16px" font-weight="500" fill="#696cff" class="apexcharts-text apexcharts-datalabel-label" style="font-family: Helvetica, Arial, sans-serif;"></text><text id="SvgjsText1361" font-family="Public Sans" x="46" y="50.5" text-anchor="middle" dominant-baseline="auto" font-size="15px" font-weight="500" fill="#384551" class="apexcharts-text apexcharts-datalabel-value" style="font-family: &quot;Public Sans&quot;;">72%</text></g></g></g></g><line id="SvgjsLine1364" x1="0" y1="0" x2="92" y2="0" stroke="#b6b6b6" stroke-dasharray="0" stroke-width="1" stroke-linecap="butt" class="apexcharts-ycrosshairs"></line><line id="SvgjsLine1365" x1="0" y1="0" x2="92" y2="0" stroke-dasharray="0" stroke-width="0" stroke-linecap="butt" class="apexcharts-ycrosshairs-hidden"></line></g><g id="SvgjsG1349" class="apexcharts-annotations"></g></svg><div class="apexcharts-legend"></div></div></div>
+								<div class="row w-100 align-items-center">
+								<div class="col-9">
+									<div class="me-2">
+									<h6 class="mb-1">Positive</h6>
+									<p class="mb-0">120</p>
+									</div>
+								</div>
+								<div class="col-3 text-end">
+									<button type="button" class="btn btn-sm btn-icon btn-label-secondary" fdprocessedid="g5nie">
+									<i class="bx bx-chevron-right scaleX-n1-rtl"></i>
+									</button>
+								</div>
+								</div>
+							<div class="resize-triggers"><div class="expand-trigger"><div style="width: 339px; height: 68px;"></div></div><div class="contract-trigger"></div></div></li>
+							<li class="d-flex mb-4 pb-1" style="position: relative;">
+								<div class="chart-progress me-4" data-color="success" data-series="48" data-progress_variant="true" style="min-height: 62.7px;"><div id="apexchartsg5g5ayej" class="apexcharts-canvas apexchartsg5g5ayej apexcharts-theme-light" style="width: 58px; height: 62.7px;"><svg id="SvgjsSvg1366" width="58" height="62.7" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev" class="apexcharts-svg" xmlns:data="ApexChartsNS" transform="translate(0, 0)" style="background: transparent;"><g id="SvgjsG1368" class="apexcharts-inner apexcharts-graphical" transform="translate(-18, -12)"><defs id="SvgjsDefs1367"><clipPath id="gridRectMaskg5g5ayej"><rect id="SvgjsRect1370" width="98" height="91" x="-3" y="-1" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath><clipPath id="forecastMaskg5g5ayej"></clipPath><clipPath id="nonForecastMaskg5g5ayej"></clipPath><clipPath id="gridRectMarkerMaskg5g5ayej"><rect id="SvgjsRect1371" width="96" height="93" x="-2" y="-2" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath></defs><g id="SvgjsG1372" class="apexcharts-radialbar"><g id="SvgjsG1373"><g id="SvgjsG1374" class="apexcharts-tracks"><g id="SvgjsG1375" class="apexcharts-radialbar-track apexcharts-track" rel="1"><path id="apexcharts-radialbarTrack-0" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815" fill="none" fill-opacity="1" stroke="#8592a329" stroke-opacity="1" stroke-linecap="round" stroke-width="5.130353658536585" stroke-dasharray="0" class="apexcharts-radialbar-area" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815"></path></g></g><g id="SvgjsG1377"><g id="SvgjsG1382" class="apexcharts-series apexcharts-radial-series" seriesName="" rel="1" data:realIndex="0"><path id="SvgjsPath1383" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 48.983495285593456 68.79861917210211" fill="none" fill-opacity="0.85" stroke="rgba(113,221,55,0.85)" stroke-opacity="1" stroke-linecap="round" stroke-width="5.2890243902439025" stroke-dasharray="0" class="apexcharts-radialbar-area apexcharts-radialbar-slice-0" data:angle="173" data:value="48" index="0" j="0" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 48.983495285593456 68.79861917210211"></path></g><circle id="SvgjsCircle1378" r="16.915920731707327" cx="46" cy="44.5" class="apexcharts-radialbar-hollow" fill="transparent"></circle><g id="SvgjsG1379" class="apexcharts-datalabels-group" transform="translate(0, 0) scale(1)" style="opacity: 1;"><text id="SvgjsText1380" font-family="Helvetica, Arial, sans-serif" x="46" y="44.5" text-anchor="middle" dominant-baseline="auto" font-size="16px" font-weight="500" fill="#71dd37" class="apexcharts-text apexcharts-datalabel-label" style="font-family: Helvetica, Arial, sans-serif;"></text><text id="SvgjsText1381" font-family="Public Sans" x="46" y="50.5" text-anchor="middle" dominant-baseline="auto" font-size="15px" font-weight="500" fill="#384551" class="apexcharts-text apexcharts-datalabel-value" style="font-family: &quot;Public Sans&quot;;">48%</text></g></g></g></g><line id="SvgjsLine1384" x1="0" y1="0" x2="92" y2="0" stroke="#b6b6b6" stroke-dasharray="0" stroke-width="1" stroke-linecap="butt" class="apexcharts-ycrosshairs"></line><line id="SvgjsLine1385" x1="0" y1="0" x2="92" y2="0" stroke-dasharray="0" stroke-width="0" stroke-linecap="butt" class="apexcharts-ycrosshairs-hidden"></line></g><g id="SvgjsG1369" class="apexcharts-annotations"></g></svg><div class="apexcharts-legend"></div></div></div>
+								<div class="row w-100 align-items-center">
+								<div class="col-9">
+									<div class="me-2">
+									<h6 class="mb-1">Negative</h6>
+									<p class="mb-0">32</p>
+									</div>
+								</div>
+								<div class="col-3 text-end">
+									<button type="button" class="btn btn-sm btn-icon btn-label-secondary" fdprocessedid="2tpms">
+									<i class="bx bx-chevron-right scaleX-n1-rtl"></i>
+									</button>
+								</div>
+								</div>
+							<div class="resize-triggers"><div class="expand-trigger"><div style="width: 339px; height: 68px;"></div></div><div class="contract-trigger"></div></div></li>
+							<li class="d-flex mb-4 pb-1" style="position: relative;">
+								<div class="chart-progress me-4" data-color="danger" data-series="15" data-progress_variant="true" style="min-height: 62.7px;"><div id="apexchartss5z58az2" class="apexcharts-canvas apexchartss5z58az2 apexcharts-theme-light" style="width: 58px; height: 62.7px;"><svg id="SvgjsSvg1386" width="58" height="62.7" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev" class="apexcharts-svg" xmlns:data="ApexChartsNS" transform="translate(0, 0)" style="background: transparent;"><g id="SvgjsG1388" class="apexcharts-inner apexcharts-graphical" transform="translate(-18, -12)"><defs id="SvgjsDefs1387"><clipPath id="gridRectMasks5z58az2"><rect id="SvgjsRect1390" width="98" height="91" x="-3" y="-1" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath><clipPath id="forecastMasks5z58az2"></clipPath><clipPath id="nonForecastMasks5z58az2"></clipPath><clipPath id="gridRectMarkerMasks5z58az2"><rect id="SvgjsRect1391" width="96" height="93" x="-2" y="-2" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath></defs><g id="SvgjsG1392" class="apexcharts-radialbar"><g id="SvgjsG1393"><g id="SvgjsG1394" class="apexcharts-tracks"><g id="SvgjsG1395" class="apexcharts-radialbar-track apexcharts-track" rel="1"><path id="apexcharts-radialbarTrack-0" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815" fill="none" fill-opacity="1" stroke="#8592a329" stroke-opacity="1" stroke-linecap="round" stroke-width="5.130353658536585" stroke-dasharray="0" class="apexcharts-radialbar-area" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815"></path></g></g><g id="SvgjsG1397"><g id="SvgjsG1402" class="apexcharts-series apexcharts-radial-series" seriesName="" rel="1" data:realIndex="0"><path id="SvgjsPath1403" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 65.80562396778035 30.110371893725297" fill="none" fill-opacity="0.85" stroke="rgba(255,62,29,0.85)" stroke-opacity="1" stroke-linecap="round" stroke-width="5.2890243902439025" stroke-dasharray="0" class="apexcharts-radialbar-area apexcharts-radialbar-slice-0" data:angle="54" data:value="15" index="0" j="0" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 65.80562396778035 30.110371893725297"></path></g><circle id="SvgjsCircle1398" r="16.915920731707327" cx="46" cy="44.5" class="apexcharts-radialbar-hollow" fill="transparent"></circle><g id="SvgjsG1399" class="apexcharts-datalabels-group" transform="translate(0, 0) scale(1)" style="opacity: 1;"><text id="SvgjsText1400" font-family="Helvetica, Arial, sans-serif" x="46" y="44.5" text-anchor="middle" dominant-baseline="auto" font-size="16px" font-weight="500" fill="#ff3e1d" class="apexcharts-text apexcharts-datalabel-label" style="font-family: Helvetica, Arial, sans-serif;"></text><text id="SvgjsText1401" font-family="Public Sans" x="46" y="50.5" text-anchor="middle" dominant-baseline="auto" font-size="15px" font-weight="500" fill="#384551" class="apexcharts-text apexcharts-datalabel-value" style="font-family: &quot;Public Sans&quot;;">15%</text></g></g></g></g><line id="SvgjsLine1404" x1="0" y1="0" x2="92" y2="0" stroke="#b6b6b6" stroke-dasharray="0" stroke-width="1" stroke-linecap="butt" class="apexcharts-ycrosshairs"></line><line id="SvgjsLine1405" x1="0" y1="0" x2="92" y2="0" stroke-dasharray="0" stroke-width="0" stroke-linecap="butt" class="apexcharts-ycrosshairs-hidden"></line></g><g id="SvgjsG1389" class="apexcharts-annotations"></g></svg><div class="apexcharts-legend"></div></div></div>
+								<div class="row w-100 align-items-center">
+								<div class="col-9">
+									<div class="me-2">
+									<h6 class="mb-1">Neutral</h6>
+									<p class="mb-0">182</p>
+									</div>
+								</div>
+								<div class="col-3 text-end">
+									<button type="button" class="btn btn-sm btn-icon btn-label-secondary" fdprocessedid="ndydx">
+									<i class="bx bx-chevron-right scaleX-n1-rtl"></i>
+									</button>
+								</div>
+								</div>
+							<div class="resize-triggers"><div class="expand-trigger"><div style="width: 339px; height: 68px;"></div></div><div class="contract-trigger"></div></div></li>
+							<li class="d-flex" style="position: relative;">
+								<div class="chart-progress me-4" data-color="info" data-series="24" data-progress_variant="true" style="min-height: 62.7px;"><div id="apexchartsq3oo24rz" class="apexcharts-canvas apexchartsq3oo24rz apexcharts-theme-light" style="width: 58px; height: 62.7px;"><svg id="SvgjsSvg1406" width="58" height="62.7" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev" class="apexcharts-svg" xmlns:data="ApexChartsNS" transform="translate(0, 0)" style="background: transparent;"><g id="SvgjsG1408" class="apexcharts-inner apexcharts-graphical" transform="translate(-18, -12)"><defs id="SvgjsDefs1407"><clipPath id="gridRectMaskq3oo24rz"><rect id="SvgjsRect1410" width="98" height="91" x="-3" y="-1" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath><clipPath id="forecastMaskq3oo24rz"></clipPath><clipPath id="nonForecastMaskq3oo24rz"></clipPath><clipPath id="gridRectMarkerMaskq3oo24rz"><rect id="SvgjsRect1411" width="96" height="93" x="-2" y="-2" rx="0" ry="0" opacity="1" stroke-width="0" stroke="none" stroke-dasharray="0" fill="#fff"></rect></clipPath></defs><g id="SvgjsG1412" class="apexcharts-radialbar"><g id="SvgjsG1413"><g id="SvgjsG1414" class="apexcharts-tracks"><g id="SvgjsG1415" class="apexcharts-radialbar-track apexcharts-track" rel="1"><path id="apexcharts-radialbarTrack-0" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815" fill="none" fill-opacity="1" stroke="#8592a329" stroke-opacity="1" stroke-linecap="round" stroke-width="5.130353658536585" stroke-dasharray="0" class="apexcharts-radialbar-area" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 1 1 45.995727242452276 20.018902811892815"></path></g></g><g id="SvgjsG1417"><g id="SvgjsG1422" class="apexcharts-series apexcharts-radial-series" seriesName="" rel="1" data:realIndex="0"><path id="SvgjsPath1423" d="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 70.42146283773275 42.79228496076043" fill="none" fill-opacity="0.85" stroke="rgba(3,195,236,0.85)" stroke-opacity="1" stroke-linecap="round" stroke-width="5.2890243902439025" stroke-dasharray="0" class="apexcharts-radialbar-area apexcharts-radialbar-slice-0" data:angle="86" data:value="24" index="0" j="0" data:pathOrig="M 46 20.01890243902438 A 24.48109756097562 24.48109756097562 0 0 1 70.42146283773275 42.79228496076043"></path></g><circle id="SvgjsCircle1418" r="16.915920731707327" cx="46" cy="44.5" class="apexcharts-radialbar-hollow" fill="transparent"></circle><g id="SvgjsG1419" class="apexcharts-datalabels-group" transform="translate(0, 0) scale(1)" style="opacity: 1;"><text id="SvgjsText1420" font-family="Helvetica, Arial, sans-serif" x="46" y="44.5" text-anchor="middle" dominant-baseline="auto" font-size="16px" font-weight="500" fill="#03c3ec" class="apexcharts-text apexcharts-datalabel-label" style="font-family: Helvetica, Arial, sans-serif;"></text><text id="SvgjsText1421" font-family="Public Sans" x="46" y="50.5" text-anchor="middle" dominant-baseline="auto" font-size="15px" font-weight="500" fill="#384551" class="apexcharts-text apexcharts-datalabel-value" style="font-family: &quot;Public Sans&quot;;">24%</text></g></g></g></g><line id="SvgjsLine1424" x1="0" y1="0" x2="92" y2="0" stroke="#b6b6b6" stroke-dasharray="0" stroke-width="1" stroke-linecap="butt" class="apexcharts-ycrosshairs"></line><line id="SvgjsLine1425" x1="0" y1="0" x2="92" y2="0" stroke-dasharray="0" stroke-width="0" stroke-linecap="butt" class="apexcharts-ycrosshairs-hidden"></line></g><g id="SvgjsG1409" class="apexcharts-annotations"></g></svg><div class="apexcharts-legend"></div></div></div>
+								<div class="row w-100 align-items-center">
+								<div class="col-9">
+									<div class="me-2">
+									<h6 class="mb-1">Feedbacks</h6>
+									<p class="mb-0">200</p>
+									</div>
+								</div>
+								<div class="col-3 text-end">
+									<button type="button" class="btn btn-sm btn-icon btn-label-secondary" fdprocessedid="s5o22z">
+									<i class="bx bx-chevron-right scaleX-n1-rtl"></i>
+									</button>
+								</div>
+								</div>
+							<div class="resize-triggers"><div class="expand-trigger"><div style="width: 339px; height: 64px;"></div></div><div class="contract-trigger"></div></div></li>
+							</ul>
+						</div>
+						</div>
+					</div>
+				</div>
 			</div>
+			
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <%- include('includes/footer.ejs') %>
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
 		</div>
-		<!--end of project-->
-	</main>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
 
-	<%- include('includes/scripts.ejs') %>
+	  <%- include('includes/scripts.ejs') %>
 
-</body>
+
+
+  </body>
 
 </html>
