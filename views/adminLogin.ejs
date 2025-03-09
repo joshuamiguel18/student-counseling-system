@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+  <link rel="stylesheet" href="/css/page-auth.css" />
+
+  </head>
+
+  <body>
+
+    <div class="container-xxl">
+      <div class="authentication-wrapper authentication-basic container-p-y">
+        <div class="authentication-inner">
+          <!-- Login -->
+          <div class="card px-sm-6 px-0">
+            <div class="card-body">
+              <!-- Logo -->
+              <div class="app-brand justify-content-center">
+                <a href="/customer/login" class="app-brand-link gap-2">
+                  <span class="app-brand-text demo menu-text fw-bold ms-2" style="color: green;">Rate<span style="color: white; text-shadow: -1px -1px 0 green, 1px -1px 0 green, -1px 1px 0 green, 1px 1px 0 green;">Smart
+                  </span>
+                </span>
+                </a>
+              </div>
+              <!-- /Logo -->
+              <h4 class="mb-1">Welcome back Admin! 👋</h4>
+              <p class="mb-6">A WebApp management</p>
+
+              <form id="formAuthentication" class="mb-6" action="/admin/login" method="post">
+
+                <% if (error) { %>
+                  <div class="alert alert-danger" role="alert">
+                    <%= error %>
+                  </div>
+                <% } %>
+            
+                <div class="mb-6">
+                  <label for="username" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" value="<%= username || '' %>" autofocus>
+                </div>
+            
+                <div class="mb-6 form-password-toggle">
+                  <label class="form-label" for="password">Password</label>
+                  <div class="input-group input-group-merge">
+                    <input type="password" id="password" class="form-control" name="password" placeholder="••••••••••••" aria-describedby="password" />
+                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                  </div>
+                </div>
+            
+                <div class="mb-6">
+                  <button class="btn btn-primary d-grid w-100" style="background:green; color: white;" type="submit">Login</button>
+                </div>
+            </form>
+            
+
+              <p class="text-center">
+                <span>Don't have an account?</span>
+                <a href="/admin/register">
+                  <span>Create an account</span>
+                </a>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </body>
+
+</html>
