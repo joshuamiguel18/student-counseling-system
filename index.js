@@ -460,11 +460,11 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post("/register", upload.single("verification"), async (req, res) => {
+app.post("/register", async (req, res) => {
     const { first_name, middle_name, last_name, organization_type, username, email, password } = req.body;
     const verification_document = req.file ? req.file.filename : null;
-  
-    if (!first_name || !last_name || !organization_type || !username || !email || !password || !verification_document) {
+    console.log(first_name);
+    if (!first_name || !last_name || !organization_type || !username || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
   
@@ -479,7 +479,7 @@ app.post("/register", upload.single("verification"), async (req, res) => {
       );
   
     //   res.status(201).json({ message: "User registered successfully", userId: result.rows[0].id });
-      res.redirect('login')
+      res.redirect('customerLogin   ')
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error" });
