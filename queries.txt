@@ -1,0 +1,29 @@
+CREATE TABLE forms (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE form_questions (
+    id SERIAL PRIMARY KEY,
+    form_id INT REFERENCES forms(id) ON DELETE CASCADE,
+    question TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL
+);
+CREATE TABLE form_options (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    option_value TEXT NOT NULL
+);
+CREATE TABLE form_answers (
+    id SERIAL PRIMARY KEY,
+    form_id INT REFERENCES forms(id) ON DELETE CASCADE,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    answer TEXT NOT NULL
+);
+
+
+
+
+
+

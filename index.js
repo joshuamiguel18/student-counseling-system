@@ -37,10 +37,315 @@ app.get('/', (req, res) => {
     res.redirect('/login');
 });
 
-// Routes
+
 app.get('/dashboard', (req, res) => {
     res.render('index');
 });
+
+// Routes
+// Fetch and display forms
+app.get("/forms", async (req, res) => {
+  try {
+      const result = await pool.query("SELECT * FROM forms ORDER BY id DESC");
+      res.render("forms", { forms: result.rows }); // Pass data to EJS
+  } catch (error) {
+      console.error(error);
+      res.status(500).send("Server error");
+  }
+});
+
+
+
+app.get("/form/edit/:id", async (req, res) => {
+  const formId = req.params.id;
+
+  try {
+      const formResult = await pool.query("SELECT * FROM forms WHERE id = $1", [formId]);
+      if (formResult.rows.length === 0) return res.status(404).send("Form not found");
+
+      const questionsResult = await pool.query(
+          "SELECT * FROM form_questions WHERE form_id = $1", 
+          [formId]
+      );
+
+      for (const question of questionsResult.rows) {
+          const optionsResult = await pool.query(
+              "SELECT * FROM form_options WHERE question_id = $1", 
+              [question.id]
+          );
+          question.options = optionsResult.rows;
+      }
+
+      res.render("form-edit", { form: formResult.rows[0], questions: questionsResult.rows });
+  } catch (error) {
+      console.error("Error fetching form:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+
+app.post("/form/submit/:id", async (req, res) => {
+  const formId = req.params.id;
+  const { questions, types, options } = req.body;
+
+  if (!questions || !Array.isArray(questions)) {
+      return res.status(400).send("Invalid form submission");
+  }
+
+  try {
+      for (let i = 0; i < questions.length; i++) {
+          const result = await pool.query(
+              "INSERT INTO form_questions (form_id, question, type) VALUES ($1, $2, $3) RETURNING id",
+              [formId, questions[i], types[i]]
+          );
+
+          const questionId = result.rows[0].id;
+
+          if (options && options[i] && (types[i] === "radio" || types[i] === "checkbox" || types[i] === "select")) {
+              for (const option of options[i]) {
+                  await pool.query(
+                      "INSERT INTO form_options (question_id, option_value) VALUES ($1, $2)",
+                      [questionId, option]
+                  );
+              }
+          }
+      }
+
+      res.redirect(`/form/view/${formId}`);
+  } catch (error) {
+      console.error("Error saving form:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+app.get("/form/view/:id", async (req, res) => {
+  const formId = req.params.id;
+
+  try {
+      // Get form details
+      const formResult = await pool.query("SELECT * FROM forms WHERE id = $1", [formId]);
+      const form = formResult.rows[0];
+
+      // Get questions for this form
+      const questionsResult = await pool.query("SELECT * FROM form_questions WHERE form_id = $1", [formId]);
+      const questions = questionsResult.rows;
+
+      for (let question of questions) {
+          if (["radio", "checkbox", "select"].includes(question.type)) {
+              const optionsResult = await pool.query("SELECT * FROM form_options WHERE question_id = $1", [question.id]);
+              question.options = optionsResult.rows;
+          }
+      }
+
+      res.render("form-view", { form, questions }); // Renders the view-only page
+  } catch (error) {
+      console.error("Error fetching form:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+app.get("/form/edit/:id", async (req, res) => {
+  const formId = req.params.id;
+
+  try {
+      // Get form details
+      const formResult = await pool.query("SELECT * FROM forms WHERE id = $1", [formId]);
+      const form = formResult.rows[0];
+
+      res.render("editForm", { form });
+  } catch (error) {
+      console.error("Error fetching form for editing:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+
+app.get("/form/answer/:id", async (req, res) => {
+  const formId = req.params.id;
+
+  try {
+      // Fetch form details
+      const formResult = await pool.query("SELECT * FROM forms WHERE id = $1", [formId]);
+      const form = formResult.rows[0];
+
+      // Fetch all questions for this form
+      const questionsResult = await pool.query(
+          "SELECT * FROM form_questions WHERE form_id = $1", 
+          [formId]
+      );
+      const questions = questionsResult.rows;
+
+      // Fetch options for multiple-choice, checkboxes, and dropdowns
+      for (let question of questions) {
+          if (["radio", "checkbox", "select"].includes(question.type)) {
+              const optionsResult = await pool.query(
+                  "SELECT * FROM form_options WHERE question_id = $1",
+                  [question.id]
+              );
+              question.options = optionsResult.rows;
+          }
+      }
+
+      // Render the answerable form page
+      res.render("form-answer", { form, questions });
+  } catch (error) {
+      console.error("Error fetching form:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+app.post("/form/edit/:id", async (req, res) => {
+  const formId = req.params.id;
+  const { question, type, options } = req.body;
+
+  try {
+      const questionResult = await pool.query(
+          "INSERT INTO form_questions (form_id, question, type) VALUES ($1, $2, $3) RETURNING id",
+          [formId, question, type]
+      );
+
+      const questionId = questionResult.rows[0].id;
+
+      if (["radio", "checkbox", "select"].includes(type) && options) {
+          const optionsArray = options.split(",").map(opt => opt.trim());
+          for (const option of optionsArray) {
+              await pool.query(
+                  "INSERT INTO form_options (question_id, option_value) VALUES ($1, $2)",
+                  [questionId, option]
+              );
+          }
+      }
+
+      res.redirect(`/form/view/${formId}`);
+  } catch (error) {
+      console.error("Error updating form:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+app.post("/form/submit-answers/:id", async (req, res) => {
+  const formId = req.params.id;
+  const answers = req.body.answers; // Contains question IDs as keys
+
+  try {
+      for (const questionId in answers) {
+          const answerValue = Array.isArray(answers[questionId]) 
+              ? answers[questionId].join(", ") // Join multiple checkboxes
+              : answers[questionId];
+
+          await pool.query(
+              "INSERT INTO form_answers (form_id, question_id, answer) VALUES ($1, $2, $3)",
+              [formId, questionId, answerValue]
+          );
+      }
+
+      res.redirect(`/form/view/${formId}?success=true`);
+  } catch (error) {
+      console.error("Error saving answers:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+app.post("/form/submit/:id", async (req, res) => {
+  const formId = req.params.id;
+  const { questions, types } = req.body;
+
+  if (!questions || !Array.isArray(questions)) {
+      return res.status(400).send("Invalid form submission");
+  }
+
+  try {
+      for (let i = 0; i < questions.length; i++) {
+          await pool.query(
+              "INSERT INTO form_questions (form_id, question, type) VALUES ($1, $2, $3)",
+              [formId, questions[i], types[i]]
+          );
+      }
+
+      res.redirect(`/form/view/${formId}`);
+  } catch (error) {
+      console.error("Error saving questions:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+app.post('/form/save', async (req, res) => {
+  try {
+      const { formName, questions, types, options } = req.body;
+
+      if (!formName || !questions || !types) {
+          return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const client = await pool.connect();
+
+      // Insert form into `forms` table
+      const formResult = await client.query(
+          'INSERT INTO forms (name) VALUES ($1) RETURNING id',
+          [formName]
+      );
+      const formId = formResult.rows[0].id;
+
+      // Insert questions into `questions` table
+      for (let i = 0; i < questions.length; i++) {
+          const questionText = questions[i];
+          const type = types[i];
+
+          const questionResult = await client.query(
+              'INSERT INTO questions (form_id, text, type) VALUES ($1, $2, $3) RETURNING id',
+              [formId, questionText, type]
+          );
+
+          const questionId = questionResult.rows[0].id;
+
+          // Insert options if applicable
+          if (["radio", "checkbox", "select"].includes(type) && options && options[i]) {
+              for (const option of options[i]) {
+                  await client.query(
+                      'INSERT INTO options (question_id, value) VALUES ($1, $2)',
+                      [questionId, option]
+                  );
+              }
+          }
+      }
+
+      client.release();
+      res.redirect('/forms'); // Redirect back to the forms list page
+  } catch (error) {
+      console.error('Error saving form:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
 
 
 //FOR CUSTOMERS
@@ -60,6 +365,34 @@ app.get('/admin/register', (req, res) => {
 app.get('/admin/login', (req, res) => {
     res.render('adminLogin', { error: null, username: '', email: '' }); 
 });
+
+
+
+//FORMS
+app.post("/form/create", async (req, res) => {
+  const { formName } = req.body;
+
+  if (!formName) {
+    return res.status(400).json({ message: "Form Name is required" });
+  }
+
+  try {
+    const query = "INSERT INTO forms (name) VALUES ($1) RETURNING *";
+    const values = [formName];
+
+    const result = await pool.query(query, values);
+    res.redirect('/forms')
+    //res.status(201).json({ message: "Form created successfully", form: result.rows[0] });
+  } catch (error) {
+    console.error("Error saving form:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
+
+
+
 
 
 app.get("/users", async (req, res) => {
