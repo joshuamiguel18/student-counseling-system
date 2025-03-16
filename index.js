@@ -43,6 +43,12 @@ app.get('/dashboard', (req, res) => {
     res.render('index');
 });
 
+app.get('/verified', (req, res) => {
+    res.render('verified')
+
+});
+
+
 // Routes
 // Fetch and display forms
 app.get("/forms", async (req, res) => {
@@ -502,8 +508,10 @@ app.post("/register", upload.single("verification"), async (req, res) => {
       if (result.rowCount === 0) {
         return res.status(400).json({ error: "Invalid or expired token" });
       }
-  
-      res.json({ message: "Email verified successfully!" });
+
+      
+      res.render('verified')
+      //res.json({ message: "Email verified successfully!" });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error" });
