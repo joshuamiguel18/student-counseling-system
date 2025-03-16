@@ -4,7 +4,8 @@ const path = require('path');
 const pool = require('./db')
 const app = express();
 const multer = require("multer");
-
+const crypto = require("crypto");
+const sendVerificationEmail = require("./emailService");
 
 
 app.use(express.static(path.join(__dirname + '/public')));
@@ -460,31 +461,55 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post("/register", async (req, res) => {
+app.post("/register", upload.single("verification"), async (req, res) => {
     const { first_name, middle_name, last_name, organization_type, username, email, password } = req.body;
-    const verification_document = req.file ? req.file.filename : null;
-    console.log(first_name);
+    const verification_document = req.file ? req.file.filename : "";
+  
     if (!first_name || !last_name || !organization_type || !username || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "All fields are requireds" });
     }
   
     try {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Insert into database
+      // Generate verification token
+      const verificationToken = Math.random().toString(36).substring(2, 15);
+  
+      // Insert user into database
       const result = await pool.query(
-        "INSERT INTO customerusers (first_name, middle_name, last_name, organization_name, verification_document, username, email, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-        [first_name, middle_name, last_name, organization_type, verification_document, username, email, hashedPassword]
+        "INSERT INTO customerusers (first_name, middle_name, last_name, organization_name, verification_document, username, email, password, verification_token, is_verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+        [first_name, middle_name, last_name, organization_type, verification_document, username, email, hashedPassword, verificationToken, false]
       );
   
-    //   res.status(201).json({ message: "User registered successfully", userId: result.rows[0].id });
-      res.redirect('customerLogin   ')
+      // Send verification email
+      await sendVerificationEmail(email, verificationToken);
+  
+      res.json({ message: "Registration successful! Please check your email for verification." });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error" });
     }
   });
+  
+
+  app.get("/verify", async (req, res) => {
+    const { token } = req.query;
+  
+    try {
+      const result = await pool.query("UPDATE customerusers SET is_verified = TRUE WHERE verification_token = $1 RETURNING *", [token]);
+  
+      if (result.rowCount === 0) {
+        return res.status(400).json({ error: "Invalid or expired token" });
+      }
+  
+      res.json({ message: "Email verified successfully!" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+  
 
 
 // Start server
