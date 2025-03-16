@@ -21,15 +21,16 @@ app.use("/uploads", express.static("uploads")); // Serve uploaded files
 const port = 8181;
 
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-      cb(null, Date.now() + "-" + file.originalname);
-    },
-  });
-const upload = multer({ storage: storage });
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//       cb(null, "uploads/");
+//     },
+//     filename: (req, file, cb) => {
+//       cb(null, Date.now() + "-" + file.originalname);
+//     },
+//   });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 
 
@@ -469,34 +470,35 @@ app.post('/login', async (req, res) => {
 
 app.post("/register", upload.single("verification"), async (req, res) => {
     const { first_name, middle_name, last_name, organization_type, username, email, password } = req.body;
-    const verification_document = req.file ? req.file.filename : "";
-  
+    const verification_document = req.file ? req.file.originalname : "";  // Just save the filename
+
     if (!first_name || !last_name || !organization_type || !username || !email || !password) {
-      return res.status(400).json({ error: "All fields are requireds" });
+        return res.status(400).json({ error: "All fields are required" });
     }
-  
+
     try {
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Generate verification token
-      const verificationToken = Math.random().toString(36).substring(2, 15);
-  
-      // Insert user into database
-      const result = await pool.query(
-        "INSERT INTO customerusers (first_name, middle_name, last_name, organization_name, verification_document, username, email, password, verification_token, is_verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-        [first_name, middle_name, last_name, organization_type, verification_document, username, email, hashedPassword, verificationToken, false]
-      );
-  
-      // Send verification email
-      await sendVerificationEmail(email, verificationToken);
-  
-      res.json({ message: "Registration successful! Please check your email for verification." });
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Generate verification token
+        const verificationToken = Math.random().toString(36).substring(2, 15);
+
+        // Insert user into database
+        const result = await pool.query(
+            "INSERT INTO customerusers (first_name, middle_name, last_name, organization_name, verification_document, username, email, password, verification_token, is_verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+            [first_name, middle_name, last_name, organization_type, verification_document, username, email, hashedPassword, verificationToken, false]
+        );
+
+        // Send verification email
+        await sendVerificationEmail(email, verificationToken);
+
+        res.json({ message: "Registration successful! Please check your email for verification." });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Server error" });
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
     }
-  });
+});
+
   
 
   app.get("/verify", async (req, res) => {
@@ -509,7 +511,7 @@ app.post("/register", upload.single("verification"), async (req, res) => {
         return res.status(400).json({ error: "Invalid or expired token" });
       }
 
-      
+
       res.render('verified')
       //res.json({ message: "Email verified successfully!" });
     } catch (err) {
