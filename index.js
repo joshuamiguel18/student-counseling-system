@@ -444,8 +444,7 @@ app.post('/admin/register', async (req, res) => {
 // User login
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log(username)
-    console.log(password)
+
     try {
         const result = await pool.query('SELECT * FROM customerusers WHERE username = $1', [username]);
 
@@ -454,6 +453,11 @@ app.post('/login', async (req, res) => {
         }
 
         const user = result.rows[0];
+
+        // Check if the user is verified
+        if (!user.is_verified) {
+            return res.render('customerLogin', { error: 'Please verify your email before logging in.', username });
+        }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
 
@@ -467,6 +471,7 @@ app.post('/login', async (req, res) => {
         res.status(500).render('customerLogin', { error: 'Internal server error', username });
     }
 });
+
 
 app.post("/register", upload.single("verification"), async (req, res) => {
     const { first_name, middle_name, last_name, organization_type, username, email, password } = req.body;
@@ -491,8 +496,8 @@ app.post("/register", upload.single("verification"), async (req, res) => {
 
         // Send verification email
         await sendVerificationEmail(email, verificationToken);
-
-        res.json({ message: "Registration successful! Please check your email for verification." });
+        res.render('emailSent', { email: email})
+        //res.json({ message: "Registration successful! Please check your email for verification." });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Server error" });

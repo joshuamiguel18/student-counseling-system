@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+  <link rel="stylesheet" href="/css/page-auth.css" />
+    <style>
+        .misc-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 1.5rem * 2);
+  text-align: center;
+}
+
+    </style>
+  </head>
+
+  <body>
+    <div class="container-xxl container-p-y">
+        <div class="misc-wrapper">
+          <h3 class="mb-2 mx-2">Verify Account! 👇</h3>
+          <p class="mb-6 mx-2">
+            We have sent a verification link to your email.
+          </p>
+          <a href="/" class="btn btn-primary">Login now</a>
+          <div class="mt-6">
+            <img src="/images/mail.png" alt="verified" width="300" class="img-fluid">
+          </div>
+        </div>
+      </div>
+
+  </body>
+
+</html>
