@@ -22,8 +22,56 @@ CREATE TABLE form_answers (
     answer TEXT NOT NULL
 );
 
+CREATE TABLE form_answers (
+    id SERIAL PRIMARY KEY,
+    form_id INT REFERENCES forms(id) ON DELETE CASCADE,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    answer TEXT NOT NULL,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 
 
 
+CREATE TABLE form_scale (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    min_value INT NOT NULL,
+    max_value INT NOT NULL
+);
 
+CREATE TABLE form_rating (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    max_stars INT NOT NULL
+);
+
+CREATE TABLE form_date (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    default_value DATE
+);
+
+CREATE TABLE form_time (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    default_value TIME
+);
+
+CREATE TABLE form_grid (
+    id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    row_value TEXT NOT NULL,
+    column_value TEXT NOT NULL
+);
+
+
+CREATE TABLE form_answers (
+    id SERIAL PRIMARY KEY,
+    form_id INT REFERENCES forms(id) ON DELETE CASCADE,
+    question_id INT REFERENCES form_questions(id) ON DELETE CASCADE,
+    user_id INT NOT NULL,
+    answer TEXT NOT NULL,
+    row_id INT NULL, -- Only used for grid questions
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
