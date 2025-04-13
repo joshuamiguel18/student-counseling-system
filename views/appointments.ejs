@@ -90,7 +90,7 @@
   
               <!-- Footer Actions -->
               <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                <% if (appointment.status !== 'cancelled' || appointment.is_online_appointment) { %>
+                <% if (appointment.status !== 'cancelled') { %>
                   <div class="dropdown">
                     <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
                       <i class="bi bi-gear-fill me-1"></i> Actions

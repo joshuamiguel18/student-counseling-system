@@ -4,7 +4,7 @@
 <html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
 
   <head>
-	<%- include('includes/head.ejs') %>
+	<%- include('../includes/head.ejs') %>
 
   <link rel="stylesheet" href="/css/page-auth.css" />
 
@@ -19,13 +19,21 @@
           <div class="px-sm-6 px-0">
             <div class="card-body">
               <!-- Logo -->
-              <!-- <div class="app-brand justify-content-center">
-                <a href="/customer/login" class="app-brand-link gap-2">
-                  <span class="app-brand-text demo menu-text fw-bold ms-2" style="color: green;">Rate<span style="color: white; text-shadow: -1px -1px 0 green, 1px -1px 0 green, -1px 1px 0 green, 1px 1px 0 green;">Smart
+              <div class="app-brand justify-content-center mb-6">
+                <a href="" class="app-brand-link">
+                  <div class="avatar">
+                    <img src="/images/logo.png" alt class="w-px-40 h-auto rounded-circle">
+                  </div>
+                    <span class="app-brand-text demo menu-text fw-bold ms-2" style="color: green;">Counse<span style="color: white; text-shadow: -1px -1px 0 green, 1px -1px 0 green, -1px 1px 0 green, 1px 1px 0 green;">lorix
+                      </span>
                   </span>
+            
                 </span>
+            
+                <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                  <i class="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
                 </a>
-              </div> -->
+            </div>
               <!-- /Logo -->
               <h4 class="mb-1">Welcome back! 👋</h4>
               <p class="mb-6">Please sign-in to your admin account</p>
@@ -59,7 +67,7 @@
 
               <p class="text-center">
                 <span>Don't have an account?</span>
-                <a href="/register">
+                <a href="/admin/register">
                   <span>Create an account</span>
                 </a>
               </p>

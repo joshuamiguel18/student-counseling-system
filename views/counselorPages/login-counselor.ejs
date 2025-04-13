@@ -4,7 +4,7 @@
 <html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
 
   <head>
-	<%- include('includes/head.ejs') %>
+	<%- include('../includes/head.ejs') %>
 
   <link rel="stylesheet" href="/css/page-auth.css" />
 
@@ -35,10 +35,10 @@
                 </a>
             </div>
               <!-- /Logo -->
-              <h4 class="mb-1">Welcome back! 👋</h4>
-              <p class="mb-6">Please sign-in to your account</p>
+              <h4 class="mb-1">Welcome back Counselor! 👋</h4>
+              <p class="mb-6">Please sign-in to your counselor account</p>
 
-              <form id="formAuthentication" class="mb-6" action="/login" method="post">
+              <form id="formAuthentication" class="mb-6" action="/counselor/login" method="post">
 
                 <% if (error) { %>
                   <div class="alert alert-danger" role="alert">
@@ -66,8 +66,8 @@
             
 
               <p class="text-center">
-                <span>Don't have an account?</span>
-                <a href="/register">
+                <span>Don't have a counselor account?</span>
+                <a href="/counselor/register">
                   <span>Create an account</span>
                 </a>
               </p>

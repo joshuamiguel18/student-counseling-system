@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          <div class="container-xxl flex-grow-1 container-p-y">
+
+            <div class="card">
+              <h5 class="card-header">Cancelled Appointments</h5>
+              <div class="card-body">
+                <div class="table-responsive d-none d-sm-block">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Student</th>
+                        <th>Counselor</th>
+                        <th>Status</th>
+                        <th>Appointment Date</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (appointments.length > 0) { %>
+                        <% appointments.forEach(appointment => { %>
+                          <tr>
+                            <td><%= appointment.title %></td>
+                            <td><%= appointment.student_first_name %> <%= appointment.student_last_name %></td>
+                            <td><%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %></td>
+                            <td>
+                              <span class="badge bg-label-warning"><%= appointment.status %></span>
+                            </td>
+                            <td><%= new Date(appointment.appointment_date).toLocaleString() %></td>
+                            <td><%= new Date(appointment.create_date).toLocaleString() %></td>
+                            <td><%= new Date(appointment.update_date).toLocaleString() %></td>
+                            <td>
+                              <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                  Action
+                                </button>
+                                <ul class="dropdown-menu">
+                                  <% if (appointment.status === 'pending') { %>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/appointments/approve/<%= appointment.id %>')">Approve</a></li>
+                                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/appointments/reject/<%= appointment.id %>')">Reject</a></li>
+                                  <% } %>
+                                  <% if (appointment.status === 'approved') { %>
+                                    <li><a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/appointments/cancel/<%= appointment.id %>')">Cancel</a></li>
+                                  <% } %>
+                                  <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">Edit</a></li>
+                                </ul>
+                              </div>
+                            </td>
+                          </tr>
+                        <% }) %>
+                      <% } else { %>
+                        <tr><td colspan="8" class="text-center">No pending appointments found.</td></tr>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="d-block d-sm-none">
+                  <% if (appointments.length > 0) { %>
+                    <% appointments.forEach(appointment => { %>
+                      <div class="card mb-3 border shadow-sm">
+                        <div class="card-body">
+                          <h5 class="card-title mb-2"><%= appointment.title %></h5>
+                          <p><strong>Student:</strong> <%= appointment.student_first_name %> <%= appointment.student_last_name %></p>
+                          <p><strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %></p>
+                          <p><strong>Status:</strong> <span class="badge bg-label-warning"><%= appointment.status %></span></p>
+                          <p><strong>Date:</strong> <%= new Date(appointment.appointment_date).toLocaleString() %></p>
+                          <p><strong>Created:</strong> <%= new Date(appointment.create_date).toLocaleString() %></p>
+                          <p><strong>Updated:</strong> <%= new Date(appointment.update_date).toLocaleString() %></p>
+
+                          <div class="dropdown w-100">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                              Action
+                            </button>
+                            <ul class="dropdown-menu w-100">
+                              <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/appointments/approve/<%= appointment.id %>')">Approve</a></li>
+                              <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/appointments/reject/<%= appointment.id %>')">Reject</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div class="text-center">No pending appointments found.</div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Confirmation Modal (Approve / Reject / Cancel) -->
+          <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="actionModalLabel">Confirm Action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="actionModalBody">Are you sure you want to perform this action?</div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <a href="#" class="btn btn-primary" id="actionModalBtn">Yes, Proceed</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Modal -->
+          <div class="modal fade" id="editAppointmentModal" tabindex="-1" aria-labelledby="editAppointmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editAppointmentModalLabel">Edit Appointment</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="editAppointmentForm">
+                    <div class="mb-3">
+                      <label for="appointmentTitle" class="form-label">Title</label>
+                      <input type="text" class="form-control" id="appointmentTitle" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="appointmentDate" class="form-label">Date</label>
+                      <input type="datetime-local" class="form-control" id="appointmentDate" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="appointmentStatus" class="form-label">Status</label>
+                      <select class="form-select" id="appointmentStatus" required>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-backdrop fade"></div>
+        </div>
+
+        <%- include('../includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('../includes/scripts.ejs') %>
+
+  <script>
+    // Sets the modal for actions like Approve / Reject / Cancel
+    function setModal(actionType, actionLink) {
+      document.getElementById('actionModalLabel').textContent = `Confirm ${actionType}`;
+      document.getElementById('actionModalBody').textContent = `Are you sure you want to ${actionType.toLowerCase()} this appointment?`;
+      document.getElementById('actionModalBtn').setAttribute('href', actionLink);
+    }
+
+    // Sets the form values for editing
+    function populateEditForm(id, title, appointment_date, status) {
+      document.getElementById('appointmentTitle').value = title;
+      document.getElementById('appointmentDate').value = new Date(appointment_date).toISOString().slice(0, 16);
+      document.getElementById('appointmentStatus').value = status;
+      document.getElementById('editAppointmentForm').action = '/appointments/edit/' + id;
+    }
+
+    // Submit Edit Appointment Form
+    document.getElementById('editAppointmentForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      fetch(event.target.action, {
+        method: 'POST',
+        body: formData,
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert('Appointment updated successfully.');
+            location.reload();
+          } else {
+            alert('Error updating appointment.');
+          }
+        });
+    });
+  </script>
+</body>
+</html>

@@ -60,6 +60,26 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const authenticateTokenAdmin = (req, res, next) => {
+    const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
+
+    if (!token) {
+        return res.redirect('/admin/login');
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.redirect('/admin/login');
+            //return res.status(403).render('login', { error: 'Invalid or expired token' });
+        }
+
+        // Attach user info to the request object
+        req.user = decoded;
+        next();
+    });
+};
+
+// My appointments
 app.get('/appointments', authenticateToken, async (req, res) => {
     const studentId = req.user.user.id;
 
@@ -96,8 +116,15 @@ app.get('/appointments/:id/chat', authenticateToken, async (req, res) => {
     try {
         // Get appointment details to validate access
         const appointmentResult = await pool.query(`
-            SELECT * FROM appointment WHERE id = $1
-        `, [appointmentId]);
+            SELECT 
+              a.*, 
+              (c.first_name || ' ' || c.middle_name || ' ' || c.last_name) AS counselor_name
+            FROM appointment a
+            JOIN counselor c ON a.counselor_id = c.id
+            WHERE a.id = $1
+          `, [appointmentId]);
+          
+          
 
         if (appointmentResult.rows.length === 0) {
             return res.status(404).send("Appointment not found");
@@ -112,15 +139,39 @@ app.get('/appointments/:id/chat', authenticateToken, async (req, res) => {
 
         res.render('appointment-chat', {
             messages: messagesResult.rows,
-            appointment,
+            appointment: appointmentResult.rows[0],
             currentUser
         });
+          
 
     } catch (error) {
         console.error("Error fetching messages:", error);
         res.status(500).send("Server Error");
     }
 });
+
+// ADMIN APPROVE POWER
+app.get('/appointments/approve/:id', async (req, res) => {
+    const appointmentId = req.params.id;
+  
+    try {
+      // Update the appointment status to 'approved'
+      await pool.query(
+        'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+        ['approved', appointmentId]
+      );
+  
+      // Redirect back to the appointments page
+      res.redirect('/admin/appointments'); // Change to match your route for listing appointments
+    } catch (err) {
+      console.error('Error approving appointment:', err);
+      res.status(500).send('Internal Server Error');
+    }
+});
+  
+
+
+
 
 app.post('/messages/send', authenticateToken, async (req, res) => {
     const { appointment_id, message, sender_type } = req.body;
@@ -349,15 +400,89 @@ app.get('/forums', authenticateToken, async (req, res) => {
   
 
 
-app.get('/admin-app', (req, res) => {
-    res.render('adminPages/admin-app'); 
+  app.get('/admin-app', authenticateTokenAdmin, async (req, res) => {
+    try {
+        // Get total number of students
+        const studentsResult = await pool.query('SELECT COUNT(*) FROM student');
+        const totalStudents = studentsResult.rows[0].count;
+
+        // Get total number of counselors
+        const counselorsResult = await pool.query('SELECT COUNT(*) FROM counselor');
+        const totalCounselors = counselorsResult.rows[0].count;
+
+        // Get total number of appointments
+        const appointmentsResult = await pool.query('SELECT COUNT(*) FROM appointment');
+        const totalAppointments = appointmentsResult.rows[0].count;
+
+        // Pass the totals to the view
+        res.render('adminPages/admin-app', {
+            totalStudents,
+            totalCounselors,
+            totalAppointments
+        });
+    } catch (err) {
+        console.error('Error fetching totals:', err);
+        res.status(500).send('Server Error');
+    }
 });
+
 //FOR ADMINS
 app.get('/admin/register', (req, res) => {
-    res.render('adminRegister', { error: null, username: '', email: '' }); 
+    res.render('adminPages/register-admin', { error: null, username: '', email: '' }); 
 });
+
+app.post('/admin/register', async (req, res) => {
+    const { username, password, email, terms } = req.body;
+  
+    // Basic validation
+    if (!username || !password || !terms) {
+      return res.render('admin/register', {
+        error: "All fields are required and terms must be accepted.",
+        username,
+        email
+      });
+    }
+  
+    try {
+      // Check if username already exists
+      const checkUser = await pool.query(
+        "SELECT * FROM admins WHERE username = $1",
+        [username]
+      );
+  
+      if (checkUser.rows.length > 0) {
+        return res.render('adminPages/register-admin', {
+          error: "Username is already taken.",
+          username,
+          email
+        });
+      }
+  
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Insert into DB
+      await pool.query(
+        `INSERT INTO admins (username, password, email) VALUES ($1, $2, $3)`,
+        [username, hashedPassword, email]
+      );
+  
+      // Redirect to login or dashboard
+      res.redirect('/admin/login');
+  
+    } catch (err) {
+      console.error("Registration error:", err);
+      res.render('admin/register', {
+        error: "Something went wrong. Please try again.",
+        username,
+        email
+      });
+    }
+  });
+  
+
 app.get('/admin/login', (req, res) => {
-    res.render('login-admin', { error: null, username: '', email: '' }); 
+    res.render('adminPages/login-admin', { error: null, username: '', email: '' }); 
 });
 app.post('/admin/login', async (req, res) => {
     const { username, password } = req.body;
@@ -366,49 +491,48 @@ app.post('/admin/login', async (req, res) => {
         const result = await pool.query('SELECT * FROM admins WHERE username = $1', [username]);
 
         if (result.rows.length === 0) {
-            return res.render('login-admin', {
-                error: 'Admin not found.',
-                username,
-                email: ''
+            return res.render('adminPages/login-admin', {
+                error: 'Invalid username or password',
+                username
             });
         }
 
         const admin = result.rows[0];
 
-        // If you're using hashed passwords
-        const isMatch = await bcrypt.compare(password, admin.password);
+        const passwordMatch = await bcrypt.compare(password, admin.password);
 
-        if (!isMatch) {
-            return res.render('login-admin', {
-                error: 'Invalid password.',
-                username,
-                email: admin.email
+        if (!passwordMatch) {
+            return res.render('adminPages/login-admin', {
+                error: 'Invalid username or password',
+                username
             });
         }
 
-        // Create JWT or set session (up to your auth logic)
-        const token = jwt.sign({ user: { id: admin.id, role: 'admin' } }, 'your-secret-key', {
-            expiresIn: '1h'
+        const token = jwt.sign(
+            { user: { id: admin.id, role: 'admin', username: admin.username } },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
         });
 
-        // Set token as cookie or store in session
-        res.cookie('token', token, { httpOnly: true });
-
-        // Redirect to admin dashboard
         res.redirect('/admin-app');
 
     } catch (err) {
-        console.error(err);
-        res.render('login-admin', {
-            error: 'Something went wrong.',
-            username,
-            email: ''
+        console.error('Error logging in admin:', err);
+        res.status(500).render('adminPages/login-admin', {
+            error: 'Internal server error',
+            username
         });
     }
 });
 
-/// display all the 
-app.get('/admin/appointments', async (req, res) => {
+
+/// display all the pending appointments
+app.get('/admin/appointments/pending',authenticateTokenAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
@@ -429,16 +553,97 @@ app.get('/admin/appointments', async (req, res) => {
 
         const appointments = result.rows;
 
-        res.render('adminPages/appointments-admin', { appointments });
+        res.render('adminPages/pending-appointments-admin', { appointments });
     } catch (err) {
         console.error('Error fetching pending appointments:', err);
         res.status(500).send('Server Error');
     }
 });
 
+app.get('/admin/appointments/approved',authenticateTokenAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                appointment.id, 
+                appointment.title, 
+                appointment.status, 
+                appointment.appointment_date,
+                student.first_name AS student_first_name,
+                student.last_name AS student_last_name,
+                counselor.first_name AS counselor_first_name,
+                counselor.last_name AS counselor_last_name
+            FROM appointment
+            JOIN student ON appointment.student_id = student.id
+            JOIN counselor ON appointment.counselor_id = counselor.id
+            WHERE appointment.status = 'approved'
+            ORDER BY appointment.appointment_date DESC
+        `);
 
+        const appointments = result.rows;
 
-app.get("/admin/students", async (req, res) => {
+        res.render('adminPages/approved-appointments-admin', { appointments });
+    } catch (err) {
+        console.error('Error fetching approved appointments:', err);
+        res.status(500).send('Server Error');
+    }
+});
+app.get('/admin/appointments/cancelled', authenticateTokenAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                appointment.id, 
+                appointment.title, 
+                appointment.status, 
+                appointment.appointment_date,
+                student.first_name AS student_first_name,
+                student.last_name AS student_last_name,
+                counselor.first_name AS counselor_first_name,
+                counselor.last_name AS counselor_last_name
+            FROM appointment
+            JOIN student ON appointment.student_id = student.id
+            JOIN counselor ON appointment.counselor_id = counselor.id
+            WHERE appointment.status = 'cancelled'
+            ORDER BY appointment.appointment_date DESC
+        `);
+
+        const appointments = result.rows;
+
+        res.render('adminPages/cancelled-appointments-admin', { appointments });
+    } catch (err) {
+        console.error('Error fetching cancelled appointments:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.get('/admin/appointments/rejected', authenticateTokenAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                appointment.id, 
+                appointment.title, 
+                appointment.status, 
+                appointment.appointment_date,
+                student.first_name AS student_first_name,
+                student.last_name AS student_last_name,
+                counselor.first_name AS counselor_first_name,
+                counselor.last_name AS counselor_last_name
+            FROM appointment
+            JOIN student ON appointment.student_id = student.id
+            JOIN counselor ON appointment.counselor_id = counselor.id
+            WHERE appointment.status = 'rejected'
+            ORDER BY appointment.appointment_date DESC
+        `);
+
+        const appointments = result.rows;
+
+        res.render('adminPages/rejected-appointments-admin', { appointments });
+    } catch (err) {
+        console.error('Error fetching rejected appointments:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.get("/admin/students", authenticateTokenAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM customerUsers");
     res.render("user", { users: result.rows }); // Render EJS template
@@ -450,30 +655,30 @@ app.get("/admin/students", async (req, res) => {
 
 
 
-// User registration
-app.post('/admin/register', async (req, res) => {
-    const { username, email, password } = req.body;
+// // User registration
+// app.post('/admin/register', async (req, res) => {
+//     const { username, email, password } = req.body;
 
-    try {
-        // Check if user already exists
-        const userExists = await pool.query('SELECT * FROM adminusers WHERE username = $1 OR email = $2', [username, email]);
+//     try {
+//         // Check if user already exists
+//         const userExists = await pool.query('SELECT * FROM adminusers WHERE username = $1 OR email = $2', [username, email]);
         
-        if (userExists.rows.length > 0) {
-            return res.render('adminRegister', { error: 'Username or email already exists', username, email });
-        }
+//         if (userExists.rows.length > 0) {
+//             return res.render('adminRegister', { error: 'Username or email already exists', username, email });
+//         }
 
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
+//         // Hash the password
+//         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert new user
-        await pool.query('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hashedPassword]);
+//         // Insert new user
+//         await pool.query('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hashedPassword]);
 
-        res.redirect('/admin/login'); // Redirect to login page after successful registration
-    } catch (err) {
-        console.error('Error registering user:', err);
-        res.status(500).render('adminRegister', { error: 'Internal server error', username, email });
-    }
-});
+//         res.redirect('/admin/login'); // Redirect to login page after successful registration
+//     } catch (err) {
+//         console.error('Error registering user:', err);
+//         res.status(500).render('adminRegister', { error: 'Internal server error', username, email });
+//     }
+// });
 
 
 // Student login
