@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('../includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('../includes/sidebar-admin.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('../includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+				
+                <div class="card bg-transparent shadow-none my-6 border-0">
+                    <div class="card-body row p-0 pb-6 g-6">
+                      <div class="col-12 col-lg-8">
+                        <h5 class="mb-2">Welcome back,<span class="h4"> 👋🏻</span></h5>
+                        <div class="col-12">
+                            <p>Your mental health journey is important, and we're here to support you. Let's take the next step together and schedule your student counseling appointment for a healthier, happier you!</p>
+                        </div>
+                        <div class="d-flex justify-content-between flex-wrap gap-4 me-12">
+                          <div class="d-flex align-items-center gap-4 me-6 me-sm-0">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-primary rounded">
+                                <div>
+                                    <i class='bx bx-calendar'></i>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Appointments</p>
+                              <h4 class="text-primary mb-0"></h4>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center gap-4">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-info rounded">
+                                <div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Test Results</p>
+                              <h4 class="text-info mb-0">82%</h4>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center gap-4">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-warning rounded">
+                                <div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Course Completed </p>
+                              <h4 class="text-warning mb-0">14</h4>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+              
+                  <div class="row mb-6 g-6 ">
+
+                        <div class="col-md mb-md-0 mb-5">
+                            <div class="form-check custom-option custom-option-icon checked" style="width: 250px;">
+                            
+                                <a href="/appointment-form">
+                                    <label class="form-check-label custom-option-content" for="customRadioIcon1" >
+                                        <span class="custom-option-body">
+                                        <i class="bx bx-calendar-edit"></i>
+                                        <span class="custom-option-title">Book Appointment</span>
+                                        </span>
+                                        <i class='bx bx-message-square-add' ></i>
+                                    </label>
+                                </a>
+                            </div>
+                        </div>
+                  
+
+                  </div>
+                  
+
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
+		  <%- include('../includes/footer.ejs') %>
+
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('../includes/scripts.ejs') %>
+
+
+
+  </body>
+
+</html>

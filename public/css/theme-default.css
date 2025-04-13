@@ -683,9 +683,9 @@ a:hover {
   backdrop-filter: saturate(200%) blur(6px);
 }
 
-.navbar-detached {
+/* .navbar-detached {
   box-shadow: 0 0 0.375rem 0.25rem rgba(145, 152, 159, 0.15);
-}
+} */
 
 .layout-navbar-fixed .layout-page:before {
   backdrop-filter: saturate(200%) blur(10px);
@@ -780,6 +780,7 @@ a:hover {
   background-color: #a7acb2 !important;
 }
 .bg-menu-theme.menu-vertical {
+  background: #f5f5f9 !important;
   box-shadow: 0 0.125rem 0.375rem 0 rgba(145, 152, 159, 0.12);
 }
 html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.open > .menu-link, .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.open > .menu-link,

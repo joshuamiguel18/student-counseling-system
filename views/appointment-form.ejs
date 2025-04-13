@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+        <form id="appointment-form" method="POST" action="/saveAppointment">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-lg-8 mx-auto">
+                <h1>Appointment Form</h1>
+        
+
+                <input type="hidden" name="student_id" value="1">
+
+                <div class="col-12 mb-4">
+                  <label class="form-label" for="title">Title</label>
+                  <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name"></textarea>
+                </div>
+        
+                <div class="col-md mb-4">
+                  <label class="form-label" for="counselor_id">Counselor</label>
+                  <select id="counselor_id" class="select2 form-select" name="counselor_id">
+                    <option selected disabled>Select Counselor</option>
+                    <% counselors.forEach(counselor => { %>
+                      <option value="<%= counselor.id %>"><%= counselor.full_name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+        
+                <div class="col-md mb-4">
+                  <div id="appointment-date-wrapper" class="d-none">
+                    <label class="form-label" for="appointment_date">Appointment Date</label>
+                    <input type="text" id="appointment_date" class="form-control" name="appointment_date" placeholder="Select A Date">
+                    <small id="available-days-note" class="text-muted"></small>
+                  </div>
+                </div>
+                
+        
+                <button type="submit" class="btn btn-primary">Book Appointment</button>
+              </div>
+            </div>
+          </div>
+        </form>
+        
+
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
+		  <%- include('includes/footer.ejs') %>
+
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('includes/scripts.ejs') %>
+
+    <!-- DUMMY DATA -->
+    <!-- <script>
+      $(document).ready(function () {
+        // Dummy counselor availability
+        const counselorAvailability = {
+          1: ["Monday", "Wednesday", "Friday"],
+          2: ["Tuesday", "Thursday"]
+        };
+    
+        const dayMap = {
+          "Sunday": 0,
+          "Monday": 1,
+          "Tuesday": 2,
+          "Wednesday": 3,
+          "Thursday": 4,
+          "Friday": 5,
+          "Saturday": 6
+        };
+    
+        let flatpickrInstance = null;
+    
+        function setupFlatpickr(availableDays) {
+          // Destroy previous Flatpickr instance
+          if (flatpickrInstance) {
+            flatpickrInstance.destroy();
+          }
+    
+          // Clear the input value before setting up
+          $('#appointment_date').val('');
+    
+          // Initialize new Flatpickr
+          flatpickrInstance = flatpickr("#appointment_date", {
+            dateFormat: "Y-m-d",
+            disable: [
+              function (date) {
+                return !availableDays.includes(date.getDay());
+              }
+            ]
+          });
+        }
+    
+        $('#counselor_id').on('change', function () {
+          const counselorId = $(this).val();
+          const days = counselorAvailability[counselorId] || [];
+          const availableDays = days.map(day => dayMap[day]);
+    
+          // Reset and setup Flatpickr
+          setupFlatpickr(availableDays);
+    
+          // Show appointment date input
+          $('#appointment-date-wrapper').removeClass('d-none');
+    
+          // Update availability note
+          $('#available-days-note').text(`Available on: ${days.join(', ')}`);
+        });
+      });
+    </script> -->
+    
+
+    <script>
+      $(document).ready(function () {
+        const dayMap = {
+          "Sunday": 0,
+          "Monday": 1,
+          "Tuesday": 2,
+          "Wednesday": 3,
+          "Thursday": 4,
+          "Friday": 5,
+          "Saturday": 6
+        };
+    
+        let flatpickrInstance = null;
+    
+        function setupFlatpickr(availableDays) {
+          // Destroy previous instance
+          if (flatpickrInstance) flatpickrInstance.destroy();
+    
+          // Reset value
+          $('#appointment_date').val('');
+    
+          // Setup new instance with only allowed days
+          flatpickrInstance = flatpickr("#appointment_date", {
+            dateFormat: "Y-m-d",
+            disable: [
+              function (date) {
+                return !availableDays.includes(date.getDay());
+              }
+            ]
+          });
+        }
+    
+        $('#counselor_id').on('change', function () {
+          const counselorId = $(this).val();
+    
+          if (!counselorId) return;
+    
+          // Fetch availability from server
+          $.ajax({
+            url: `http://localhost:8181/counselors/${counselorId}/availability`,
+            method: 'GET',
+            dataType: 'json',
+            success: function (response) {
+              const days = response.available_days || [];
+              const availableDays = days.map(day => dayMap[day]);
+    
+              setupFlatpickr(availableDays);
+    
+              // Show date picker and note
+              $('#appointment-date-wrapper').removeClass('d-none');
+              $('#available-days-note').text(`Available on: ${days.join(', ')}`);
+            },
+            error: function () {
+              alert("Failed to fetch counselor availability.");
+              $('#appointment-date-wrapper').addClass('d-none');
+              $('#appointment_date').val('');
+              if (flatpickrInstance) flatpickrInstance.destroy();
+            }
+          });
+        });
+      });
+    </script>
+    
+    
+    
+    
+
+
+  </body>
+
+</html>

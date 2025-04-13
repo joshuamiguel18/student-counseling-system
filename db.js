@@ -5,7 +5,7 @@ require('dotenv').config();
 // const pool = new Pool({
 //   user: 'postgres',
 //   password: '123',
-//   database: 'rate-smart',
+//   database: 'student-counseling-system',
 //   host: 'localhost',
 //   port: 5432, 
 // });
@@ -14,5 +14,6 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 
 });
+
 
 module.exports = pool;

@@ -142,7 +142,6 @@ body {
   line-height: var(--bs-body-line-height);
   color: var(--bs-body-color);
   text-align: var(--bs-body-text-align);
-  background-color: var(--bs-body-bg);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(34,48,62,0)
 }
@@ -4065,7 +4064,8 @@ textarea.form-control-lg {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: var(--bs-navbar-padding-y) var(--bs-navbar-padding-x)
+  padding: var(--bs-navbar-padding-y) var(--bs-navbar-padding-x);
+  background: transparent !important;
 }
 
 .navbar>.container,.navbar>.container-fluid,.navbar>.container-sm,.navbar>.container-md,.navbar>.container-lg,.navbar>.container-xl,.navbar>.container-xxl {
@@ -4583,7 +4583,7 @@ textarea.form-control-lg {
 .card-body {
   flex: 1 1 auto;
   padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
-  color: var(--bs-card-color)
+  color: var(--bs-card-color);
 }
 
 .card-title {
@@ -15664,7 +15664,7 @@ html:not([dir=rtl]) .toast.bs-toast .toast-header .btn-close {
 }
 
 .my-6 {
-  margin-top: 1.5rem !important;
+  /* margin-top: 1.5rem !important; */
   margin-bottom: 1.5rem !important
 }
 
@@ -19802,6 +19802,10 @@ html:not([dir=rtl]) .toast.bs-toast .toast-header .btn-close {
   .py-md-7 {
       padding-top: 1.75rem !important;
       padding-bottom: 1.75rem !important
+  }
+
+  .container-p-y:not([class^=pt-]):not([class*=" pt-"]) {
+    padding-top: 0 !important;
   }
 
   .py-md-8 {
@@ -33088,11 +33092,11 @@ html:not([dir=rtl]) .menu-toggle::after {
 }
 
 .layout-navbar.navbar-detached {
-  box-shadow: 0 .125rem .375rem 0 rgba(34,48,62,.08);
+  /* box-shadow: 0 .125rem .375rem 0 rgba(34,48,62,.08); */
   width: calc(100% - 1.625rem*2);
   margin: 1rem auto 0;
   border-radius: .375rem;
-  padding: 0 1.5rem
+  padding: 0;
 }
 
 .layout-navbar.navbar-detached.container-xxl {
@@ -33315,12 +33319,12 @@ html:not([dir=rtl]) .menu-toggle::after {
       float: left
   }
 
-  .layout-navbar .navbar-nav .nav-item.dropdown .dropdown-menu {
+  /* .layout-navbar .navbar-nav .nav-item.dropdown .dropdown-menu {
       position: absolute;
       left: .9rem;
       min-width: auto;
       width: 92%
-  }
+  } */
 }
 
 @media(max-width: 1199.98px) {

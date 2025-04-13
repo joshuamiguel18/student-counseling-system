@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+				
+        
+                <div class="card bg-transparent shadow-none my-6 border-0">
+                    <div class="card-body row p-0 pb-6 g-6">
+
+
+                     
+                      
+                 
+                      
+
+
+                      <div class="col-12 col-lg-8">
+                        <h5 class="mb-2">Welcome back,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                        <div class="col-12">
+                            <p>Your mental health journey is important, and we're here to support you. Let's take the next step together and schedule your student counseling appointment for a healthier, happier you!</p>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between flex-wrap gap-4 me-12">
+                          <div class="d-flex align-items-center gap-4 me-6 me-sm-0">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-primary rounded">
+                                <div>
+                                    <i class='bx bx-calendar'></i>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Appointments</p>
+                              <h4 class="text-primary mb-0"><%= appointments.length %></h4>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center gap-4">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-info rounded">
+                                <div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Test Results</p>
+                              <h4 class="text-info mb-0">82%</h4>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center gap-4">
+                            <div class="avatar avatar-lg">
+                              <div class="avatar-initial bg-label-warning rounded">
+                                <div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="content-right">
+                              <p class="mb-0 fw-medium">Course Completed </p>
+                              <h4 class="text-warning mb-0">14</h4>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+              
+                  <div class="row mb-6 g-6 ">
+                    <div class="col-12 col-xl-4 col-md-6">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <div class="bg-label-primary rounded-3 text-center mb-4 overflow-hidden">
+                            <img class="img-fluid" src="/images/ChatGPT Image Apr 12, 2025, 09_17_11 PM.png" alt="Card girl image" style="width: 100%; height: 150px; object-fit: cover;">
+                          </div>
+                          <h5 class="mb-2">Your Feelings</h5>
+                          <p>Tap the button to choose your mood today!</p>
+                    
+                          <% if (!todayMood) { %>
+                            <!-- If no mood has been selected, show the button -->
+                            <div class="col-12 text-center">
+                              <button type="button" class="btn btn-outline-success w-100 d-grid" data-bs-toggle="modal" data-bs-target="#moodModal">
+                                Mood for today
+                              </button>
+                            </div>
+                          <% } else { %>
+                            <!-- If mood is already selected, show the selected mood -->
+                            <div class="col-12 text-center">
+                              <div class="alert alert-info" role="alert">
+                                You already selected a mood today: 
+                                <span class="fs-3">
+                                  <%= todayMood.emotion === 'happy' ? '😊' :
+                                      todayMood.emotion === 'sad' ? '😢' :
+                                      todayMood.emotion === 'angry' ? '😠' :
+                                      todayMood.emotion === 'excited' ? '🤩' :
+                                      todayMood.emotion === 'relaxed' ? '😌' : '😶' %>
+                                </span> 
+                                (<%= todayMood.emotion %>)
+                              </div>
+                            </div>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                    
+                        <div class="col-md mb-md-0 mb-5">
+
+
+
+
+
+
+                            <div class="form-check custom-option custom-option-icon checked" style="width: 250px;">
+                            
+                                <a href="/appointment-form">
+                                    <label class="form-check-label custom-option-content" for="customRadioIcon1" >
+                                        <span class="custom-option-body">
+                                        <i class="bx bx-calendar-edit"></i>
+                                        <span class="custom-option-title">Book Appointment</span>
+                                        </span>
+                                        <i class='bx bx-message-square-add' ></i>
+                                    </label>
+                                </a>
+                            </div>
+                        </div>
+                  
+
+                  </div>
+
+                  <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="moodModalLabel">Choose Your Mood</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                          <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <!-- Example Mood Emojis with tooltips -->
+                            <a href="/mood/happy/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Happy">😊</a>
+                            <a href="/mood/sad/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Sad">😢</a>
+                            <a href="/mood/angry/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Angry">😠</a>
+                            <a href="/mood/excited/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Excited">🤩</a>
+                            <a href="/mood/relaxed/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relaxed">😌</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
+		  <%- include('includes/footer.ejs') %>
+
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+    <!-- Mood Submitted Modal -->
+<div class="modal fade" id="moodSubmittedModal" tabindex="-1" aria-labelledby="moodSubmittedModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header">
+        <h5 class="modal-title" id="moodSubmittedModalLabel">Mood Submitted</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="fs-4">🎉 Thanks for sharing your mood!</p>
+        <p class="text-muted">Your mood has been recorded successfully.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">Awesome!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+	  <%- include('includes/scripts.ejs') %>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('submittedMood') === 'true') {
+      const modal = new bootstrap.Modal(document.getElementById('moodSubmittedModal'));
+      modal.show();
+
+      // Optional: remove query param from URL without reloading
+      const url = new URL(window.location);
+      url.searchParams.delete('submittedMood');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  });
+
+
+    </script>
+    
+
+
+  </body>
+
+</html>

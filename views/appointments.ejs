@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+                <% if (success) { %>
+                    <div class="alert alert-success">
+                      <%= success %>
+                    </div>
+                  <% } %>
+                  <% if (error) { %>
+                    <div class="alert alert-danger">
+                      <%= error %>
+                    </div>
+                  <% } %>
+          <!-- ✅ Desktop Table View -->
+<div class="card">
+    <h5 class="card-header">Appointments</h5>
+    <div class="card-body">
+      <div class="table-responsive d-none d-sm-block">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Student</th>
+              <th>Counselor</th>
+              <th>Status</th>
+              <th>Appointment Date</th>
+              <th>Created At</th>
+              <th>Updated At</th>
+              <th>Actions</th> <!-- NEW -->
+            </tr>
+          </thead>
+          <tbody>
+            <% if (appointments.length > 0) { %>
+              <% appointments.forEach(appointment => { %>
+                <tr>
+                  <td><%= appointment.title %></td>
+                  <td><%= appointment.student_first_name %> <%= appointment.student_last_name %></td>
+                  <td><%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %></td>
+                  <td>
+                    <span class="badge 
+                      <%= appointment.status === 'approved' ? 'bg-label-success' :
+                          appointment.status === 'pending' ? 'bg-label-warning' :
+                          appointment.status === 'rejected' ? 'bg-label-danger' : 
+                          appointment.status === 'cancelled' ? 'bg-label-danger' : 
+                          'bg-label-secondary' %>">
+                      <%= appointment.status %>
+                    </span>
+                  </td>
+                  <td><%= new Date(appointment.appointment_date).toLocaleString() %></td>
+                  <td><%= new Date(appointment.create_date).toLocaleString() %></td>
+                  <td><%= new Date(appointment.update_date).toLocaleString() %></td>
+                  <td>
+                    <a href="/appointments/cancel/<%= appointment.id %>" class="btn btn-sm btn-outline-danger">
+                      Cancel
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center">No appointments found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+  
+      <!-- ✅ Mobile View -->
+      <div class="d-block d-sm-none">
+        <% if (appointments.length > 0) { %>
+          <% appointments.forEach(appointment => { %>
+            <div class="card mb-3 border shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title mb-2"><%= appointment.title %></h5>
+                <p class="mb-1"><strong>Student:</strong> <%= appointment.student_first_name %> <%= appointment.student_last_name %></p>
+                <p class="mb-1"><strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %></p>
+                <p class="mb-1"><strong>Status:</strong> <%= appointment.status %></p>
+                <p class="mb-1"><strong>Date:</strong> <%= new Date(appointment.appointment_date).toLocaleString() %></p>
+                <p class="mb-1"><strong>Created:</strong> <%= new Date(appointment.create_date).toLocaleString() %></p>
+                <p class="mb-3"><strong>Updated:</strong> <%= new Date(appointment.update_date).toLocaleString() %></p>
+  
+                <a href="/appointments/cancel/<%= appointment.id %>" class="btn btn-outline-danger btn-sm w-100">
+                  Cancel
+                </a>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="text-center">No appointments found.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  
+                  
+			
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+        
+			</div>
+			<!--/ Content wrapper: End -->
+      
+		  </div>
+			  <%- include('includes/footer.ejs') %>
+      
+		  <!-- / Layout page: End -->
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('includes/scripts.ejs') %>
+
+
+
+  </body>
+
+</html>
