@@ -42,12 +42,13 @@ const authenticateToken = (req, res, next) => {
     const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
 
     if (!token) {
-        return res.status(401).render('login', { error: 'Unauthorized access' });
+        return res.redirect('/login');
     }
 
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(403).render('login', { error: 'Invalid or expired token' });
+            return res.redirect('/login');
+            //return res.status(403).render('login', { error: 'Invalid or expired token' });
         }
 
         // Attach user info to the request object
@@ -87,7 +88,7 @@ app.get('/appointments', authenticateToken, async (req, res) => {
 
 
 app.get('/', authenticateToken, (req, res) => {
-    res.redirect('/login');
+    res.redirect('/student-app');
 });
 
 
