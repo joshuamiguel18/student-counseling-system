@@ -79,6 +79,25 @@ const authenticateTokenAdmin = (req, res, next) => {
     });
 };
 
+const authenticateTokenCounselor = (req, res, next) => {
+  const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
+
+  if (!token) {
+      return res.redirect('/counselor/login');
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+          return res.redirect('/counselor/login');
+          //return res.status(403).render('login', { error: 'Invalid or expired token' });
+      }
+
+      // Attach user info to the request object
+      req.user = decoded;
+      next();
+  });
+};
+
 // My appointments
 app.get('/appointments', authenticateToken, async (req, res) => {
     const studentId = req.user.user.id;
@@ -655,6 +674,214 @@ app.get("/admin/students", authenticateTokenAdmin, async (req, res) => {
 
 
 
+// FOR COUNSELORS
+app.get('/counselor/login', (req, res) => {
+  res.render('counselorPages/login-counselor', { error: null, username: '' }); // Ensure username is always defined
+});
+app.get('/counselor/register', (req, res) => {
+  res.render('counselorPages/register-counselor', { error: null, username: '', email: '' }); 
+});
+
+
+
+app.post('/counselor/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const result = await pool.query('SELECT * FROM counselor WHERE username = $1', [username]);
+
+    if (result.rows.length === 0) {
+      return res.render('counselorPages/login-counselor', {
+        error: 'Invalid username or password',
+        username
+      });
+    }
+
+    const counselor = result.rows[0];
+    const passwordMatch = await bcrypt.compare(password, counselor.password);
+
+    if (!passwordMatch) {
+      return res.render('counselorPages/login-counselor', {
+        error: 'Invalid username or password',
+        username
+      });
+    }
+
+    const token = jwt.sign(
+      { user: { id: counselor.id, role: 'counselor', username: counselor.username } },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production'
+    });
+
+    res.redirect('/counselor-app');
+
+  } catch (err) {
+    console.error('Counselor login error:', err);
+    res.status(500).render('counselorPages/login-counselor', {
+      error: 'Internal server error',
+      username
+    });
+  }
+});
+
+app.post('/counselor/register', async (req, res) => {
+  const { username, password, email, first_name, middle_name, last_name, terms } = req.body;
+
+  if (!username || !password || !first_name || !last_name || !terms) {
+    return res.render('counselorPages/register-counselor', {
+      error: "All required fields must be filled and terms accepted.",
+      username,
+      email,
+      first_name,
+      middle_name,
+      last_name
+    });
+  }
+
+  try {
+    const checkUser = await pool.query(
+      "SELECT * FROM counselor WHERE username = $1",
+      [username]
+    );
+
+    if (checkUser.rows.length > 0) {
+      return res.render('counselorPages/register-counselor', {
+        error: "Username is already taken.",
+        username,
+        email,
+        first_name,
+        middle_name,
+        last_name
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO counselor (first_name, middle_name, last_name, username, password, email)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [first_name, middle_name, last_name, username, hashedPassword, email]
+    );
+
+    res.redirect('/counselor/login');
+
+  } catch (err) {
+    console.error("Counselor registration error:", err);
+    res.render('counselorPages/register-counselor', {
+      error: "Something went wrong. Please try again.",
+      username,
+      email,
+      first_name,
+      middle_name,
+      last_name
+    });
+  }
+});
+
+app.get('/counselors/:id/availability', async (req, res) => {
+    const counselorId = req.params.id;
+
+    try {
+        // Query to get the available days for the counselor
+        const result = await pool.query(
+            'SELECT available_day FROM counselor_availability WHERE counselor_id = $1',
+            [counselorId]
+        );
+
+        // Check if the counselor has availability
+        if (result.rows.length > 0) {
+            const availableDays = result.rows.map(row => row.available_day);
+            return res.json({ available_days: availableDays });
+        } else {
+            return res.status(404).json({ message: 'Counselor not found or no availability' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+app.get('/counselor-app', authenticateTokenCounselor, async (req, res) => {
+  try {
+    const counselorId = req.user.user.id;
+
+    // 1. Get counselor's appointments
+    const appointmentResult = await pool.query(
+      `
+      SELECT a.*, 
+             s.first_name AS student_first_name, 
+             s.last_name AS student_last_name
+      FROM appointment a
+      JOIN student s ON a.student_id = s.id
+      WHERE a.counselor_id = $1
+      ORDER BY a.appointment_date DESC
+      `,
+      [counselorId]
+    );
+
+    // 2. Get counselor availability status
+    const availabilityResult = await pool.query(
+      'SELECT is_available FROM counselor WHERE id = $1',
+      [counselorId]
+    );
+
+    const isAvailable = availabilityResult.rows[0]?.is_available;
+
+    // 3. Render the counselor dashboard
+    res.render('counselorPages/counselor-app', {
+      user: req.user.user,
+      appointments: appointmentResult.rows,
+      isAvailable
+    });
+  } catch (err) {
+    console.error('Error loading counselor app:', err);
+    res.status(500).render('counselorPages/counselor-app', {
+      error: 'Error fetching data',
+      user: req.user.user,
+      appointments: [],
+      isAvailable: false
+    });
+  }
+});
+
+app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) => {
+  try {
+    const counselorId = req.user.user.id;
+
+    const result = await pool.query(
+      `
+      SELECT 
+        a.id, 
+        a.title, 
+        a.status, 
+        a.appointment_date,
+        s.first_name AS student_first_name,
+        s.last_name AS student_last_name
+      FROM appointment a
+      JOIN student s ON a.student_id = s.id
+      WHERE a.counselor_id = $1
+      ORDER BY a.appointment_date DESC
+      `,
+      [counselorId]
+    );
+
+    const appointments = result.rows;
+
+    res.render('counselorPages/counselor-appointments', { appointments });
+  } catch (err) {
+    console.error('Error fetching counselor appointments:', err);
+    res.status(500).send('Server error');
+  }
+});
+
+
+
 // // User registration
 // app.post('/admin/register', async (req, res) => {
 //     const { username, email, password } = req.body;
@@ -770,7 +997,7 @@ app.get('/mood/:emotion/:studentId', async (req, res) => {
 
 
 
-app.post("/register", upload.single("verification"), async (req, res) => {
+app.post("/register", async (req, res) => {
     const { first_name, middle_name, last_name, username, email, password } = req.body;
 
     if (!first_name || !last_name || !username || !email || !password) {
@@ -786,14 +1013,74 @@ app.post("/register", upload.single("verification"), async (req, res) => {
              RETURNING id`,
             [first_name, middle_name, last_name, username, email, hashedPassword, false]
         );
-
-        res.json({ message: "Registration successful!", student_id: result.rows[0].id });
+        res.redirect('/login');
+        //res.json({ message: "Registration successful!", student_id: result.rows[0].id });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Server error" });
     }
 });
 
+
+
+
+
+// SAVE THE AVAILABLITY
+app.post('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
+  const counselorId = req.user.user.id;
+  const selectedDays = req.body.availableDays; // Check the structure of this value
+
+  console.log('Selected Days:', selectedDays); // Log to debug
+
+  try {
+    // Clear existing availability for counselor
+    await pool.query('DELETE FROM counselor_availability WHERE counselor_id = $1', [counselorId]);
+
+    // Insert new availability
+    if (Array.isArray(selectedDays)) {
+      const insertPromises = selectedDays.map(day =>
+        pool.query(
+          'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
+          [counselorId, day]
+        )
+      );
+      await Promise.all(insertPromises);
+    } else if (typeof selectedDays === 'string') {
+      // Handle single day case
+      await pool.query(
+        'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
+        [counselorId, selectedDays]
+      );
+    }
+
+    res.redirect('/counselor/availability?success=true');
+  } catch (err) {
+    console.error('Error saving availability:', err);
+    res.status(500).send('Something went wrong while saving your availability.');
+  }
+});
+
+
+// FETCH
+app.get('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
+  const counselorId = req.user.user.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT available_day FROM counselor_availability WHERE counselor_id = $1',
+      [counselorId]
+    );
+
+    const selectedDays = result.rows.map(row => row.available_day);
+    console.log(counselorId, selectedDays)
+    res.render('counselorPages/counselor-availability', {
+      selectedDays
+    });
+  } catch (err) {
+    console.error('Error loading availability page:', err);
+    res.status(500).send('Error loading availability.');
+  }
+});
 
   
 
@@ -818,28 +1105,6 @@ try {
   
 
 
-app.get('/counselors/:id/availability', async (req, res) => {
-    const counselorId = req.params.id;
-
-    try {
-        // Query to get the available days for the counselor
-        const result = await pool.query(
-            'SELECT available_day FROM counselor_availability WHERE counselor_id = $1',
-            [counselorId]
-        );
-
-        // Check if the counselor has availability
-        if (result.rows.length > 0) {
-            const availableDays = result.rows.map(row => row.available_day);
-            return res.json({ available_days: availableDays });
-        } else {
-            return res.status(404).json({ message: 'Counselor not found or no availability' });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
 
 
 
@@ -893,7 +1158,15 @@ app.get('/logout', (req, res) => {
     // Redirect to the login page or home page after logging out
     res.redirect('/login');
 });
+app.get('/admin/logout', (req, res) => {
+  res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+  res.redirect('/admin/login'); // or wherever your admin login page is
+});
 
+app.get('/counselor/logout', (req, res) => {
+  res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+  res.redirect('/counselor/login'); // or wherever your counselor login page is
+});
 
 // Start server
 const PORT = process.env.PORT || 8181;

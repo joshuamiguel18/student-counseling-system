@@ -14,14 +14,14 @@
 	<div class="layout-wrapper layout-content-navbar">
 	  <div class="layout-container">
 	
-		<%- include('../includes/sidebar-admin.ejs') %>
+		<%- include('../includes/sidebar-counselor.ejs') %>
 	
 		<!-- Layout page: Start -->
 		<div class="layout-page">
 	
 	
 		  <!-- Navbar: Start -->
-		  <%- include('../includes/header.ejs') %>
+		  <%- include('../includes/header-counselor.ejs') %>
 		  <!-- Navbar: End -->
 	
 	
@@ -33,48 +33,7 @@
 				
         <div class="row g-6">
           <!-- Card Border Shadow -->
-          <div class="col-lg-3 col-sm-6">
-            <div class="card card-border-shadow-primary h-100">
-              <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="avatar me-4">
-                    <span class="avatar-initial rounded bg-label-primary"><i class='bx bxs-user-account'></i></span>
-                  </div>
-                  <h4 class="mb-0"><%= totalStudents %></h4>
-                </div>
-                <p class="">Students</p>
 
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-3 col-sm-6">
-            <div class="card card-border-shadow-warning h-100">
-              <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="avatar me-4">
-                    <span class="avatar-initial rounded bg-label-warning"><i class='bx bxs-user-badge'></i></span>
-                  </div>
-                  <h4 class="mb-0"><%= totalCounselors %></h4>
-                </div>
-                <p class="mb-2">Counselors</p>
-
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-3 col-sm-6">
-            <div class="card card-border-shadow-danger h-100">
-              <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="avatar me-4">
-                    <span class="avatar-initial rounded bg-label-info"><i class='bx bx-calendar'></i></span>
-                  </div>
-                  <h4 class="mb-0"><%= totalAppointments %></h4>
-                </div>
-                <p class="mb-2">Total Appointments</p>
-
-              </div>
-            </div>
-          </div>
 
           <!--/ Card Border Shadow -->
         

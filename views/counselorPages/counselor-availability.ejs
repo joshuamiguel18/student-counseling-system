@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('../includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('../includes/sidebar-counselor.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('../includes/header-counselor.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+          <!-- ✅ Desktop Table View -->
+          <div class="card">
+            <h5 class="card-header">Set Up My Availability</h5>
+            <div class="card-body">
+              <form action="/counselor/availability" method="POST">
+                <% const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]; %>
+              
+                <% days.forEach(day => { %>
+                  <div class="form-check">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      name="availableDays" 
+                      value="<%= day %>" 
+                      id="day-<%= day %>"
+                      <%= selectedDays.includes(day) ? 'checked' : '' %>
+                    >
+                    <label class="form-check-label" for="day-<%= day %>"><%= day %></label>
+                  </div>
+                <% }); %>
+              
+                <button type="submit" class="btn btn-primary mt-3">Save Availability</button>
+              </form>
+              
+              
+              
+            </div>
+          </div>
+          
+
+          
+  
+  
+                  
+			
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+        
+			</div>
+			<!--/ Content wrapper: End -->
+      
+		  </div>
+			  <%- include('../includes/footer.ejs') %>
+      
+		  <!-- / Layout page: End -->
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('../includes/scripts.ejs') %>
+
+
+
+  </body>
+
+</html>
