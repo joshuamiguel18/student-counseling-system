@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 const session = require('express-session');
-
+const cors = require('cors');
 
 app.use(express.static(path.join(__dirname + '/public')));
 app.use(cookieParser());
@@ -23,7 +23,10 @@ app.set('views', path.join(__dirname, '/views'))
 app.use("/uploads", express.static("uploads")); // Serve uploaded files
 app.use(session({ secret: 'petCounseling', resave: false, saveUninitialized: true }));
 app.use(flash());
-
+app.use(cors({
+    origin: 'https://counseling-system.vercel.app',
+    credentials: true // if you use cookies/sessions
+}));
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
