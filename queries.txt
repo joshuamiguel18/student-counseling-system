@@ -86,3 +86,10 @@ CREATE TABLE counselor_availability (
     FOREIGN KEY (counselor_id) REFERENCES counselor(id)
 );
 
+CREATE TABLE forum_comment_reply (
+  id SERIAL PRIMARY KEY,
+  comment_id INTEGER REFERENCES forum_comment(id) ON DELETE CASCADE,
+  student_id INTEGER REFERENCES student(id) ON DELETE SET NULL,
+  reply TEXT NOT NULL,
+  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

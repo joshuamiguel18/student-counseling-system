@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+
+                  
+                  <div class="card-body">
+
+                    
+
+                    
+
+
+
+
+
+                    <div class="container-xxl py-4 px-0">
+                      
+
+
+
+                    
+                      <div class="card-body">
+                        <!-- Forum Header: Avatar + Name + Timestamp -->
+                                               <!-- Go Back Button -->
+                      <div class="d-flex justify-content-start mb-5">
+                        <a href="/forums" class="btn btn-secondary btn-sm">Back to Forums</a>
+                      </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                          <div class="d-flex align-items-center">
+                            <div class="avatar me-2">
+                              <img src="/images/user.png" alt="Avatar" class="rounded-circle" width="50" height="50">
+                            </div>
+                            <div>
+                              <div class="fw-semibold">
+                                <%= forum.student_first_name %> <%= forum.student_last_name %>
+                              </div>
+                              <div class="text-muted small">
+                                <%= new Date(forum.create_date).toLocaleString() %>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Forum Content -->
+                        <div class="mb-3">
+                          <h5 class="fw-bold mb-2"><%= forum.title %></h5>
+                          <p><%= forum.content %></p>
+                        </div>
+
+                        <!-- Comment Section -->
+                        <!-- Comment Section -->
+                        <div class="comments-section">
+                          <h6 class="mb-3">Comments</h6>
+                          <div id="comments-container">
+                            <% if (comments.length > 0) { %>
+                              <% comments.forEach(comment => { %>
+                                <div class="comment mb-3">
+                                  <div class="d-flex align-items-center mb-2">
+                                    <div class="avatar me-2">
+                                      <img src="/images/user.png" alt="Avatar" class="rounded-circle" width="40" height="40">
+                                    </div>
+                                    <div>
+                                      <div class="fw-semibold">
+                                        <%= comment.student_first_name %> <%= comment.student_last_name %>
+                                      </div>
+                                      <div class="text-muted small">
+                                        <%= new Date(comment.create_date).toLocaleString() %>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <p><%= comment.comment %></p>
+                                </div>
+                              <% }) %>
+                            <% } else { %>
+                              <p class="text-muted">No comments yet. Be the first to comment!</p>
+                            <% } %>
+                          </div>
+                        </div>
+
+
+                        <!-- Add Comment Section -->
+                        <form action="/forums/<%= forum.id %>/comment" method="POST">
+                          <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." required></textarea>
+                          </div>
+                          <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+                          </div>
+                        </form>
+                      </div>
+                    
+
+
+
+                      
+                      
+                      
+                      
+                    </div>
+                    
+                  </div>
+  
+  
+                  
+			
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+        
+			</div>
+			<!--/ Content wrapper: End -->
+      
+		  </div>
+			  <%- include('includes/footer.ejs') %>
+      
+		  <!-- / Layout page: End -->
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('includes/scripts.ejs') %>
+    <script>
+      window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+    
+        if (status === 'success') {
+          // Trigger the success modal
+          var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+          successModal.show();
+        } else if (status === 'error') {
+          // Trigger the error modal
+          var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+          errorModal.show();
+        }
+      }
+    </script>
+    <script>
+      function loadComments() {
+        fetch('/forums/<%= forum.id %>/comments')
+          .then(res => res.json())
+          .then(comments => {
+            const container = document.getElementById('comments-container');
+            container.innerHTML = ''; // Clear existing comments
+    
+            if (comments.length === 0) {
+              container.innerHTML = '<p class="text-muted">No comments yet. Be the first to comment!</p>';
+              return;
+            }
+    
+            comments.forEach(comment => {
+              const commentEl = document.createElement('div');
+              commentEl.classList.add('comment', 'mb-3');
+              commentEl.innerHTML = `
+                <div class="d-flex align-items-center mb-2">
+                  <div class="avatar me-2">
+                    <img src="/images/user.png" alt="Avatar" class="rounded-circle" width="40" height="40">
+                  </div>
+                  <div>
+                    <div class="fw-semibold">${comment.student_first_name} ${comment.student_last_name}</div>
+                    <div class="text-muted small">${new Date(comment.create_date).toLocaleString()}</div>
+                  </div>
+                </div>
+                <p>${comment.comment}</p>
+              `;
+              container.appendChild(commentEl);
+            });
+          })
+          .catch(err => console.error('Error loading comments:', err));
+      }
+    
+      // Auto refresh every 5 seconds
+      setInterval(loadComments, 5000);
+    
+      // Initial load
+      loadComments();
+    </script>
+    
+
+
+  </body>
+
+</html>

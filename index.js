@@ -164,7 +164,123 @@ app.get('/register', (req, res) => {
     res.render('register', { error: null, username: '', email: '' }); 
 });
 
+app.get('/forums', authenticateToken, async (req, res) => {
+    try {
+      const forumsResult = await pool.query(`
+        SELECT f.*, 
+               COUNT(fc.id) AS comment_count,
+               s.first_name AS student_first_name,
+               s.last_name AS student_last_name
+        FROM forum f
+        LEFT JOIN forum_comment fc ON f.id = fc.forum_id
+        LEFT JOIN student s ON f.student_id = s.id
+        GROUP BY f.id, s.first_name, s.last_name
+        ORDER BY f.create_date DESC
+      `);
+  
+      const forums = forumsResult.rows;
+      console.log(forums);
+      res.render('forums', { forums, user: req.user.user });
+    } catch (err) {
+      console.error('Error fetching forums:', err);
+      res.status(500).render('forums', { error: 'Failed to load forums', forums: [], user: req.user.user });
+    }
+  });
+  
+  // CREATE A FORUM
+  app.post('/forums/create', authenticateToken, async (req, res) => {
+    const { title, content } = req.body;
+    const studentId = req.user.user.id;
+  
+    try {
+      await pool.query(
+        'INSERT INTO forum (student_id, title, content) VALUES ($1, $2, $3)',
+        [studentId, title, content]
+      );
+      res.redirect('/forums?status=success');
+    } catch (err) {
+      console.error('Error creating forum:', err);
+      res.redirect('/forums?status=error');
+    }
+  });
+  
 
+  // GET THE COMMENTS AND CONTENTS OF THE COMMENTS
+  app.get('/forums/:id', authenticateToken, async (req, res) => {
+    try {
+      // Query the specific forum based on the provided ID
+      const forumResult = await pool.query(
+        `SELECT f.*, 
+                s.first_name AS student_first_name,
+                s.last_name AS student_last_name
+         FROM forum f
+         JOIN student s ON f.student_id = s.id
+         WHERE f.id = $1`,
+        [req.params.id]
+      );
+      const forum = forumResult.rows[0];
+  
+      // Query comments associated with the forum
+      const commentsResult = await pool.query(
+        `SELECT fc.*, 
+                s.first_name AS student_first_name, 
+                s.last_name AS student_last_name
+         FROM forum_comment fc
+         JOIN student s ON fc.student_id = s.id
+         WHERE fc.forum_id = $1
+         ORDER BY fc.create_date ASC`,
+        [req.params.id]
+      );
+      const comments = commentsResult.rows;
+  
+      res.render('forum-details', { forum, comments, user: req.user.user });
+    } catch (err) {
+      console.error('Error fetching forum:', err);
+      res.status(500).render('forum-detail', { error: 'Failed to load forum details', forum: {}, comments: [], user: req.user.user });
+    }
+  });
+  
+  // CREATE A COMMENT
+  app.post('/forums/:id/comment', authenticateToken, async (req, res) => {
+    const { comment } = req.body;
+    const forumId = req.params.id;
+    const studentId = req.user.user.id;
+  
+    try {
+      await pool.query(
+        'INSERT INTO forum_comment (forum_id, student_id, comment) VALUES ($1, $2, $3)',
+        [forumId, studentId, comment]
+      );
+  
+      // Redirect to the forum detail page to show the new comment
+      res.redirect(`/forums/${forumId}`);
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      res.status(500).send('Failed to add comment');
+    }
+  });
+  
+  // USED FOR COMMENT AJAX REFRESH
+  app.get('/forums/:id/comments', async (req, res) => {
+    try {
+      const forumId = req.params.id;
+      const result = await pool.query(
+        `SELECT fc.*, 
+                s.first_name AS student_first_name, 
+                s.last_name AS student_last_name
+         FROM forum_comment fc
+         JOIN student s ON fc.student_id = s.id
+         WHERE fc.forum_id = $1
+         ORDER BY fc.create_date ASC`,
+        [forumId]
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+      res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+  });
+  
 
 
 app.get('/admin-app', (req, res) => {
