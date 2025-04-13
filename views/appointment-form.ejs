@@ -43,7 +43,16 @@
                   <label class="form-label" for="title">Title</label>
                   <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name"></textarea>
                 </div>
-        
+                
+                <div class="col-md mb-4">
+                  <label class="form-label" for="counselor_id">Appointment Type</label>
+                  <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment">
+                    <option selected disabled>Select Counselor</option>
+                      <option value="1">Online Appointment</option>
+                      <option value="0">Physical Appoinment</option>
+                  </select>
+                </div>
+
                 <div class="col-md mb-4">
                   <label class="form-label" for="counselor_id">Counselor</label>
                   <select id="counselor_id" class="select2 form-select" name="counselor_id">
@@ -53,6 +62,7 @@
                     <% }); %>
                   </select>
                 </div>
+
         
                 <div class="col-md mb-4">
                   <div id="appointment-date-wrapper" class="d-none">
@@ -156,7 +166,7 @@
     
 
     <script>
-      $(document).ready(function () {
+      document.addEventListener('DOMContentLoaded', function () {
         const dayMap = {
           "Sunday": 0,
           "Monday": 1,
@@ -170,13 +180,9 @@
         let flatpickrInstance = null;
     
         function setupFlatpickr(availableDays) {
-          // Destroy previous instance
           if (flatpickrInstance) flatpickrInstance.destroy();
+          document.getElementById('appointment_date').value = '';
     
-          // Reset value
-          $('#appointment_date').val('');
-    
-          // Setup new instance with only allowed days
           flatpickrInstance = flatpickr("#appointment_date", {
             dateFormat: "Y-m-d",
             disable: [
@@ -187,36 +193,35 @@
           });
         }
     
-        $('#counselor_id').on('change', function () {
-          const counselorId = $(this).val();
-    
+        document.getElementById('counselor_id').addEventListener('change', function () {
+          const counselorId = this.value;
           if (!counselorId) return;
     
-          // Fetch availability from server
-          $.ajax({
-            url: `http://localhost:8181/counselors/${counselorId}/availability`,
-            method: 'GET',
-            dataType: 'json',
-            success: function (response) {
-              const days = response.available_days || [];
+          // Use relative URL for fetch (no hardcoded host)
+          fetch(`/counselors/${counselorId}/availability`)
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.json();
+            })
+            .then(data => {
+              const days = data.available_days || [];
               const availableDays = days.map(day => dayMap[day]);
     
               setupFlatpickr(availableDays);
     
-              // Show date picker and note
-              $('#appointment-date-wrapper').removeClass('d-none');
-              $('#available-days-note').text(`Available on: ${days.join(', ')}`);
-            },
-            error: function () {
+              document.getElementById('appointment-date-wrapper').classList.remove('d-none');
+              document.getElementById('available-days-note').textContent = `Available on: ${days.join(', ')}`;
+            })
+            .catch(() => {
               alert("Failed to fetch counselor availability.");
-              $('#appointment-date-wrapper').addClass('d-none');
-              $('#appointment_date').val('');
+              document.getElementById('appointment-date-wrapper').classList.add('d-none');
+              document.getElementById('appointment_date').value = '';
               if (flatpickrInstance) flatpickrInstance.destroy();
-            }
-          });
+            });
         });
       });
     </script>
+    
     
     
     

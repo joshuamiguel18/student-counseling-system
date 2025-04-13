@@ -88,6 +88,72 @@ app.get('/appointments', authenticateToken, async (req, res) => {
     }
 });
 
+// Route: /appointments/:id/chat
+app.get('/appointments/:id/chat', authenticateToken, async (req, res) => {
+    const appointmentId = req.params.id;
+    const currentUser = req.user.user;
+    
+    try {
+        // Get appointment details to validate access
+        const appointmentResult = await pool.query(`
+            SELECT * FROM appointment WHERE id = $1
+        `, [appointmentId]);
+
+        if (appointmentResult.rows.length === 0) {
+            return res.status(404).send("Appointment not found");
+        }
+
+        const appointment = appointmentResult.rows[0];
+
+        // Fetch messages
+        const messagesResult = await pool.query(`
+            SELECT * FROM messages WHERE appointment_id = $1 ORDER BY created_at ASC
+        `, [appointmentId]);
+
+        res.render('appointment-chat', {
+            messages: messagesResult.rows,
+            appointment,
+            currentUser
+        });
+
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        res.status(500).send("Server Error");
+    }
+});
+
+app.post('/messages/send', authenticateToken, async (req, res) => {
+    const { appointment_id, message, sender_type } = req.body;
+
+    try {
+        await pool.query(
+            `INSERT INTO messages (appointment_id, message, sender_type) VALUES ($1, $2, $3)`,
+            [appointment_id, message, sender_type]
+        );
+        res.redirect(`/appointments/${appointment_id}/chat`);
+    } catch (err) {
+        console.error('Error sending message:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+// Route: Get messages for a specific appointment
+app.get('/messages/:appointmentId', async (req, res) => {
+    const appointmentId = req.params.appointmentId;
+
+    try {
+        const messagesResult = await pool.query(`
+            SELECT * FROM messages WHERE appointment_id = $1 ORDER BY created_at ASC
+        `, [appointmentId]);
+
+        res.json(messagesResult.rows);
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        res.status(500).send("Server Error");
+    }
+});
+
 
 
 app.get('/', authenticateToken, (req, res) => {
@@ -573,36 +639,46 @@ app.get('/counselors/:id/availability', async (req, res) => {
 
 
 
-// Route to save appointment
-app.post('/saveAppointment', async (req, res) => {
-    const { title, student_id, counselor_id, appointment_date } = req.body;
 
-    // Set default status to 'pending' if it's not provided
-    const status = req.body.status || 'pending';  // Default status is 'pending'
-    
-    // Ensure that appointment date is in the correct format (if needed)
+
+app.post('/saveAppointment', async (req, res) => {
+    const { title, student_id, counselor_id, appointment_date, isOnlineAppointment } = req.body;
+
+    // Default status
+    const status = req.body.status || 'pending';
+
+    // Format date
     const formattedAppointmentDate = moment(appointment_date).format('YYYY-MM-DD HH:mm:ss');
+    const todayFormatted = moment().format('YYYYMMDD');
+
+    // Generate 6-digit random number
+    const randomDigits = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
+
+    // Generate appointment number
+    const appointmentNumber = `${randomDigits}${todayFormatted}${student_id}${counselor_id}`;
 
     try {
-        // Insert appointment data into the database
+        // Insert appointment into DB
         const result = await pool.query(
-            `INSERT INTO appointment (title, student_id, counselor_id, status, appointment_date, create_date, update_date)
-             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `INSERT INTO appointment 
+              (title, student_id, counselor_id, status, appointment_date, is_online_appointment, appointment_number, create_date, update_date)
+             VALUES 
+              ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
              RETURNING id`,
-            [title, student_id, counselor_id, status, formattedAppointmentDate]
+            [title, student_id, counselor_id, status, formattedAppointmentDate, isOnlineAppointment, appointmentNumber]
         );
 
         const appointmentId = result.rows[0].id;
 
-        // Send a success response back to the client
-        res.redirect('/student-app')
+        // Log and redirect
         console.log("Appointment created successfully");
-        //res.status(201).json({ message: 'Appointment created successfully', appointmentId });
+        res.redirect('/student-app');
     } catch (error) {
         console.error('Error saving appointment:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 
 app.get('/logout', (req, res) => {

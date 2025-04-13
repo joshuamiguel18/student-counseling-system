@@ -74,6 +74,8 @@ CREATE TABLE appointment (
     student_id INTEGER REFERENCES student(id),
     counselor_id INTEGER REFERENCES counselor(id),
     status VARCHAR(100),
+    is_online_appointment boolean,
+    appointment_number text,
     appointment_date TIMESTAMP,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -92,4 +94,14 @@ CREATE TABLE forum_comment_reply (
   student_id INTEGER REFERENCES student(id) ON DELETE SET NULL,
   reply TEXT NOT NULL,
   create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    appointment_id INTEGER REFERENCES appointment(id) ON DELETE CASCADE,
+    sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('student', 'counselor')),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

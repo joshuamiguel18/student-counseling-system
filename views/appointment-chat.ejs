@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+        <div class="card shadow-sm">
+          <h5 class="card-header bg-primary text-white">Chat Room</h5>
+          <div class="card-body px-0">
+        
+            <div class="container-xxl px-0">
+        
+              <!-- Chat Window -->
+              <div class="container py-4" style="max-width: 100%; width: 100%;">
+                <div id="chat-box" class="border rounded shadow-sm p-3 mb-3" style="height: 400px; overflow-y: auto; background: #f9f9f9;">
+        
+                  <!-- Messages will go here -->
+                  <% messages.forEach(msg => { %>
+                    <div class="mb-3 d-flex <%= msg.sender_type === 'student' ? 'justify-content-end' : 'justify-content-start' %>">
+                      <div class="p-2 rounded <%= msg.sender_type === 'counselor' ? 'bg-primary text-white' : 'bg-light border' %>" style="max-width: 80%; word-wrap: break-word;">
+                        <div><%= msg.message %></div>
+                        <small class="d-block text-end text-muted" style="font-size: 0.75rem;"><%= new Date(msg.created_at).toLocaleString() %></small>
+                      </div>
+                    </div>
+                  <% }) %>
+        
+                </div>
+        
+                <!-- Send Message Form -->
+                <form action="/messages/send" method="POST" class="d-flex">
+                  <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
+                  <input type="hidden" name="sender_type" value="student">
+                  <input type="text" name="message" class="form-control me-2" placeholder="Type your message..." required style="max-width: 80%; border-radius: 20px;">
+                  <button class="btn btn-primary" type="submit" style="border-radius: 20px;">Send</button>
+                </form>
+              </div>
+        
+            </div>
+        
+          </div>
+        </div>
+        
+  
+  
+                  
+			
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+        
+			</div>
+			<!--/ Content wrapper: End -->
+      
+		  </div>
+			  <%- include('includes/footer.ejs') %>
+      
+		  <!-- / Layout page: End -->
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('includes/scripts.ejs') %>
+    <script>
+      const appointmentId = <%= appointment.id %>; // Get appointment id from EJS
+      const chatBox = document.getElementById('chat-box'); // The chat box to display messages
+    
+      // Function to fetch messages
+      function fetchMessages() {
+        console.log("FETCHING MESSAGES from ", appointmentId)
+        fetch(`/messages/${appointmentId}`)
+          .then(response => response.json())
+          .then(messages => {
+            // Clear the chat box and append new messages
+            chatBox.innerHTML = '';
+            
+            messages.forEach(msg => {
+              const messageDiv = document.createElement('div');
+              messageDiv.classList.add('mb-2', 'd-flex');
+              
+              // Add alignment based on sender type
+              messageDiv.classList.add(msg.sender_type === 'student' ? 'justify-content-end' : 'justify-content-start');
+              
+              messageDiv.innerHTML = `
+                <div class="p-2 rounded ${msg.sender_type === 'counselor' ? 'bg-primary text-white' : 'bg-light border'}" style="max-width: 70%;">
+                  <div>${msg.message}</div>
+                  <small class="d-block text-end text-muted" style="font-size: 0.75rem;">${new Date(msg.created_at).toLocaleString()}</small>
+                </div>
+              `;
+              chatBox.appendChild(messageDiv);
+            });
+    
+            // Scroll to the bottom of the chat box after appending new messages
+            chatBox.scrollTop = chatBox.scrollHeight;
+          })
+          .catch(err => console.error('Error fetching messages:', err));
+      }
+    
+      // Fetch messages every 1 second (1000 milliseconds)
+      setInterval(fetchMessages, 5000);
+    
+      // Initial fetch when the page loads
+      fetchMessages();
+    </script>
+    
+    </script>
+    
+
+
+  </body>
+
+</html>
