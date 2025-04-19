@@ -693,7 +693,8 @@ app.get('/forums', authenticateToken, async (req, res) => {
         res.render('adminPages/admin-app', {
             totalStudents,
             totalCounselors,
-            totalAppointments
+            totalAppointments,
+            user: req.user.user,
         });
     } catch (err) {
         console.error('Error fetching totals:', err);
