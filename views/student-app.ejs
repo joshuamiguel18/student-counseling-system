@@ -49,7 +49,12 @@
                             <h5 class="mb-2">Welcome back,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
                       
                           <% } %>
-                        <h5 class="mb-2">Your are in class <span class="h4">  <%= user.class_name %> </span></h5>
+                          <% if (user.class_id) { %>
+                          <p class="mb-2">Your are in class <span class="font-bold"><%= user.class_name %></span> </p>
+                        <% } else { %>
+                          <h5 class="mb-2">You don't have a class yet.</h5>
+                          
+                          <% } %>
                         <div class="col-12">
                             <p>Your mental health journey is important, and we're here to support you. Let's take the next step together and schedule your student counseling appointment for a healthier, happier you!</p>
                         </div>
