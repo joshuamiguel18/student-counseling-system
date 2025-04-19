@@ -37,16 +37,16 @@
                 <h1>Appointment Form</h1>
         
 
-                <input type="hidden" name="student_id" value="1">
+                <input type="hidden" name="student_id" value="<%= user.id %>" required>
 
                 <div class="col-12 mb-4">
                   <label class="form-label" for="title">Title</label>
-                  <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name"></textarea>
+                  <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name" required></textarea>
                 </div>
                 
                 <div class="col-md mb-4">
                   <label class="form-label" for="counselor_id">Appointment Type</label>
-                  <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment">
+                  <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment" required>
                     <option selected disabled>Select Counselor</option>
                       <option value="1">Online Appointment</option>
                       <option value="0">Physical Appoinment</option>
@@ -55,7 +55,7 @@
 
                 <div class="col-md mb-4">
                   <label class="form-label" for="counselor_id">Counselor</label>
-                  <select id="counselor_id" class="select2 form-select" name="counselor_id">
+                  <select id="counselor_id" class="select2 form-select" name="counselor_id" required>
                     <option selected disabled>Select Counselor</option>
                     <% counselors.forEach(counselor => { %>
                       <option value="<%= counselor.id %>"><%= counselor.full_name %></option>
@@ -67,7 +67,7 @@
                 <div class="col-md mb-4">
                   <div id="appointment-date-wrapper" class="d-none">
                     <label class="form-label" for="appointment_date">Appointment Date</label>
-                    <input type="text" id="appointment_date" class="form-control" name="appointment_date" placeholder="Select A Date">
+                    <input type="text" id="appointment_date" class="form-control" name="appointment_date" placeholder="Select A Date" required>
                     <small id="available-days-note" class="text-muted"></small>
                   </div>
                 </div>
@@ -219,6 +219,19 @@
               if (flatpickrInstance) flatpickrInstance.destroy();
             });
         });
+      });
+
+
+      document.getElementById('appointment-form').addEventListener('submit', function (e) {
+        const title = document.getElementById('title').value.trim();
+        const isOnline = document.getElementById('isOnlineAppointment').value;
+        const counselor = document.getElementById('counselor_id').value;
+        const appointmentDate = document.getElementById('appointment_date').value.trim();
+
+        if (!title || !isOnline || !counselor || !appointmentDate) {
+          e.preventDefault();
+          alert('Please fill in all required fields before submitting the form.');
+        }
       });
     </script>
     

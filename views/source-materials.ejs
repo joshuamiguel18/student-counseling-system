@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+				
+
+        <div class="app-academy">
+          <div class="card p-0 mb-6">
+              <div class="card-body d-flex flex-column flex-md-row justify-content-between p-0 pt-6">
+      
+                  <div class="app-academy-md-50 card-body d-flex align-items-md-center flex-column text-md-center mb-6 py-6">
+                      <span class="card-title mb-4 px-md-12 h4">
+                          Mental Health Resources<br>
+                          <span class="text-primary text-nowrap">Your well-being, all in one place</span>.
+                      </span>
+                      <p class="mb-4">
+                          Access essential resources for mental health tips, school policies, and emergency contacts for support and well-being.
+                      </p>
+                      <div class="d-flex align-items-center justify-content-between app-academy-md-80">
+                          <input type="search" placeholder="Search a resource here" id="searchInput" class="form-control me-4">
+                          <button type="submit" class="btn btn-primary btn-icon" fdprocessedid="umn1wa"><i class="bx bx-search bx-md"></i></button>
+                      </div>
+                  </div>
+      
+              </div>
+          </div>
+      
+          <div class="card mb-6">
+              <div class="card-header d-flex flex-wrap justify-content-between gap-4">
+                  <div class="card-title mb-0 me-1">
+                      <h5 class="mb-0">Mental Health Resources</h5>
+                      <p class="mb-0">Find helpful materials and contact information for support</p>
+                  </div>
+              </div>
+              <div class="card-body">
+                  <div class="row gy-6 mb-6" id="resource-list">
+                      <!-- Resources will be dynamically rendered here -->
+                  </div>
+              </div>
+          </div>
+      </div>
+	
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
+		  <%- include('includes/footer.ejs') %>
+
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+	  <%- include('includes/scripts.ejs') %>
+
+    <script>
+      // Fetch courses and render them
+      async function loadCourses() {
+        try {
+          const res = await fetch('/api/resources');
+          const courses = await res.json();
+          renderCourses(courses);
+        } catch (err) {
+          console.error('Failed to fetch courses', err);
+        }
+      }
+    
+      function renderCourses(courses) {
+        const container = document.getElementById('resource-list');
+        container.innerHTML = ''; // Clear existing
+        
+       
+        courses.forEach(course => {
+          let badgeColor = 'bg-label-primary'; // Default color
+            if (course.category_name === 'Emergency Contacts') {
+                badgeColor = 'bg-label-danger';  // Change color for Emergency Contacts
+            } else if (course.category_name === 'School Policies') {
+                badgeColor = 'bg-label-warning';  // Change color for School Policies
+            }
+          const html = `
+            <div class="col-sm-6 col-lg-4 course-card">
+              <div class="card p-2 shadow-none border"  style="min-height: 300px;">
+                <div class="card-body p-4 pt-2 d-flex flex-column justify-content-between">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="badge ${badgeColor}">${course.category_name}</span>
+                  </div>
+                  <a href="${course.details_link}" class="h5 course-title">${course.title}</a>
+                  <p class="mt-1 course-subtitle">${course.description}</p>
+                  <p class="mb-4 d-flex align-items-center mb-1 course-desc">
+                    <i class="bx bx-time-five me-1"></i>${course.read_time}
+                  </p>
+                  <div class="d-flex flex-column flex-md-row gap-4 text-nowrap flex-wrap flex-md-nowrap flex-lg-wrap flex-xxl-nowrap">
+                    <a class="w-100 btn btn-primary d-flex align-items-center" href="${course.pdf_link}" target="_blank">
+                      <span>Read</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+          container.insertAdjacentHTML('beforeend', html);
+        });
+      }
+    
+      // Real-time search
+      document.getElementById("searchInput").addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase();
+        const courseCards = document.querySelectorAll(".course-card");
+    
+        courseCards.forEach(card => {
+          const title = card.querySelector(".course-title").textContent.toLowerCase();
+          const desc = card.querySelector(".course-desc").textContent.toLowerCase();
+          const subtitle = card.querySelector(".course-subtitle").textContent.toLowerCase();
+    
+          if (
+            title.includes(searchTerm) ||
+            desc.includes(searchTerm) ||
+            subtitle.includes(searchTerm)
+          ) {
+            card.style.display = "block";
+          } else {
+            card.style.display = "none";
+          }
+        });
+      });
+    
+      // Initial load
+      window.addEventListener('DOMContentLoaded', loadCourses);
+    </script>
+    
+      
+
+  </body>
+
+</html>

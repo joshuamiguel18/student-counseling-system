@@ -58,7 +58,7 @@
   
                 <div class="mb-2">
                   <i class="bi bi-person-circle me-1 text-muted"></i>
-                  <strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %>
+                  <strong>Student:</strong> <%= appointment.student_first_name %> <%= appointment.student_last_name %> 
                 </div>
   
                 <div class="mb-2">
@@ -76,41 +76,50 @@
                   <strong>Appointment #:</strong> <%= appointment.appointment_number %>
                 </div>
   
-                <div class="text-muted small">
-                  <i class="bi bi-clock me-1"></i>
-                  Created: <%= new Date(appointment.create_date).toLocaleDateString() %>  Updated: <%= new Date(appointment.update_date).toLocaleDateString() %>
-                </div>
-                  
-                <div class="text-muted small">
-                  <i class="bi bi-clock me-1"></i>
-                  Updated: <%= new Date(appointment.update_date).toLocaleDateString() %>
-                </div>
+
               </div>
               
   
               <!-- Footer Actions -->
               <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                <% if (appointment.status !== 'cancelled') { %>
+                <% if (appointment.status !== 'cancelled' && appointment.status !== 'completed') { %>
                   <div class="dropdown">
                     <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
                       <i class="bi bi-gear-fill me-1"></i> Actions
                     </button>
                     <ul class="dropdown-menu w-100 shadow-sm rounded-3">
-                      <% if (appointment.status !== 'cancelled') { %>
+                      <% if (appointment.status == 'pending' || appointment.status == 'approved') { %>
                         <li>
                           <a class="dropdown-item text-danger" href="/appointments/cancel/<%= appointment.id %>">
                             <i class="bi bi-x-circle me-2"></i>Cancel
                           </a>
                         </li>
                       <% } %>
+                    
+                      <% if (appointment.status === 'approved') { %>
+                        <li>
+                          <a class="dropdown-item text-success" href="/counselor/appointments/completed/<%= appointment.id %>">
+                            <i class="bi bi-check-circle me-2"></i>Mark as Completed
+                          </a>
+                        </li>
+                      <% } %>
+                      <% if (appointment.status === 'pending') { %>
+                        <li>
+                          <a class="dropdown-item text-success" href="/counselor/appointments/approve/<%= appointment.id %>">
+                            <i class="bi bi-check2-circle me-2"></i>Approve
+                          </a>
+                        </li>
+                      <% } %>
+                      
                       <% if (appointment.is_online_appointment) { %>
                         <li>
-                          <a class="dropdown-item" href="/appointments/<%= appointment.id %>/chat">
+                          <a class="dropdown-item" href="/counselor/appointments/<%= appointment.id %>/chat">
                             <i class="bi bi-chat-dots me-2"></i>Go to Chat
                           </a>
                         </li>
                       <% } %>
                     </ul>
+                    
                   </div>
                 <% } else { %>
                   <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>

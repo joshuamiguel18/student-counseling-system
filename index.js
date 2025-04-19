@@ -27,7 +27,6 @@ app.use(cors({
     origin: 'https://counseling-system.vercel.app',
     credentials: true // if you use cookies/sessions
 }));
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -101,7 +100,7 @@ const authenticateTokenCounselor = (req, res, next) => {
 // My appointments
 app.get('/appointments', authenticateToken, async (req, res) => {
     const studentId = req.user.user.id;
-
+      console.log(studentId)
     try {
         const result = await pool.query(`
             SELECT 
@@ -117,15 +116,97 @@ app.get('/appointments', authenticateToken, async (req, res) => {
             JOIN student s ON a.student_id = s.id
             JOIN counselor c ON a.counselor_id = c.id
             WHERE a.student_id = $1
-            ORDER BY a.appointment_date DESC
+            ORDER BY a.appointment_date ASC
         `, [studentId]);
-
-        res.render('appointments', { appointments: result.rows });
+          console.log(result.rows)
+        res.render('appointments', { appointments: result.rows, user: req.user.user });
     } catch (err) {
         console.error('Error fetching appointments:', err);
         res.status(500).send('Server error');
     }
 });
+
+
+app.get('/getAppointments', authenticateToken, async (req, res) => {
+  const studentId = req.user.user.id;
+  const { status, sort } = req.query; // Get filter and sort parameters from query
+
+  try {
+      let query = `
+          SELECT 
+              a.*, 
+              s.first_name AS student_first_name,
+              s.middle_name AS student_middle_name,
+              s.last_name AS student_last_name,
+              c.first_name AS counselor_first_name,
+              c.middle_name AS counselor_middle_name,
+              c.last_name AS counselor_last_name
+          FROM 
+              appointment a
+          JOIN student s ON a.student_id = s.id
+          JOIN counselor c ON a.counselor_id = c.id
+          WHERE a.student_id = $1
+      `;
+
+      const queryParams = [studentId];
+
+      // Add filter for status if provided
+      if (status && status !== 'all') {
+          query += ` AND a.status = $${queryParams.length + 1}`;
+          queryParams.push(status); // Add the status filter parameter
+      }
+
+      // Add sorting by date (ascending or descending)
+      const sortOrder = sort === 'desc' ? 'DESC' : 'ASC';
+      query += ` ORDER BY a.appointment_date ${sortOrder}`;
+
+      // Execute the query with the parameters
+      const result = await pool.query(query, queryParams);
+
+      // Return JSON data instead of rendering the page (useful for dynamic updates)
+      res.json({ appointments: result.rows });
+
+  } catch (err) {
+      console.error('Error fetching appointments:', err);
+      res.status(500).send('Server error');
+  }
+});
+
+
+
+app.get('/api/resources', async (req, res) => {
+  const { search } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        resources.*, 
+        categories.name AS category_name
+      FROM 
+        resources
+      LEFT JOIN 
+        categories ON resources.category_id = categories.id
+    `;
+
+    const values = [];
+
+    if (search) {
+      query += ` WHERE LOWER(resources.title) LIKE $1 OR LOWER(resources.description) LIKE $1 `;
+      values.push(`%${search.toLowerCase()}%`);
+    }
+
+    query += ' ORDER BY resources.id DESC';
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching resources:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
 
 // Route: /appointments/:id/chat
 app.get('/appointments/:id/chat', authenticateToken, async (req, res) => {
@@ -159,7 +240,8 @@ app.get('/appointments/:id/chat', authenticateToken, async (req, res) => {
         res.render('appointment-chat', {
             messages: messagesResult.rows,
             appointment: appointmentResult.rows[0],
-            currentUser
+            currentUser,
+            user: req.user.user
         });
           
 
@@ -189,6 +271,40 @@ app.get('/appointments/approve/:id', async (req, res) => {
 });
   
 
+app.get('/counselor/appointments/approve/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Update the appointment status to 'approved'
+    await pool.query(
+      'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+      ['approved', appointmentId]
+    );
+
+    // Redirect back to the appointments page
+    res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+  } catch (err) {
+    console.error('Error approving appointment:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+app.get('/counselor/appointments/completed/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Update the appointment status to 'approved'
+    await pool.query(
+      'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+      ['completed', appointmentId]
+    );
+
+    // Redirect back to the appointments page
+    res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+  } catch (err) {
+    console.error('Error approving appointment:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 
 
@@ -232,64 +348,139 @@ app.get('/', authenticateToken, (req, res) => {
 
 
 app.get('/student-app', authenticateToken, async (req, res) => {
+  try {
+    const studentId = req.user.user.id;
+    console.log(req.user)
+    // 1. Get all appointments
+    const appointmentResult = await pool.query(
+      'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC',
+      [studentId]
+    );
+
+    // 2. Get today's mood
+    const moodResult = await pool.query(`
+      SELECT emotion, create_date 
+      FROM mood 
+      WHERE student_id = $1 
+        AND DATE(create_date) = CURRENT_DATE
+      ORDER BY create_date DESC 
+      LIMIT 1;
+    `, [studentId]);
+
+    const todayMood = moodResult.rows.length > 0 ? moodResult.rows[0] : null;
+
+    // 3. Check if student is class mayor
+    const mayorResult = await pool.query(
+      'SELECT is_class_mayor FROM student WHERE id = $1',
+      [studentId]
+    );
+
+    const isClassMayor = mayorResult.rows[0]?.is_class_mayor || false;
+
+    // 4. Count appointment statuses
+    const countResult = await pool.query(`
+      SELECT 
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+        COUNT(*) FILTER (WHERE status = 'completed') AS completed
+      FROM appointment
+      WHERE student_id = $1
+    `, [studentId]);
+
+    const counts = countResult.rows[0];
+
+    // 5. Render view
+    res.render('student-app', {
+      user: req.user.user,
+      appointments: appointmentResult.rows,
+      todayMood,
+      isClassMayor,
+      appointmentStats: {
+        total: parseInt(counts.total),
+        pending: parseInt(counts.pending),
+        completed: parseInt(counts.completed)
+      }
+    });
+
+  } catch (err) {
+    console.error('Error loading student app:', err);
+    res.status(500).render('student-app', {
+      error: 'Error fetching data',
+      user: req.user.user,
+      appointments: [],
+      todayMood: null,
+      isClassMayor: false,
+      appointmentStats: {
+        total: 0,
+        pending: 0,
+        completed: 0
+      }
+    });
+  }
+});
+
+app.get('/source-materials',authenticateToken, (req, res) => {
+  res.render('source-materials', { user: req.user.user }); 
+});
+  
+
+
+  app.get('/appointment-form', authenticateToken, async (req, res) => {
     try {
-      const studentId = req.user.user.id;
+      const result = await pool.query(`
+        SELECT DISTINCT c.id, 
+               CONCAT(c.first_name, ' ', COALESCE(c.middle_name, ''), ' ', c.last_name) AS full_name
+        FROM counselor c
+        INNER JOIN counselor_availability ca ON c.id = ca.counselor_id
+      `);
   
-      // 1. Get appointments
-      const appointmentResult = await pool.query(
-        'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC',
-        [studentId]
-      );
+      res.render('appointment-form', { counselors: result.rows, user: req.user.user });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+  app.get('/psycho-testing-form', authenticateToken, async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT DISTINCT c.id, 
+               CONCAT(c.first_name, ' ', COALESCE(c.middle_name, ''), ' ', c.last_name) AS full_name
+        FROM counselor c
+        INNER JOIN counselor_availability ca ON c.id = ca.counselor_id
+      `);
   
-      // 2. Get today's mood if already selected
-      const moodResult = await pool.query(`
-        SELECT emotion, create_date 
-        FROM mood 
-        WHERE student_id = $1 
-          AND DATE(create_date) = CURRENT_DATE
-        ORDER BY create_date DESC 
-        LIMIT 1;
-      `, [studentId]);
-  
-      const todayMood = moodResult.rows.length > 0 ? moodResult.rows[0] : null;
-  
-      // 3. Render view with user, appointments, and mood
-      res.render('student-app', {
-        user: req.user.user,
-        appointments: appointmentResult.rows,
-        todayMood: todayMood
-      });
-    } catch (err) {
-      console.error('Error loading student app:', err);
-      res.status(500).render('student-app', {
-        error: 'Error fetching data',
-        user: req.user.user,
-        appointments: [],
-        todayMood: null
-      });
+      res.render('psycho-testing-form', { counselors: result.rows, user: req.user.user });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
     }
   });
   
 
 
-app.get('/appointment-form', async (req, res) => {
-    try {
-        // Query to fetch counselors and concatenate their names
-        const result = await pool.query(`
-            SELECT id, 
-                   CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) AS full_name
-            FROM counselor
-        `);
-        
-        // Pass the counselors data to the EJS template
-        res.render('appointment-form', { counselors: result.rows });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
+app.post('/appointments/reschedule', async (req, res) => {
+  const { appointment_id, new_date } = req.body;
+
+  try {
+    // Optional: Validate inputs here
+
+    const updateQuery = `
+      UPDATE appointment
+      SET appointment_date = $1,
+          update_date = NOW()
+      WHERE id = $2
+    `;
+
+    await pool.query(updateQuery, [new_date, appointment_id]);
+
+    // Redirect or send JSON depending on your app flow
+    res.redirect('/appointments'); // or res.json({ success: true });
+  } catch (err) {
+    console.error('Error rescheduling appointment:', err);
+    res.status(500).send('Something went wrong');
+  }
 });
 
-// Routes
 
 
 //FOR CUSTOMERS
@@ -299,6 +490,12 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
     res.render('register', { error: null, username: '', email: '' }); 
 });
+
+app.get('/profile/:id',authenticateToken, (req, res) => {
+  
+  res.render('profile',{user: req.user.user}); // Ensure username is always defined
+});
+
 
 app.get('/forums', authenticateToken, async (req, res) => {
     try {
@@ -376,6 +573,65 @@ app.get('/forums', authenticateToken, async (req, res) => {
     }
   });
   
+
+  app.get('/student/mood-trend', authenticateToken, async (req, res) => {
+    const studentId = req.user.user.id;
+  
+    try {
+      const result = await pool.query(`
+        SELECT 
+          emotion,
+          COUNT(*) AS count,
+          DATE_TRUNC('week', create_date)::date AS week_start
+        FROM mood
+        WHERE student_id = $1
+        GROUP BY week_start, emotion
+        ORDER BY week_start ASC;
+      `, [studentId]);
+  
+      res.render('mood-trends', { moodData: result.rows, user: req.user.user });
+  
+    } catch (error) {
+      console.error("Error fetching mood trend:", error);
+      res.status(500).send("Server Error");
+    }
+  });
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // CREATE A COMMENT
   app.post('/forums/:id/comment', authenticateToken, async (req, res) => {
     const { comment } = req.body;
@@ -861,6 +1117,8 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
         a.title, 
         a.status, 
         a.appointment_date,
+        a.is_online_appointment,
+        a.appointment_number,
         s.first_name AS student_first_name,
         s.last_name AS student_last_name
       FROM appointment a
@@ -872,7 +1130,7 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
     );
 
     const appointments = result.rows;
-
+    console.log(appointments)
     res.render('counselorPages/counselor-appointments', { appointments });
   } catch (err) {
     console.error('Error fetching counselor appointments:', err);
@@ -880,7 +1138,64 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
   }
 });
 
+app.get('/counselor/appointments/:id/chat', authenticateTokenCounselor, async (req, res) => {
+  const appointmentId = req.params.id;
+  const currentUser = req.user.user;
+  
+  try {
+      // Get appointment details to validate access
+      const appointmentResult = await pool.query(`
+        SELECT 
+          a.*, 
+          (c.first_name || ' ' || c.middle_name || ' ' || c.last_name) AS counselor_name,
+          (s.first_name || ' ' || s.middle_name || ' ' || s.last_name) AS student_name
+        FROM appointment a
+        JOIN counselor c ON a.counselor_id = c.id
+        JOIN student s ON a.student_id = s.id
+        WHERE a.id = $1
+      `, [appointmentId]);
+      
+        
+        
 
+      if (appointmentResult.rows.length === 0) {
+          return res.status(404).send("Appointment not found");
+      }
+
+      const appointment = appointmentResult.rows[0];
+
+      // Fetch messages
+      const messagesResult = await pool.query(`
+          SELECT * FROM messages WHERE appointment_id = $1 ORDER BY created_at ASC
+      `, [appointmentId]);
+
+      res.render('counselorPages/counselor-appointment-chat', {
+          messages: messagesResult.rows,
+          appointment: appointmentResult.rows[0],
+          currentUser,
+          user: req.user.user
+      });
+        
+
+  } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).send("Server Error");
+  }
+});
+app.post('/counselor/messages/send', authenticateTokenCounselor, async (req, res) => {
+  const { appointment_id, message, sender_type } = req.body;
+
+  try {
+      await pool.query(
+          `INSERT INTO messages (appointment_id, message, sender_type) VALUES ($1, $2, $3)`,
+          [appointment_id, message, sender_type]
+      );
+      res.redirect(`/counselor/appointments/${appointment_id}/chat`);
+  } catch (err) {
+      console.error('Error sending message:', err);
+      res.status(500).send('Server Error');
+  }
+});
 
 // // User registration
 // app.post('/admin/register', async (req, res) => {
@@ -909,42 +1224,83 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
 
 
 // Student login
+// app.post('/login', async (req, res) => {
+//     const { username, password } = req.body;
+
+//     try {
+//         const result = await pool.query('SELECT * FROM student WHERE username = $1', [username]);
+
+//         if (result.rows.length === 0) {
+//             return res.render('login', { error: 'Invalid username or password', username });
+//         }
+
+//         const user = result.rows[0];
+
+//         const passwordMatch = await bcrypt.compare(password, user.password);
+
+//         if (!passwordMatch) {
+//             return res.render('login', { error: 'Invalid username or password', username });
+//         }
+
+//         // Create a JWT token with user data (avoid putting sensitive data like password in the token)
+//         const token = jwt.sign(
+//             { user }, // payload (store minimal info)
+//             JWT_SECRET, // secret key
+//             { expiresIn: '1h' } // token expiration time
+//         );
+
+//         // Optionally, set the token as a cookie (for client-side session)
+//         res.cookie('jwt', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+
+//         // Redirect or render user-specific view (you could pass user info to the next page if needed)
+//         res.redirect('/student-app');
+//     } catch (err) {
+//         console.error('Error logging in user:', err);
+//         res.status(500).render('login', { error: 'Internal server error', username });
+//     }
+// });
+
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    try {
-        const result = await pool.query('SELECT * FROM student WHERE username = $1', [username]);
+  try {
+      // Query to get student data along with class name
+      const result = await pool.query(`
+          SELECT student.*, class.class_name
+          FROM student
+          LEFT JOIN class ON student.class_id = class.id
+          WHERE student.username = $1
+      `, [username]);
 
-        if (result.rows.length === 0) {
-            return res.render('login', { error: 'Invalid username or password', username });
-        }
+      if (result.rows.length === 0) {
+          return res.render('login', { error: 'Invalid username or password', username });
+      }
 
-        const user = result.rows[0];
+      const user = result.rows[0];
 
-        const passwordMatch = await bcrypt.compare(password, user.password);
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
-        if (!passwordMatch) {
-            return res.render('login', { error: 'Invalid username or password', username });
-        }
+      if (!passwordMatch) {
+          return res.render('login', { error: 'Invalid username or password', username });
+      }
 
-        // Create a JWT token with user data (avoid putting sensitive data like password in the token)
-        const token = jwt.sign(
-            { user }, // payload (store minimal info)
-            JWT_SECRET, // secret key
-            { expiresIn: '1h' } // token expiration time
-        );
+      // Create a JWT token with user data (avoid putting sensitive data like password in the token)
+      const token = jwt.sign(
+          { user }, // payload (store minimal info)
+          JWT_SECRET, // secret key
+          { expiresIn: '1h' } // token expiration time
+      );
 
-        // Optionally, set the token as a cookie (for client-side session)
-        res.cookie('jwt', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      // Optionally, set the token as a cookie (for client-side session)
+      res.cookie('jwt', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
 
-        // Redirect or render user-specific view (you could pass user info to the next page if needed)
-        res.redirect('/student-app');
-    } catch (err) {
-        console.error('Error logging in user:', err);
-        res.status(500).render('login', { error: 'Internal server error', username });
-    }
+      // Redirect or render user-specific view (you could pass user info to the next page if needed)
+      res.redirect('/student-app');
+  } catch (err) {
+      console.error('Error logging in user:', err);
+      res.status(500).render('login', { error: 'Internal server error', username });
+  }
 });
-
 
 
 
@@ -1104,7 +1460,24 @@ try {
 });
   
 
-
+app.get('/psychotests', authenticateToken, async (req, res) => {
+  try {
+    const studentId = req.user.user.id;
+    const result = await pool.query(
+      `SELECT pt.*, c.first_name AS counselor_first_name, c.last_name AS counselor_last_name
+       FROM psycho_tests pt
+       JOIN counselor c ON pt.counselor_id = c.id
+       WHERE pt.student_id = $1
+       ORDER BY pt.test_date DESC`,
+      [studentId]
+    );
+    res.render('psycho-testing',{ psychoTests: result.rows, user: req.user.user });
+    //res.render('psychoTests/index', { psychoTests: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
 
 
 
@@ -1147,6 +1520,42 @@ app.post('/saveAppointment', async (req, res) => {
         console.error('Error saving appointment:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+});
+app.post('/savePsychotesting', async (req, res) => {
+  const { title, student_id, counselor_id, test_date, isOnlineTest } = req.body;
+
+  // Default status
+  const status = req.body.status || 'pending';
+
+  // Format date
+  const formattedTestDate = moment(test_date).format('YYYY-MM-DD HH:mm:ss');
+  const todayFormatted = moment().format('YYYYMMDD');
+
+  // Generate 6-digit random number
+  const randomDigits = Math.floor(100000 + Math.random() * 900000);
+
+  // Generate unique test number
+  const testNumber = `${randomDigits}${todayFormatted}${student_id}${counselor_id}`;
+
+  try {
+    // Insert into psycho_tests table
+    const result = await pool.query(
+      `INSERT INTO psycho_tests 
+        (test_title, student_id, counselor_id, test_date, test_number, is_online_test, status, created_at, updated_at)
+       VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING id`,
+      [title, student_id, counselor_id, formattedTestDate, testNumber, isOnlineTest, status]
+    );
+
+    const testId = result.rows[0].id;
+
+    console.log("Psychological test record created successfully");
+    res.redirect('/student-app');
+  } catch (error) {
+    console.error('Error saving psychotesting record:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 

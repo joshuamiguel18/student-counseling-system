@@ -105,3 +105,48 @@ CREATE TABLE messages (
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+CREATE TABLE psycho_tests (
+  id SERIAL PRIMARY KEY,
+  test_title VARCHAR(255) NOT NULL,
+  student_id INTEGER NOT NULL,
+  counselor_id INTEGER NOT NULL,
+  test_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  test_number VARCHAR(100) UNIQUE NOT NULL,
+  is_online_test BOOLEAN DEFAULT TRUE,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE psycho_tests
+  ADD CONSTRAINT fk_student
+    FOREIGN KEY (student_id) REFERENCES student(id)
+    ON DELETE CASCADE;
+
+ALTER TABLE psycho_tests
+  ADD CONSTRAINT fk_counselor
+    FOREIGN KEY (counselor_id) REFERENCES counselor(id)
+    ON DELETE CASCADE;
+
+
+
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE resources (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category_id INT REFERENCES categories(id),
+    read_time VARCHAR(50),
+    pdf_link TEXT,
+    details_link TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

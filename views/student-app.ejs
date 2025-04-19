@@ -43,7 +43,13 @@
 
 
                       <div class="col-12 col-lg-8">
-                        <h5 class="mb-2">Welcome back,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                        <% if (isClassMayor) { %>
+                            <h5 class="mb-2">Welcome back Mayor,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                          <% } else { %>
+                            <h5 class="mb-2">Welcome back,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                      
+                          <% } %>
+                        <h5 class="mb-2">Your are in class <span class="h4">  <%= user.class_name %> </span></h5>
                         <div class="col-12">
                             <p>Your mental health journey is important, and we're here to support you. Let's take the next step together and schedule your student counseling appointment for a healthier, happier you!</p>
                         </div>
@@ -59,31 +65,33 @@
                             </div>
                             <div class="content-right">
                               <p class="mb-0 fw-medium">Appointments</p>
-                              <h4 class="text-primary mb-0"><%= appointments.length %></h4>
+                              <h4 class="text-primary mb-0"><%= appointmentStats.total %></h4>
                             </div>
                           </div>
                           <div class="d-flex align-items-center gap-4">
                             <div class="avatar avatar-lg">
                               <div class="avatar-initial bg-label-info rounded">
                                 <div>
+                                  <i class='bx bx-calendar'></i>
                                 </div>
                               </div>
                             </div>
                             <div class="content-right">
-                              <p class="mb-0 fw-medium">Test Results</p>
-                              <h4 class="text-info mb-0">82%</h4>
+                              <p class="mb-0 fw-medium">Completed Appointments</p>
+                              <h4 class="text-info mb-0"><%= appointmentStats.completed %></h4>
                             </div>
                           </div>
                           <div class="d-flex align-items-center gap-4">
                             <div class="avatar avatar-lg">
                               <div class="avatar-initial bg-label-warning rounded">
                                 <div>
+                                  <i class='bx bx-calendar'></i>
                                 </div>
                               </div>
                             </div>
                             <div class="content-right">
-                              <p class="mb-0 fw-medium">Course Completed </p>
-                              <h4 class="text-warning mb-0">14</h4>
+                              <p class="mb-0 fw-medium">Pending Appointments </p>
+                              <h4 class="text-warning mb-0"><%= appointmentStats.pending %></h4>
                             </div>
                           </div>
                         </div>
@@ -151,8 +159,30 @@
                             
 
                         </div>
-                  
+                        <% if (isClassMayor) { %>
+                          <div class="col-md mb-md-0 mb-5">
 
+
+
+
+
+
+                            <div class="form-check custom-option custom-option-icon checked" style="width: 250px;">
+                            
+                                <a href="/psycho-testing-form">
+                                    <label class="form-check-label custom-option-content" for="customRadioIcon1" >
+                                        <span class="custom-option-body">
+                                        <i class="bx bx-calendar-edit"></i>
+                                        <span class="custom-option-title">Schedule Class Psycho Testing</span>
+                                        </span>
+                                        <i class='bx bx-message-square-add' ></i>
+                                    </label>
+                                </a>
+                            </div>
+                            
+
+                          </div>
+                        <% } %>
                   </div>
 
                   <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalLabel" aria-hidden="true">

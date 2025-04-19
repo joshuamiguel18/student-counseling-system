@@ -230,24 +230,24 @@ button.list-group-item-primary.active {
 
 .btn-primary {
   color: #fff;
-  background-color: #89AC46;
-  border-color: #89AC46;
+  background-color: #696cff;
+  border-color: #696cff;
   box-shadow: 0 0.125rem 0.25rem 0 rgba(105, 108, 255, 0.4);
 }
 .btn-primary:hover {
   color: #fff !important;
-  background-color: #D3E671 !important;
-  border-color: #D3E671 !important;
+  background-color: #5f61e6 !important;
+  border-color: #5f61e6 !important;
 }
 .btn-check:focus + .btn-primary, .btn-primary:focus, .btn-primary.focus {
   color: #fff;
-  background-color: #D3E671;
-  border-color: #D3E671;
+  background-color: #5f61e6;
+  border-color: #5f61e6;
 }
 .btn-check:checked + .btn-primary, .btn-check:active + .btn-primary, .btn-primary:active, .btn-primary.active, .btn-primary.show.dropdown-toggle, .show > .btn-primary.dropdown-toggle {
   color: #fff !important;
-  background-color: #D3E671 !important;
-  border-color: #D3E671 !important;
+  background-color: #5f61e6 !important;
+  border-color: #5f61e6 !important;
 }
 .btn-primary.disabled, .btn-primary:disabled {
   color: #fff !important;
@@ -257,13 +257,13 @@ button.list-group-item-primary.active {
 
 .btn-group .btn-primary,
 .input-group .btn-primary {
-  border-right: var(--bs-border-width) solid #D3E671;
-  border-left: var(--bs-border-width) solid #D3E671;
+  border-right: var(--bs-border-width) solid #5f61e6;
+  border-left: var(--bs-border-width) solid #5f61e6;
 }
 
 .btn-group-vertical .btn-primary {
-  border-top-color: #D3E671;
-  border-bottom-color: #D3E671;
+  border-top-color: #5f61e6;
+  border-bottom-color: #5f61e6;
 }
 
 .btn-outline-primary {
@@ -544,7 +544,7 @@ button.list-group-item-primary.active {
 
 @media (max-width: 1199.98px) {
   .app-brand .layout-menu-toggle {
-    border: 7px solid #D3E671 !important;
+    border: 7px solid #5f61e6 !important;
   }
 }
 .footer.bg-primary {
@@ -810,7 +810,7 @@ html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-lin
 }
 
 .app-brand .layout-menu-toggle {
-  background-color: green;
+  background-color: #696cff;
   border: 7px solid #f5f5f9;
 }
 .app-brand .layout-menu-toggle i {

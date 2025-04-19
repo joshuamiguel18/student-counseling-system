@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+<head>
+  <%- include('includes/head.ejs') %>
+</head>
+
+<body>
+  <!-- Layout wrapper: Start -->
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+
+      <%- include('includes/sidebar.ejs') %>
+
+      <!-- Layout page: Start -->
+      <div class="layout-page">
+
+        <!-- Navbar: Start -->
+        <%- include('includes/header.ejs') %>
+        <!-- Navbar: End -->
+
+        <!-- Content wrapper: Start -->
+        <div class="content-wrapper">
+          <!-- Content: Start -->
+          <div class="container-xxl flex-grow-1 container-p-y">
+            <form id="appointment-form" method="POST" action="/savePsychotesting">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-8 mx-auto">
+                    <h1>Schedule Psycho Testing</h1>
+
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="class_id" value="<%= user.class_id %>" required>
+                    <input type="hidden" name="student_id" value="<%= user.id %>" required>
+
+                    <!-- Test Title -->
+                    <div class="col-12 mb-4">
+                      <label class="form-label" for="title">Test Title</label>
+                      <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Test Title" required></textarea>
+                    </div>
+
+                    <!-- Test Type -->
+                    <div class="col-md mb-4">
+                      <label class="form-label" for="isOnlineTest">Test Type</label>
+                      <select id="isOnlineTest" class="select2 form-select" name="isOnlineTest" required>
+                        <option selected disabled>Select Type</option>
+                        <option value="1">Online Test</option>
+                        <option value="0">Physical Test</option>
+                      </select>
+                    </div>
+
+                    <!-- Counselor -->
+                    <div class="col-md mb-4">
+                      <label class="form-label" for="counselor_id">Counselor</label>
+                      <select id="counselor_id" class="select2 form-select" name="counselor_id" required>
+                        <option selected disabled>Select Counselor</option>
+                        <% counselors.forEach(counselor => { %>
+                          <option value="<%= counselor.id %>"><%= counselor.full_name %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+
+                    <!-- Test Date -->
+                    <div class="col-md mb-4">
+                      <div id="appointment-date-wrapper" class="d-none">
+                        <label class="form-label" for="test_date">Test Date</label>
+                        <input type="text" id="test_date" class="form-control" name="test_date" placeholder="Select A Date" required>
+                        <small id="available-days-note" class="text-muted"></small>
+                      </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-primary">Book Psycho Testing</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <!--/ Content: End -->
+
+          <!-- Footer: Start -->
+          <%- include('includes/footer.ejs') %>
+          <!-- Footer: End -->
+
+          <div class="content-backdrop fade"></div>
+        </div>
+        <!--/ Content wrapper: End -->
+      </div>
+      <!-- / Layout page: End -->
+
+    </div>
+  </div>
+  <!-- Layout wrapper: End -->
+
+  <!-- Scripts -->
+  <%- include('includes/scripts.ejs') %>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const dayMap = {
+        "Sunday": 0,
+        "Monday": 1,
+        "Tuesday": 2,
+        "Wednesday": 3,
+        "Thursday": 4,
+        "Friday": 5,
+        "Saturday": 6
+      };
+
+      let flatpickrInstance = null;
+
+      function setupFlatpickr(availableDays) {
+        if (flatpickrInstance) flatpickrInstance.destroy();
+        document.getElementById('test_date').value = '';
+
+        flatpickrInstance = flatpickr("#test_date", {
+          dateFormat: "Y-m-d",
+          disable: [
+            function (date) {
+              return !availableDays.includes(date.getDay());
+            }
+          ]
+        });
+      }
+
+      document.getElementById('counselor_id').addEventListener('change', function () {
+        const counselorId = this.value;
+        if (!counselorId) return;
+
+        fetch(`/counselors/${counselorId}/availability`)
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(data => {
+            const days = data.available_days || [];
+            const availableDays = days.map(day => dayMap[day]);
+
+            setupFlatpickr(availableDays);
+
+            document.getElementById('appointment-date-wrapper').classList.remove('d-none');
+            document.getElementById('available-days-note').textContent = `Available on: ${days.join(', ')}`;
+          })
+          .catch(() => {
+            alert("Failed to fetch counselor availability.");
+            document.getElementById('appointment-date-wrapper').classList.add('d-none');
+            document.getElementById('test_date').value = '';
+            if (flatpickrInstance) flatpickrInstance.destroy();
+          });
+      });
+
+      document.getElementById('appointment-form').addEventListener('submit', function (e) {
+        const title = document.getElementById('title').value.trim();
+        const isOnline = document.getElementById('isOnlineTest').value;
+        const counselor = document.getElementById('counselor_id').value;
+        const appointmentDate = document.getElementById('test_date').value.trim();
+
+        if (!title || !isOnline || !counselor || !appointmentDate) {
+          e.preventDefault();
+          alert('Please fill in all required fields before submitting the form.');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

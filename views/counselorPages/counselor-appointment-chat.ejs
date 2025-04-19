@@ -3,7 +3,7 @@
 <html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
 
   <head>
-	<%- include('includes/head.ejs') %>
+    <%- include('../includes/head.ejs') %>
 
 
 
@@ -26,14 +26,14 @@
 		  <div class="content-wrapper">
 			<!-- Content: Start -->
 			<div class="container-xxl flex-grow-1 container-p-y">
-        <a href="/appointments" class="btn btn-outline-secondary  mb-2" type="button">
+        <a href="/counselor/appointments/" class="btn btn-outline-secondary  mb-2" type="button">
           ← Back 
         </a>
         <div class="card shadow-sm">
           
           <h5 class="card-header bg-primary text-white">
 
-                 Chat with Counselor <%= appointment.counselor_name %>
+                 Chat with Student <%= appointment.student_name %>
 
           </h5>
           
@@ -58,9 +58,9 @@
                 </div>
         
                 <!-- Send Message Form -->
-                <form action="/messages/send" method="POST" class="d-flex">
+                <form action="/counselor/messages/send" method="POST" class="d-flex">
                   <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
-                  <input type="hidden" name="sender_type" value="student">
+                  <input type="hidden" name="sender_type" value="counselor">
                   <input type="text" name="message" class="form-control me-2" placeholder="Type your message..." required style="max-width: 80%; border-radius: 20px;">
                   <button class="btn btn-primary" type="submit" style="border-radius: 20px;">Send</button>
                 </form>
@@ -99,7 +99,7 @@
 	  <!-- Layout wrapper: End -->
 	
 
-	  <%- include('includes/scripts.ejs') %>
+	  <%- include('../includes/scripts.ejs') %>
     <script>
       const appointmentId = <%= appointment.id %>; // Get appointment id from EJS
       const chatBox = document.getElementById('chat-box'); // The chat box to display messages
@@ -118,10 +118,10 @@
               messageDiv.classList.add('mb-2', 'd-flex');
               
               // Add alignment based on sender type
-              messageDiv.classList.add(msg.sender_type === 'student' ? 'justify-content-end' : 'justify-content-start');
+              messageDiv.classList.add(msg.sender_type === 'counselor' ? 'justify-content-end' : 'justify-content-start');
               
               messageDiv.innerHTML = `
-                <div class="p-2 rounded ${msg.sender_type === 'counselor' ? 'bg-primary text-white' : 'bg-light border'}" style="max-width: 70%;">
+                <div class="p-2 rounded ${msg.sender_type === 'student' ? 'bg-primary text-white' : 'bg-light border'}" style="max-width: 70%;">
                   <div>${msg.message}</div>
                   <small class="d-block text-end text-muted" style="font-size: 0.75rem;">${new Date(msg.created_at).toLocaleString()}</small>
                 </div>

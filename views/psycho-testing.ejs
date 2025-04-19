@@ -21,91 +21,51 @@
 
           <div class="card mb-4">
             <h5 class="card-header d-flex justify-content-between align-items-center">
-              <span>My Appointments</span>
-              <div class="d-flex gap-2">
-                <!-- Filter -->
-                <select id="statusFilter" class="form-select w-auto">
-                  <option value="all">All</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending" selected >Pending</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="completed">Completed</option>
-                </select>
-
-                <!-- Sort -->
-                <select id="sortByDate" class="form-select w-auto">
-                  <option value="desc">Newest First</option>
-                  <option value="asc">Oldest First</option>
-                </select>
-              </div>
+              <span>My Psychological Tests</span>
             </h5>
-
-            <div class="container p-3" id="appointmentsContainer">
-              <% if (appointments.length > 0) { %>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="appointmentList">
-                  <% appointments.forEach(appointment => { %>
-                    <div class="col appointment-card-item" data-status="<%= appointment.status %>" data-date="<%= appointment.appointment_date %>">
+          
+            <div class="container p-3" id="psychoTestsContainer">
+              <% if (psychoTests.length > 0) { %>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="testList">
+                  <% psychoTests.forEach(test => { %>
+                    <div class="col">
                       <div class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
                         <div class="position-absolute top-0 end-0 m-3">
                           <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
-                            <%= appointment.status === 'approved' ? 'bg-success' :
-                                appointment.status === 'pending' ? 'bg-warning text-dark' :
-                                appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
+                            <%= test.status === 'completed' ? 'bg-success' :
+                                test.status === 'pending' ? 'bg-warning text-dark' :
+                                test.status === 'cancelled' || test.status === 'rejected' ? 'bg-danger' :
                                 'bg-secondary' %>">
-                            <%= appointment.status.toUpperCase() %>
+                            <%= test.status.toUpperCase() %>
                           </span>
                         </div>
                         <div class="card-body p-4">
                           <h5 class="card-title mb-2 text-primary">
-                            <i class="bi bi-journal-check me-1"></i> <%= appointment.title %>
+                            <i class="bi bi-file-earmark-text me-1"></i> <%= test.test_title %>
                           </h5>
                           <div class="mb-2">
                             <i class="bi bi-person-circle me-1 text-muted"></i>
-                            <strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %>
+                            <strong>Counselor:</strong> <%= test.counselor_first_name %> <%= test.counselor_last_name %>
                           </div>
                           <div class="mb-2">
                             <i class="bi bi-calendar-event me-1 text-muted"></i>
-                            <strong>Date:</strong> <%= new Date(appointment.appointment_date).toLocaleString() %>
+                            <strong>Date:</strong> <%= new Date(test.test_date).toLocaleString() %>
                           </div>
                           <div class="mb-2">
                             <i class="bi bi-laptop me-1 text-muted"></i>
-                            <strong>Type:</strong> <%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %>
+                            <strong>Type:</strong> <%= test.is_online_test ? 'Online' : 'Face-to-Face' %>
                           </div>
                           <div class="mb-3">
                             <i class="bi bi-hash me-1 text-muted"></i>
-                            <strong>Appointment #:</strong> <%= appointment.appointment_number %>
+                            <strong>Test #:</strong> <%= test.test_number %>
                           </div>
-
                         </div>
+          
                         <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                          <% if (appointment.status !== 'cancelled') { %>
-                            <div class="dropdown">
-                              <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-gear-fill me-1"></i> Actions
-                              </button>
-                              <ul class="dropdown-menu w-100 shadow-sm rounded-3">
-                                <% if (appointment.status == 'pending') { %>
-                                <li>
-                                  <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#rescheduleModal" data-appointment-id="<%= appointment.id %>" data-current-date="<%= appointment.appointment_date %>">
-                                    <i class="bi bi-calendar2-plus me-2"></i>Reschedule
-                                  </button>
-                                </li>
-                                <% } %>
-                                <li>
-                                  <a class="dropdown-item text-danger" href="/appointments/cancel/<%= appointment.id %>">
-                                    <i class="bi bi-x-circle me-2"></i>Cancel
-                                  </a>
-                                </li>
-                                <% if (appointment.is_online_appointment) { %>
-                                  <li>
-                                    <a class="dropdown-item" href="/appointments/<%= appointment.id %>/chat">
-                                      <i class="bi bi-chat-dots me-2"></i>Go to Chat
-                                    </a>
-                                  </li>
-                                <% } %>
-                              </ul>
-                            </div>
+                          <% if (test.status == 'approved') { %>
+                            <a class="btn btn-outline-primary w-100 rounded-pill" href="/psycho-tests/<%= test.id %>/view">
+                              <i class="bi bi-eye me-1"></i> Go to Group Chat
+                            </a>
                           <% } else { %>
                             <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>
                           <% } %>
@@ -117,11 +77,12 @@
               <% } else { %>
                 <div class="text-center mt-5">
                   <i class="bi bi-emoji-frown display-4 text-secondary"></i>
-                  <p class="mt-3 fs-5 text-muted">No appointments found.</p>
+                  <p class="mt-3 fs-5 text-muted">No psychological tests found.</p>
                 </div>
               <% } %>
             </div>
           </div>
+          
         </div>
 
         <!-- Reschedule Modal -->
