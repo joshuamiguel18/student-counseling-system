@@ -457,6 +457,30 @@ app.get('/source-materials',authenticateToken, (req, res) => {
   });
   
 
+  app.post('/appointments/edit/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, appointment_date, status } = req.body;
+    console.log(title, appointment_date, status);
+    try {
+      await pool.query(
+        `UPDATE appointment
+         SET title = $1,
+             appointment_date = $2,
+             status = $3,
+             update_date = CURRENT_TIMESTAMP
+         WHERE id = $4`,
+        [title, appointment_date, status, id]
+      );
+  
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error updating appointment:', err);
+      res.json({ success: false });
+    }
+  });
+  
+
+
 
 app.post('/appointments/reschedule', async (req, res) => {
   const { appointment_id, new_date } = req.body;
@@ -715,7 +739,7 @@ app.post('/admin/register', async (req, res) => {
       return res.render('admin/register', {
         error: "All fields are required and terms must be accepted.",
         username,
-        email
+        email,
       });
     }
   
@@ -808,7 +832,7 @@ app.post('/admin/login', async (req, res) => {
 
 
 /// display all the pending appointments
-app.get('/admin/appointments/pending',authenticateTokenAdmin, async (req, res) => {
+app.get('/admin/appointments',authenticateTokenAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
@@ -823,46 +847,46 @@ app.get('/admin/appointments/pending',authenticateTokenAdmin, async (req, res) =
             FROM appointment
             JOIN student ON appointment.student_id = student.id
             JOIN counselor ON appointment.counselor_id = counselor.id
-            WHERE appointment.status = 'pending'
             ORDER BY appointment.appointment_date DESC
         `);
 
         const appointments = result.rows;
-
-        res.render('adminPages/pending-appointments-admin', { appointments });
+        res.render('adminPages/appointments-admin', { appointments, user: req.user.user });
     } catch (err) {
         console.error('Error fetching pending appointments:', err);
         res.status(500).send('Server Error');
     }
 });
 
-app.get('/admin/appointments/approved',authenticateTokenAdmin, async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT 
-                appointment.id, 
-                appointment.title, 
-                appointment.status, 
-                appointment.appointment_date,
-                student.first_name AS student_first_name,
-                student.last_name AS student_last_name,
-                counselor.first_name AS counselor_first_name,
-                counselor.last_name AS counselor_last_name
-            FROM appointment
-            JOIN student ON appointment.student_id = student.id
-            JOIN counselor ON appointment.counselor_id = counselor.id
-            WHERE appointment.status = 'approved'
-            ORDER BY appointment.appointment_date DESC
-        `);
+app.get('/admin/psycho-testing', authenticateTokenAdmin, async (req, res) => {
+  try {
+      const result = await pool.query(`
+          SELECT 
+              psycho_tests.id,
+              psycho_tests.test_title,
+              psycho_tests.status,
+              psycho_tests.test_date,
+              psycho_tests.test_number,
+              psycho_tests.is_online_test,
+              student.first_name AS student_first_name,
+              student.last_name AS student_last_name,
+              counselor.first_name AS counselor_first_name,
+              counselor.last_name AS counselor_last_name
+          FROM psycho_tests
+          JOIN student ON psycho_tests.student_id = student.id
+          JOIN counselor ON psycho_tests.counselor_id = counselor.id
+          ORDER BY psycho_tests.test_date DESC
+      `);
 
-        const appointments = result.rows;
+      const tests = result.rows;
 
-        res.render('adminPages/approved-appointments-admin', { appointments });
-    } catch (err) {
-        console.error('Error fetching approved appointments:', err);
-        res.status(500).send('Server Error');
-    }
+      res.render('adminPages/psycho-testing-admin', { tests, user: req.user.user });
+  } catch (err) {
+      console.error('Error fetching psycho tests:', err);
+      res.status(500).send('Server Error');
+  }
 });
+
 app.get('/admin/appointments/cancelled', authenticateTokenAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -884,7 +908,7 @@ app.get('/admin/appointments/cancelled', authenticateTokenAdmin, async (req, res
 
         const appointments = result.rows;
 
-        res.render('adminPages/cancelled-appointments-admin', { appointments });
+        res.render('adminPages/cancelled-appointments-admin', { appointments, user: req.user.user });
     } catch (err) {
         console.error('Error fetching cancelled appointments:', err);
         res.status(500).send('Server Error');
@@ -912,7 +936,7 @@ app.get('/admin/appointments/rejected', authenticateTokenAdmin, async (req, res)
 
         const appointments = result.rows;
 
-        res.render('adminPages/rejected-appointments-admin', { appointments });
+        res.render('adminPages/rejected-appointments-admin', { appointments, user: req.user.user });
     } catch (err) {
         console.error('Error fetching rejected appointments:', err);
         res.status(500).send('Server Error');
@@ -1319,11 +1343,11 @@ app.get('/appointments/cancel/:id', async (req, res) => {
       if (result.rows.length > 0) {
         // Redirect to the appointments page with a success message
         req.flash('success', 'Appointment has been successfully cancelled.');
-        res.redirect('/appointments');
+        res.redirect('/admin/appointments');
       } else {
         // If no appointment found
         req.flash('error', 'Appointment not found.');
-        res.redirect('/appointments');
+        res.redirect('/admin/appointments');
       }
     } catch (err) {
       console.error(err);
@@ -1481,7 +1505,87 @@ app.get('/psychotests', authenticateToken, async (req, res) => {
 });
 
 
+app.get('/classes', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.class_name,
+        c.create_date,
+        c.update_date,
+        COUNT(s.id) AS student_count
+      FROM class c
+      LEFT JOIN student s ON s.class_id = c.id
+      GROUP BY c.id
+      ORDER BY c.class_name;
+    `);
 
+    res.render('adminPages/classTable', { classes: result.rows, user: req.user.user });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+app.get('/students', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT student.*, class.class_name AS class_name 
+      FROM student 
+      LEFT JOIN class ON student.class_id = class.id
+      ORDER BY student.create_date DESC
+    `);
+    res.render('adminPages/studentsTable', { students: result.rows, user: req.user.user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+app.get('/students/:id', async (req, res) => {
+  console.log("FETCHING!")
+  try {
+    const id = req.params.id;
+    const result = await pool.query(`SELECT s.*, c.class_name as class_name FROM student s LEFT JOIN class c ON s.class_id = c.id WHERE s.id = $1`, [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/students/edit/:id', async (req, res) => {
+  const { first_name, middle_name, last_name, email, is_class_mayor } = req.body;
+  try {
+    await pool.query(`
+      UPDATE student
+      SET first_name = $1,
+          middle_name = $2,
+          last_name = $3,
+          email = $4,
+          is_class_mayor = $5,
+          update_date = CURRENT_TIMESTAMP
+      WHERE id = $6
+    `, [first_name, middle_name, last_name, email, is_class_mayor, req.params.id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
+
+
+// Save new class
+app.post('/classes/create', async (req, res) => {
+  const { class_name } = req.body;
+  try {
+    await pool.query('INSERT INTO class (class_name) VALUES ($1)', [class_name]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false });
+  }
+});
 
 
 

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          
+
+            <div class="card" style="box-shadow: none !important;">
+                <h5 class="card-header">All Classes</h5>
+                <div class="card-body">
+                    <div class="mb-3 text-end">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClassModal">
+                            <i class="bx bx-plus"></i> Create Class
+                        </button>
+                    </div>
+                  <div class="table-responsive d-none d-sm-block">
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Class ID</th>
+                          <th>Class Name</th>
+                          <th>Number of Students</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if (classes.length > 0) { %>
+                          <% classes.forEach(cls => { %>
+                            <tr>
+                              <td><%= cls.id %></td>
+                              <td><%= cls.class_name %></td>
+                              <td><%= cls.student_count %></td>
+                            </tr>
+                          <% }) %>
+                        <% } else { %>
+                          <tr><td colspan="3" class="text-center">No classes found.</td></tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+              
+                  <!-- Mobile Cards -->
+                  <div class="d-block d-sm-none">
+                    <% if (classes.length > 0) { %>
+                      <% classes.forEach(cls => { %>
+                        <div class="card mb-3 border shadow-sm">
+                          <div class="card-body">
+                            <h5 class="card-title mb-2">Class: <%= cls.class_name %></h5>
+                            <p><strong>Class ID:</strong> <%= cls.id %></p>
+                            <p><strong>Number of Students:</strong> <%= cls.student_count %></p>
+                          </div>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <div class="text-center">No classes found.</div>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              
+
+          <!-- Action Confirmation Modal (Approve / Reject / Cancel) -->
+          <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="actionModalLabel">Confirm Action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="actionModalBody">Are you sure you want to perform this action?</div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <a href="#" class="btn btn-primary" id="actionModalBtn">Yes, Proceed</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Modal -->
+          <div class="modal fade" id="editAppointmentModal" tabindex="-1" aria-labelledby="editAppointmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editAppointmentModalLabel">Edit Appointment</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="editAppointmentForm">
+                    <div class="mb-3">
+                      <label for="appointmentTitle" class="form-label">Title</label>
+                      <input type="text" class="form-control" id="appointmentTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="appointmentDate" class="form-label">Date</label>
+                      <input type="datetime-local" class="form-control" id="appointmentDate" name="appointment_date" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="appointmentStatus" class="form-label">Status</label>
+                      <select class="form-select" id="appointmentStatus" name="status" required>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </form>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-backdrop fade"></div>
+
+
+          <!-- Create Class Modal -->
+            <div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="createClassForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createClassModalLabel">Create New Class</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                        <label for="newClassName" class="form-label">Class Name</label>
+                        <input type="text" class="form-control" id="newClassName" name="class_name" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+
+
+
+          <!-- Success Modal -->
+          <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-success">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="successModalLabel">Success</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Appointment updated successfully!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Modal -->
+          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-danger">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Failed to update the appointment. Please try again.
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+        </div>
+
+        <%- include('../includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('../includes/scripts.ejs') %>
+
+  <script>
+    // Submit Create Class Form
+// Submit Create Class Form
+document.getElementById('createClassForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+
+  const data = {
+    class_name: document.getElementById('newClassName').value
+  };
+
+  fetch('/classes/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(data => {
+    // Hide the modal immediately
+    const createModal = bootstrap.Modal.getInstance(document.getElementById('createClassModal'));
+    createModal.hide();
+
+    if (data.success) {
+      new bootstrap.Modal(document.getElementById('successModal')).show();
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      new bootstrap.Modal(document.getElementById('errorModal')).show();
+    }
+  });
+});
+
+  </script>
+</body>
+</html>

@@ -132,7 +132,13 @@ ALTER TABLE psycho_tests
     FOREIGN KEY (counselor_id) REFERENCES counselor(id)
     ON DELETE CASCADE;
 
+ALTER TABLE psycho_tests
+ADD COLUMN class_id INTEGER;
 
+ALTER TABLE psycho_tests
+ADD CONSTRAINT fk_class
+FOREIGN KEY (class_id) REFERENCES class(id)
+ON DELETE SET NULL;
 
 
 CREATE TABLE categories (

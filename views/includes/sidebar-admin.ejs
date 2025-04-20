@@ -1,47 +1,42 @@
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
   <%- include('logo.ejs') %>
- 
-
 
   <div class="menu-inner-shadow"></div>
 
   <ul class="menu-inner py-1">
-
-
     <li class="menu-item">
       <a href="/admin-app" class="menu-link">
-        <i class="menu-icon tf-icons bx bxs-dashboard"></i>
+        <i class="menu-icon tf-icons bx bx-home"></i>
         <div class="text-truncate" data-i18n="Dashboard">Dashboard</div>
       </a>
     </li>
 
     <li class="menu-item">
-      <a href="/admin/appointments/pending" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-notepad"></i>
-        <div class="text-truncate" data-i18n="Forms">Pending appointments</div>
-      </a>
-    </li>
-    <li class="menu-item">
-      <a href="/admin/appointments/approved" class="menu-link">
-        
-        <i class="menu-icon tf-icons bx bx-check-circle"></i>
-        <div class="text-truncate" data-i18n="Forms">Approved appointments</div>
+      <a href="/admin/appointments" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-calendar"></i>
+        <div class="text-truncate" data-i18n="Forms">Appointments</div>
       </a>
     </li>
 
     <li class="menu-item">
-      <a href="/admin/appointments/rejected" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-x-circle"></i>
-        <div class="text-truncate" data-i18n="Forms">Rejected appointments</div>
+      <a href="/admin/psycho-testing" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-brain"></i>
+        <div class="text-truncate" data-i18n="Forms">Psycho Testing</div>
       </a>
     </li>
+
     <li class="menu-item">
-      <a href="/admin/appointments/cancelled" class="menu-link">
-        <i class="menu-icon tf-icons bx bxs-user-x"></i>
-        <div class="text-truncate" data-i18n="Forms">Cancelled appointments</div>
+      <a href="/classes" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-group"></i>
+        <div class="text-truncate" data-i18n="Forms">Classes</div>
+      </a>
+    </li>
+
+    <li class="menu-item">
+      <a href="/students" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-user"></i>
+        <div class="text-truncate" data-i18n="Forms">Students</div>
       </a>
     </li>
   </ul>
-
-
 </aside>

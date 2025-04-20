@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          
+
+          <div class="card" style="box-shadow: none !important;">
+            <h5 class="card-header">Students</h5>
+
+
+
+          
+            
+
+
+            <div class="card-body">
+              <div id="studentList">
+                <!-- Search + Filter -->
+                <div class="mb-3">
+                  <input class="search form-control mb-2" placeholder="Search students..." />
+                  <select id="mayorFilter" class="form-select">
+                    <option value="">All Students</option>
+                    <option value="true">Mayors</option>
+                    <option value="false">Not Mayors</option>
+                  </select>
+                </div>
+              
+                <!-- Desktop Table -->
+                <div class="table-responsive d-none d-sm-block">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th class="sort" data-sort="name">Name</th>
+                        <th class="sort" data-sort="username">Username</th>
+                        <th class="sort" data-sort="email">Email</th>
+                        <th>Class</th>
+                        <th>Mayor</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="list">
+                      <% students.forEach(student => { %>
+                      <tr data-mayor="<%= student.is_class_mayor %>">
+                        <td class="name"><%= student.first_name %> <%= student.middle_name %> <%= student.last_name %></td>
+                        <td class="username"><%= student.username %></td>
+                        <td class="email"><%= student.email %></td>
+                        <td><%= student.class_name || 'Unassigned' %></td>
+                        <td>
+                          <span class="badge <%= student.is_class_mayor ? 'bg-label-success' : 'bg-label-secondary' %>">
+                            <%= student.is_class_mayor ? 'Yes' : 'No' %>
+                          </span>
+                        </td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary" onclick="editStudent(<%= student.id %>)">Edit</button>
+                        </td>
+                      </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              
+                <!-- Mobile Cards -->
+                <div class="d-block d-sm-none list">
+                  <% students.forEach(student => { %>
+                    <div class="card mb-3 border shadow-sm" data-mayor="<%= student.is_class_mayor %>">
+                      <div class="card-body">
+                        <h5 class="card-title mb-2 name"><%= student.first_name %> <%= student.middle_name %> <%= student.last_name %></h5>
+                        <p><strong>Username:</strong> <span class="username"><%= student.username %></span></p>
+                        <p><strong>Email:</strong> <span class="email"><%= student.email %></span></p>
+                        <p><strong>Class:</strong> <%= student.class_name || 'Unassigned' %></p>
+                        <p><strong>Mayor:</strong> 
+                          <span class="badge <%= student.is_class_mayor ? 'bg-label-success' : 'bg-label-secondary' %>">
+                            <%= student.is_class_mayor ? 'Yes' : 'No' %>
+                          </span>
+                        </p>
+                        <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="editStudent(<%= student.id %>)">Edit</button>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              
+                <!-- Pagination -->
+                <ul class="pagination pagination-sm mt-3 justify-content-center"></ul>
+              </div>
+              
+            </div>
+          </div>
+          
+              
+
+          <!-- Action Confirmation Modal (Approve / Reject / Cancel) -->
+          <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="actionModalLabel">Confirm Action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="actionModalBody">Are you sure you want to perform this action?</div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <a href="#" class="btn btn-primary" id="actionModalBtn">Yes, Proceed</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+         <!-- 3. HTML Modal to Edit Student -->
+          <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Student</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editStudentForm">
+                  <div class="modal-body">
+                    <input type="hidden" id="editStudentId">
+                    <div class="mb-3">
+                      <label class="form-label">First Name</label>
+                      <input type="text" class="form-control" id="editFirstName" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Middle Name</label>
+                      <input type="text" class="form-control" id="editMiddleName">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Last Name</label>
+                      <input type="text" class="form-control" id="editLastName" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" id="editEmail">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Is Mayor</label>
+                      <select class="form-select" id="editIsMayor">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-bs-dismiss="editStudentModal">Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-backdrop fade"></div>
+
+          <!-- Success Modal -->
+          <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-success">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="successModalLabel">Success</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Appointment updated successfully!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Modal -->
+          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-danger">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Failed to update the appointment. Please try again.
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+        </div>
+
+        <%- include('../includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('../includes/scripts.ejs') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+
+  <script>
+
+const options = {
+  valueNames: ['name', 'username', 'email'],
+  page: 5,
+  pagination: {
+    paginationClass: "pagination"
+  }
+};
+
+const studentList = new List('studentList', options);
+
+// Mayor filter (applies to both table rows and mobile cards)
+document.getElementById('mayorFilter').addEventListener('change', function () {
+  const value = this.value;
+
+  // Apply filter to the table
+  studentList.filter(item => {
+    const isMayor = item.elm.getAttribute('data-mayor');
+    return value === '' || isMayor === value;
+  });
+
+  // Apply filter to the mobile cards as well
+  const mobileCards = document.querySelectorAll('.d-block.d-sm-none .card');
+  mobileCards.forEach(card => {
+    const isMayor = card.getAttribute('data-mayor');
+    if (value === '' || isMayor === value) {
+      card.style.display = ''; // Show card
+    } else {
+      card.style.display = 'none'; // Hide card
+    }
+  });
+});
+
+// For search functionality (applies to both table rows and mobile cards)
+document.querySelector('.search').addEventListener('input', function () {
+  const query = this.value.toLowerCase();
+
+  // Apply search to the table rows
+  const rows = document.querySelectorAll('.table tbody tr');
+  rows.forEach(row => {
+    const name = row.querySelector('.name').textContent.toLowerCase();
+    const username = row.querySelector('.username').textContent.toLowerCase();
+    const email = row.querySelector('.email').textContent.toLowerCase();
+
+    if (name.includes(query) || username.includes(query) || email.includes(query)) {
+      row.style.display = ''; // Show row
+    } else {
+      row.style.display = 'none'; // Hide row
+    }
+  });
+
+  // Apply search to the mobile cards
+  const mobileCards = document.querySelectorAll('.d-block.d-sm-none .card');
+  mobileCards.forEach(card => {
+    const name = card.querySelector('.name').textContent.toLowerCase();
+    const username = card.querySelector('.username').textContent.toLowerCase();
+    const email = card.querySelector('.email').textContent.toLowerCase();
+
+    if (name.includes(query) || username.includes(query) || email.includes(query)) {
+      card.style.display = ''; // Show card
+    } else {
+      card.style.display = 'none'; // Hide card
+    }
+  });
+});
+
+
+  // Mayor filter
+  document.getElementById('mayorFilter').addEventListener('change', function () {
+    const value = this.value;
+
+    studentList.filter(item => {
+      const isMayor = item.elm.getAttribute('data-mayor');
+      return value === '' || isMayor === value;
+    });
+  });
+
+
+
+    function editStudent(id) {
+      console.log("ID IS: " + id)
+      fetch(`/students/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log(data)
+          document.getElementById('editStudentId').value = data.id;
+          document.getElementById('editFirstName').value = data.first_name;
+          document.getElementById('editMiddleName').value = data.middle_name;
+          document.getElementById('editLastName').value = data.last_name;
+          document.getElementById('editEmail').value = data.email;
+          document.getElementById('editIsMayor').value = data.is_class_mayor;
+          new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+        });
+    }
+    
+    document.getElementById('editStudentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('editStudentId').value;
+      const data = {
+        first_name: document.getElementById('editFirstName').value,
+        middle_name: document.getElementById('editMiddleName').value,
+        last_name: document.getElementById('editLastName').value,
+        email: document.getElementById('editEmail').value,
+        is_class_mayor: document.getElementById('editIsMayor').value === 'true'
+      };
+    
+      fetch(`/students/edit/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+              const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+              successModal.show();
+              setTimeout(() => {
+              successModal.hide();
+              location.reload(); // Optional: Refresh after showing success
+            }, 1500);
+          } else {
+            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+          }
+
+        });
+    });
+    </script>
+</body>
+</html>
