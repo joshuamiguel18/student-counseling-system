@@ -62,7 +62,7 @@
                                     <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/appointments/reject/<%= appointment.id %>')">Reject</a></li>
                                   <% } %>
                                   <% if (appointment.status === 'approved') { %>
-                                    <li><a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/appointments/cancel/<%= appointment.id %>')">Cancel</a></li>
+                                    <li><a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/admin/appointments/cancel/<%= appointment.id %>')">Cancel</a></li>
                                   <% } %>
                                   <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">Edit</a></li>
                                 </ul>

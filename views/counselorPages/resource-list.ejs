@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
+
+<body>
+  <!-- Layout wrapper: Start -->
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+
+      <%- include('../includes/sidebar-counselor.ejs') %>
+
+      <!-- Layout page: Start -->
+      <div class="layout-page">
+
+        <!-- Navbar: Start -->
+        <%- include('../includes/header-counselor.ejs') %>
+        <!-- Navbar: End -->
+
+        <!-- Content wrapper: Start -->
+        <div class="content-wrapper">
+          <!-- Content: Start -->
+          <div class="container-xxl flex-grow-1 container-p-y">
+            <h1>All Resources</h1>
+            <div class="mb-3">
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                + Add New Resource
+              </button>
+            </div>
+            
+<!-- Desktop Table -->
+<div class="table-responsive d-none d-md-block">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Read Time</th>
+        <th>PDF</th>
+        <th>Details</th>
+        <th>Created At</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% resources.forEach(resource => { %>
+        <tr>
+          <td><%= resource.title %></td>
+          <td><%= resource.category_name || 'Uncategorized' %></td>
+          <td><%= resource.description %></td>
+          <td><%= resource.read_time %></td>
+          <td>
+            <% if (resource.pdf_link) { %>
+              <a href="<%= resource.pdf_link %>" target="_blank">View PDF</a>
+            <% } else { %> N/A <% } %>
+          </td>
+          <td>
+            <% if (resource.details_link) { %>
+              <a href="<%= resource.details_link %>" target="_blank">More Details</a>
+            <% } else { %> N/A <% } %>
+          </td>
+          <td><%= new Date(resource.created_at).toLocaleString() %></td>
+          <td>
+            <button class="btn btn-sm btn-primary edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
+              data-id="<%= resource.id %>"
+              data-title="<%= resource.title %>"
+              data-description="<%= resource.description %>"
+              data-read_time="<%= resource.read_time %>"
+              data-pdf_link="<%= resource.pdf_link %>"
+              data-details_link="<%= resource.details_link %>"
+              data-category="<%= resource.category_id %>">
+              Edit
+            </button>
+            <form action="/delete/resource/<%= resource.id %>" method="POST" style="display:inline;" onsubmit="return confirm('Delete this resource?')">
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Mobile Cards -->
+<div class="d-block d-md-none">
+  <% resources.forEach(resource => { %>
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title"><%= resource.title %></h5>
+        <p><strong>Category:</strong> <%= resource.category_name || 'Uncategorized' %></p>
+        <p><strong>Description:</strong> <%= resource.description %></p>
+        <p><strong>Read Time:</strong> <%= resource.read_time %></p>
+        <p><strong>PDF:</strong>
+          <% if (resource.pdf_link) { %>
+            <a href="<%= resource.pdf_link %>" target="_blank">View PDF</a>
+          <% } else { %> N/A <% } %>
+        </p>
+        <p><strong>Details:</strong>
+          <% if (resource.details_link) { %>
+            <a href="<%= resource.details_link %>" target="_blank">More Details</a>
+          <% } else { %> N/A <% } %>
+        </p>
+        <p><strong>Created At:</strong> <%= new Date(resource.created_at).toLocaleString() %></p>
+
+        <button class="btn btn-sm btn-primary edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
+          data-id="<%= resource.id %>"
+          data-title="<%= resource.title %>"
+          data-description="<%= resource.description %>"
+          data-read_time="<%= resource.read_time %>"
+          data-pdf_link="<%= resource.pdf_link %>"
+          data-details_link="<%= resource.details_link %>"
+          data-category="<%= resource.category_id %>">
+          Edit
+        </button>
+        <form action="/delete/resource/<%= resource.id %>" method="POST" style="display:inline;" onsubmit="return confirm('Delete this resource?')">
+          <button class="btn btn-sm btn-danger mt-1">Delete</button>
+        </form>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+
+          </div>
+          <!--/ Content: End -->
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="editResourceForm" method="POST" action="/update/resource">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Resource</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-id">
+
+          <div class="mb-3">
+            <label for="edit-title" class="form-label">Title</label>
+            <input type="text" name="title" class="form-control" id="edit-title" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-description" class="form-label">Description</label>
+            <textarea name="description" class="form-control" id="edit-description"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-read-time" class="form-label">Read Time</label>
+            <input type="text" name="read_time" class="form-control" id="edit-read-time">
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-pdf-link" class="form-label">PDF Link</label>
+            <input type="text" name="pdf_link" class="form-control" id="edit-pdf-link">
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-details-link" class="form-label">Details Link</label>
+            <input type="text" name="details_link" class="form-control" id="edit-details-link">
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-category" class="form-label">Category</label>
+            <select name="category_id" class="form-select" id="edit-category">
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat.id %>"><%= cat.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="createResourceForm" method="POST" action="/create/resource">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createModalLabel">Add New Resource</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="create-title" class="form-label">Title</label>
+            <input type="text" name="title" class="form-control" id="create-title" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="create-description" class="form-label">Description</label>
+            <textarea name="description" class="form-control" id="create-description"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="create-read-time" class="form-label">Read Time</label>
+            <input type="text" name="read_time" class="form-control" id="create-read-time">
+          </div>
+
+          <div class="mb-3">
+            <label for="create-pdf-link" class="form-label">PDF Link</label>
+            <input type="text" name="pdf_link" class="form-control" id="create-pdf-link">
+          </div>
+
+          <div class="mb-3">
+            <label for="create-details-link" class="form-label">Details Link</label>
+            <input type="text" name="details_link" class="form-control" id="create-details-link">
+          </div>
+
+          <div class="mb-3">
+            <label for="create-category" class="form-label">Category</label>
+            <select name="category_id" class="form-select" id="create-category">
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat.id %>"><%= cat.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Resource</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+          <!-- Footer: Start -->
+          <%- include('../includes/footer.ejs') %>
+          <!-- Footer: End -->
+
+          <div class="content-backdrop fade"></div>
+        </div>
+        <!--/ Content wrapper: End -->
+      </div>
+      <!-- / Layout page: End -->
+
+    </div>
+  </div>
+  <!-- Layout wrapper: End -->
+
+  <!-- Scripts -->
+  <%- include('../includes/scripts.ejs') %>
+  <script>
+    document.querySelectorAll('.edit-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById('edit-id').value = button.dataset.id;
+        document.getElementById('edit-title').value = button.dataset.title;
+        document.getElementById('edit-description').value = button.dataset.description;
+        document.getElementById('edit-read-time').value = button.dataset.read_time;
+        document.getElementById('edit-pdf-link').value = button.dataset.pdf_link;
+        document.getElementById('edit-details-link').value = button.dataset.details_link;
+        document.getElementById('edit-category').value = button.dataset.category;
+      });
+    });
+  </script>
+  
+</body>
+
+</html>

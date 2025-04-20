@@ -13,6 +13,14 @@ const flash = require('connect-flash');
 const session = require('express-session');
 const cors = require('cors');
 
+const { S3Client, PutObjectCommand ,GetObjectCommand } = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require('uuid');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+const { uploadStudentIdImage } = require('./multerConfig');
+
+
+
 app.use(express.static(path.join(__dirname + '/public')));
 app.use(cookieParser());
 
@@ -37,6 +45,31 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');
     next();
   });
+
+
+  const getSignedS3Url = async (fileName) => {
+    if (!fileName) return null;
+  
+    // Create a new S3 client instance for each request
+    const s3 = new S3Client({
+      
+      credentials: {
+          accessKeyId: process.env.ACCESS_KEY_VARIABLE,
+          secretAccessKey: process.env.ACCESS_SECRET_KEY_VARIABLE,
+      },
+      region: process.env.BUCKET_REGION
+    })
+  
+    const command = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: fileName,
+    });
+  
+    return await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour expiration
+  };
+  
+
+
 
   
 // Middleware to verify the JWT token
@@ -100,7 +133,6 @@ const authenticateTokenCounselor = (req, res, next) => {
 // My appointments
 app.get('/appointments', authenticateToken, async (req, res) => {
     const studentId = req.user.user.id;
-      console.log(studentId)
     try {
         const result = await pool.query(`
             SELECT 
@@ -118,7 +150,6 @@ app.get('/appointments', authenticateToken, async (req, res) => {
             WHERE a.student_id = $1
             ORDER BY a.appointment_date ASC
         `, [studentId]);
-          console.log(result.rows)
         res.render('appointments', { appointments: result.rows, user: req.user.user });
     } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -165,13 +196,38 @@ app.get('/getAppointments', authenticateToken, async (req, res) => {
 
       // Return JSON data instead of rendering the page (useful for dynamic updates)
       res.json({ appointments: result.rows });
-
+      console.log(result.rows);
   } catch (err) {
       console.error('Error fetching appointments:', err);
       res.status(500).send('Server error');
   }
 });
 
+app.post('/appointments/delete/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Fetch the appointment by ID
+    const result = await pool.query(
+      'SELECT status FROM appointment WHERE id = $1',
+      [appointmentId]
+    );
+
+    const appointment = result.rows[0];
+
+    if (appointment && (appointment.status === 'cancelled' || appointment.status === 'rejected')) {
+      await pool.query('DELETE FROM appointment WHERE id = $1', [appointmentId]);
+      req.flash('success', 'Appointment deleted successfully.');
+    } else {
+      req.flash('error', 'Only cancelled or rejected appointments can be deleted.');
+    }
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Error deleting appointment.');
+  }
+
+  res.redirect('/appointments');
+});
 
 
 app.get('/api/resources', async (req, res) => {
@@ -1343,11 +1399,11 @@ app.get('/appointments/cancel/:id', async (req, res) => {
       if (result.rows.length > 0) {
         // Redirect to the appointments page with a success message
         req.flash('success', 'Appointment has been successfully cancelled.');
-        res.redirect('/admin/appointments');
+        res.redirect('/appointments');
       } else {
         // If no appointment found
         req.flash('error', 'Appointment not found.');
-        res.redirect('/admin/appointments');
+        res.redirect('/appointments');
       }
     } catch (err) {
       console.error(err);
@@ -1356,6 +1412,32 @@ app.get('/appointments/cancel/:id', async (req, res) => {
     }
   });
 
+  app.get('/admin/appointments/cancel/:id', async (req, res) => {
+    const appointmentId = req.params.id;
+  
+    try {
+      // Update the appointment's status to 'Cancelled'
+      const result = await pool.query(
+        'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
+        ['cancelled', appointmentId]
+      );
+  
+      // Check if appointment was found and updated
+      if (result.rows.length > 0) {
+        // Redirect to the appointments page with a success message
+        req.flash('success', 'Appointment has been successfully cancelled.');
+        res.redirect('/appointments');
+      } else {
+        // If no appointment found
+        req.flash('error', 'Appointment not found.');
+        res.redirect('/appointments');
+      }
+    } catch (err) {
+      console.error(err);
+      req.flash('error', 'Something went wrong while cancelling the appointment.');
+      res.redirect('/appointments');
+    }
+  });
 
 
 app.get('/mood/:emotion/:studentId', async (req, res) => {
@@ -1376,31 +1458,83 @@ app.get('/mood/:emotion/:studentId', async (req, res) => {
 });
 
 
+const extractFileName = (file) => file ? file[0].key : null;  
 
 
-app.post("/register", async (req, res) => {
-    const { first_name, middle_name, last_name, username, email, password } = req.body;
+// app.post("/register", uploadStudentIdImage, async (req, res) => {
+//     const { first_name, middle_name, last_name, username, email, password } = req.body;
 
-    if (!first_name || !last_name || !username || !email || !password) {
-        return res.status(400).json({ error: "All fields are required" });
-    }
+//     if (!first_name || !last_name || !username || !email || !password) {
+//         return res.status(400).json({ error: "All fields are required" });
+//     }
+//     const student_id_image = extractFileName(req.files["student_id_image"]);
 
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const result = await pool.query(
-            `INSERT INTO student (first_name, middle_name, last_name, username, email, password, is_class_mayor, create_date, update_date)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             RETURNING id`,
-            [first_name, middle_name, last_name, username, email, hashedPassword, false]
-        );
-        res.redirect('/login');
-        //res.json({ message: "Registration successful!", student_id: result.rows[0].id });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
-    }
+//     try {
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         const result = await pool.query(
+//             `INSERT INTO student (first_name, middle_name, last_name, username, email, password, is_class_mayor, create_date, update_date)
+//              VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+//              RETURNING id`,
+//             [first_name, middle_name, last_name, username, email, hashedPassword, false]
+//         );
+//         res.redirect('/login');
+//         //res.json({ message: "Registration successful!", student_id: result.rows[0].id });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: "Server error" });
+//     }
+// });
+
+
+app.post("/register", uploadStudentIdImage, async (req, res) => {
+  const { first_name, middle_name, last_name, username, email, password } = req.body;
+
+  if (!first_name || !last_name || !username || !email || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  // Ensure the file exists
+  const studentIdFile = req.files?.student_id_image?.[0];
+  if (!studentIdFile) {
+    return res.status(400).json({ error: "Student ID image is required" });
+  }
+
+  const student_id_image_key = studentIdFile.key; // <- This is the S3 key/filename
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `INSERT INTO student (
+         first_name, middle_name, last_name, username, email, password, student_id_image, is_class_mayor, create_date, update_date
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING id`,
+      [
+        first_name,
+        middle_name || null,
+        last_name,
+        username,
+        email,
+        hashedPassword,
+        student_id_image_key, // Save image key to DB
+        false,
+      ]
+    );
+
+    res.redirect('/login');
+    // or respond with JSON if this is an API
+    // res.json({ message: "Registration successful", student_id: result.rows[0].id });
+
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
+
+
 
 
 
@@ -1485,6 +1619,74 @@ try {
 });
   
 
+app.post('/create/resource', async (req, res) => {
+  const { title, description, read_time, pdf_link, details_link, category_id } = req.body;
+  // Assuming you're using a DB function:
+  await pool.query(`
+    INSERT INTO resources (title, description, read_time, pdf_link, details_link, category_id, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+    [title, description, read_time, pdf_link, details_link, category_id || null]
+  );
+  res.redirect('/create/resources'); // Or wherever your list is
+});
+
+
+app.get('/create/resources', authenticateTokenCounselor, async (req, res) => {
+  try {
+
+
+    const resourceResult = await pool.query(`
+      SELECT r.*, c.name AS category_name 
+      FROM resources r 
+      LEFT JOIN categories c ON r.category_id = c.id
+      ORDER BY r.id DESC
+    `);
+    const categoryResult = await pool.query('SELECT * FROM categories');
+
+    res.render('counselorPages/resource-list', {
+      user: req.user.user,
+      resources: resourceResult.rows,
+      categories: categoryResult.rows
+    });
+  } catch (err) {
+    console.error('Error fetching resources:', err);
+    res.send("Failed to load resources");
+  }
+});
+app.post('/update/resource', authenticateTokenCounselor, async (req, res) => {
+  const { id, title, description, read_time, pdf_link, details_link, category_id } = req.body;
+
+  try {
+    await pool.query(`
+      UPDATE resources
+      SET title = $1,
+          description = $2,
+          read_time = $3,
+          pdf_link = $4,
+          details_link = $5,
+          category_id = $6
+      WHERE id = $7
+    `, [title, description, read_time, pdf_link, details_link, category_id, id]);
+
+    res.redirect('/create/resources/');
+  } catch (err) {
+    console.error('Error updating resource:', err);
+    res.send("Error updating resource");
+  }
+});
+app.post('/delete/resource/:id', authenticateTokenCounselor, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM resources WHERE id = $1', [id]);
+    res.redirect('/create/resources/');
+  } catch (err) {
+    console.error('Error deleting resource:', err);
+    res.status(500).send('Error deleting resource');
+  }
+});
+
+
+
 app.get('/psychotests', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
@@ -1527,20 +1729,111 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
   }
 });
 
+
+app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
+  const classId = req.params.id;
+
+  try {
+    const classQuery = await pool.query('SELECT * FROM class WHERE id = $1', [classId]);
+    const studentsQuery = await pool.query('SELECT * FROM student WHERE class_id = $1', [classId]);
+
+    if (classQuery.rows.length === 0) {
+      return res.status(404).send('Class not found');
+    }
+
+    res.render('adminPages/studentsTable', {
+      classInfo: classQuery.rows[0],
+      students: studentsQuery.rows,
+      user: req.user.user,
+    });
+  } catch (error) {
+    console.error('Error fetching class students:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+// app.get('/students', authenticateTokenAdmin, async (req, res) => {
+    
+//   try {
+//     const result = await pool.query(`
+//       SELECT student.*, class.class_name AS class_name 
+//       FROM student 
+//       LEFT JOIN class ON student.class_id = class.id
+//       ORDER BY student.create_date DESC
+//     `);
+//     const idImageUrl = await getSignedS3Url(result.rows.student_id_image);
+
+//     res.render('adminPages/studentsTable', { students: result.rows, user: req.user.user });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Server error");
+//   }
+// });
+
 app.get('/students', authenticateTokenAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT student.*, class.class_name AS class_name 
       FROM student 
       LEFT JOIN class ON student.class_id = class.id
+      WHERE student.class_id IS NOT NULL
       ORDER BY student.create_date DESC
     `);
-    res.render('adminPages/studentsTable', { students: result.rows, user: req.user.user });
+
+    const studentsWithSignedUrls = await Promise.all(
+      result.rows.map(async (student) => {
+        if (student.student_id_image) {
+          student.student_id_image_url = await getSignedS3Url(student.student_id_image);
+        } else {
+          student.student_id_image_url = null;
+        }
+        return student;
+      })
+    );
+
+    res.render('adminPages/studentsTable', {
+      students: studentsWithSignedUrls,
+      user: req.user.user,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send("Server error");
   }
 });
+
+app.get('/students/unassigned', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM student 
+      WHERE class_id IS NULL
+      ORDER BY create_date DESC
+    `);
+
+    const studentsWithSignedUrls = await Promise.all(
+      result.rows.map(async (student) => {
+        if (student.student_id_image) {
+          student.student_id_image_url = await getSignedS3Url(student.student_id_image);
+        } else {
+          student.student_id_image_url = null;
+        }
+        return student;
+      })
+    );
+
+    res.render('adminPages/studentsTable', {
+      students: studentsWithSignedUrls,
+      user: req.user.user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+
+
 app.get('/students/:id', async (req, res) => {
   console.log("FETCHING!")
   try {

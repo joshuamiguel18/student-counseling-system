@@ -44,9 +44,9 @@
 
                       <div class="col-12 col-lg-8">
                         <% if (isClassMayor) { %>
-                            <h5 class="mb-2">Welcome back Mayor,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                            <h5 class="mb-2">Welcome back Mayor,  <%= user.first_name %>  <%= user.last_name %>👋🏻</h5>
                           <% } else { %>
-                            <h5 class="mb-2">Welcome back,<span class="h4">  <%= user.first_name %>  <%= user.last_name %>👋🏻</span></h5>
+                            <h5 class="mb-2">Welcome back,  <%= user.first_name %>  <%= user.last_name %>👋🏻</h5>
                       
                           <% } %>
                           <% if (user.class_id) { %>

@@ -45,7 +45,6 @@
                         <th class="sort" data-sort="username">Username</th>
                         <th class="sort" data-sort="email">Email</th>
                         <th>Class</th>
-                        <th>ID IMAGE</th>
                         <th>Mayor</th>
                         <th>Actions</th>
                       </tr>
@@ -57,11 +56,6 @@
                         <td class="username"><%= student.username %></td>
                         <td class="email"><%= student.email %></td>
                         <td><%= student.class_name || 'Unassigned' %></td>
-                        <!-- Inside table row -->
-                        <td>
-                          <img src="<%= student.student_id_image_url %>" class="img-thumbnail" style="width: 50px; height: 50px; cursor: pointer;" onclick="showImageModal('<%= student.student_id_image_url %>')" />
-                        </td>
-
                         <td>
                           <span class="badge <%= student.is_class_mayor ? 'bg-label-success' : 'bg-label-secondary' %>">
                             <%= student.is_class_mayor ? 'Yes' : 'No' %>
@@ -90,10 +84,6 @@
                             <%= student.is_class_mayor ? 'Yes' : 'No' %>
                           </span>
                         </p>
-                        <p>
-                          <strong>ID:</strong>
-                          <img src="<%= student.student_id_image_url %>" class="img-thumbnail" style="width: 50px; height: 50px; cursor: pointer;" onclick="showImageModal('<%= student.student_id_image_url %>')" />
-                        </p>
                         <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="editStudent(<%= student.id %>)">Edit</button>
                       </div>
                     </div>
@@ -107,21 +97,7 @@
             </div>
           </div>
           
-              <!-- Image View Modal -->
-          <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content text-center">
-                <div class="modal-header">
-                  <h5 class="modal-title">Student ID</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <img id="modalImage" src="" class="img-fluid" />
-                </div>
-              </div>
-            </div>
-          </div>
-
+              
 
           <!-- Action Confirmation Modal (Approve / Reject / Cancel) -->
           <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
@@ -360,12 +336,6 @@ document.querySelector('.search').addEventListener('input', function () {
 
         });
     });
-
-    function showImageModal(imageUrl) {
-  document.getElementById('modalImage').src = imageUrl;
-  new bootstrap.Modal(document.getElementById('imageModal')).show();
-}
-
     </script>
 </body>
 </html>

@@ -39,7 +39,13 @@
                               <td><%= cls.id %></td>
                               <td><%= cls.class_name %></td>
                               <td><%= cls.student_count %></td>
+                              <td>
+                                <a href="/classes/<%= cls.id %>/students" class="btn btn-sm btn-primary">
+                                  <i class="bx bx-show"></i> View Students
+                                </a>
+                              </td>
                             </tr>
+                            
                           <% }) %>
                         <% } else { %>
                           <tr><td colspan="3" class="text-center">No classes found.</td></tr>
@@ -57,6 +63,12 @@
                             <h5 class="card-title mb-2">Class: <%= cls.class_name %></h5>
                             <p><strong>Class ID:</strong> <%= cls.id %></p>
                             <p><strong>Number of Students:</strong> <%= cls.student_count %></p>
+                            <p>
+                              <a href="/classes/<%= cls.id %>/students" class="btn btn-sm btn-primary">
+                                <i class="bx bx-show"></i> View Students
+                              </a>
+                            </p>
+                            
                           </div>
                         </div>
                       <% }) %>
