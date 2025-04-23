@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<html lang="en" class="light-style layout-menu-fixed">
   <head>
     <%- include('includes/head.ejs') %>
     <link rel="stylesheet" href="/css/page-auth.css" />
@@ -12,97 +12,145 @@
           <!-- Register Card -->
           <div class="card px-sm-6 px-0">
             <div class="card-body">
-              <!-- Logo -->
               <%- include('includes/logo.ejs') %>
-              <!-- /Logo -->
-              <h4 class="mb-1">Welcome to RateSmart! 🚀</h4>
+              <h4 class="mb-1">Welcome to EagleMind!🦅🧠 </h4>
               <p class="mb-6">Make your account now.</p>
 
-              <!-- Stepper -->
-              <div id="stepper" class="bs-stepper">
-                <div class="bs-stepper-header" style="display: none">
-                  <div class="step" data-target="#step-1">
-                    <button class="step-trigger">
-                      <span class="bs-stepper-circle">1</span>
-                      <span class="bs-stepper-label">Personal Info</span>
-                    </button>
-                  </div>
-                  <div class="line"></div>
-                  <div class="step" data-target="#step-2">
-                    <button class="step-trigger">
-                      <span class="bs-stepper-circle">2</span>
-                      <span class="bs-stepper-label">Account Details</span>
-                    </button>
-                  </div>
-                </div>
+<!-- Inside your HTML <body> -->
 
-                <div class="bs-stepper-content">
-                  <form id="formAuthentication" action="/register" method="post" enctype="multipart/form-data">
-                    <!-- Step 1: Personal Info -->
-                    <div id="step-1" class="content">
-                      <div class="mb-3">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter your first name" required />
-                      </div>
-                      <div class="mb-3">
-                        <label for="middle_name" class="form-label">Middle Name</label>
-                        <input type="text" class="form-control" id="middle_name" name="middle_name" placeholder="Enter your middle name" />
-                      </div>
-                      <div class="mb-3">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter your last name" required />
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <div></div>
-                        <button class="btn btn-primary" type="button" id="nextStep1">Next</button>
-                      </div>
-                    </div>
+<!-- Stepper Header -->
+<div id="stepper" class="bs-stepper">
+  <div class="bs-stepper-header" style="display: none">
+    <div class="step" data-target="#step-1">
+      <button class="step-trigger">
+        <span class="bs-stepper-circle">1</span>
+        <span class="bs-stepper-label">Personal Info</span>
+      </button>
+    </div>
+    <div class="line"></div>
+    <div class="step" data-target="#step-2">
+      <button class="step-trigger">
+        <span class="bs-stepper-circle">2</span>
+        <span class="bs-stepper-label">School Details</span>
+      </button>
+    </div>
+    <div class="line"></div>
+    <div class="step" data-target="#step-3">
+      <button class="step-trigger">
+        <span class="bs-stepper-circle">3</span>
+        <span class="bs-stepper-label">Account</span>
+      </button>
+    </div>
+  </div>
 
-                    <!-- Step 2: Account Details -->
-                    <div id="step-2" class="content">
-                      <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username" required />
-                      </div>
-                      <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required />
-                      </div>
-                      <div class="mb-3 form-password-toggle">
-                        <label class="form-label" for="password">Password</label>
-                        <div class="input-group input-group-merge">
-                          <input type="password" id="password" class="form-control" name="password" placeholder="••••••••••••" required />
-                          <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
-                        </div>
-                      </div>
-                      <div class="mb-3">
-                        <label for="student_id_image" class="form-label">Upload Student ID</label>
-                        <input
-                          type="file"
-                          class="form-control"
-                          id="student_id_image"
-                          name="student_id_image"
-                          accept="image/png, image/jpeg, image/jpg"
-                          required
-                        />
-                      </div>
-                      
-                      <div class="my-3">
-                        <div class="form-check mb-0 ms-2">
-                          <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" required />
-                          <label class="form-check-label" for="terms-conditions">
-                            I agree to <a href="javascript:void(0);">privacy policy & terms</a>
-                          </label>
-                        </div>
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <button class="btn btn-secondary" type="button" onclick="stepper.previous()">Previous</button>
-                        <button class="btn btn-success" type="submit" id="submitForm">Sign up</button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
+  <div class="bs-stepper-content">
+    <form id="formAuthentication" action="/register" method="post" enctype="multipart/form-data">
+      
+      <!-- Step 1: Personal Info -->
+      <div id="step-1" class="content">
+        <div class="mb-3">
+          <label for="first_name" class="form-label">First Name</label>
+          <input type="text" class="form-control" id="first_name" name="first_name" required />
+        </div>
+        <div class="mb-3">
+          <label for="middle_initial" class="form-label">Middle Initial</label>
+          <input type="text" class="form-control" id="middle_initial" name="middle_initial" />
+        </div>
+        <div class="mb-3">
+          <label for="last_name" class="form-label">Last Name</label>
+          <input type="text" class="form-control" id="last_name" name="last_name" required />
+        </div>
+        <div class="mb-3">
+          <label for="sex" class="form-label">Sex</label>
+          <select class="form-control" id="sex" name="sex" required>
+            <option value="" disabled selected>Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="contact_number" class="form-label">Contact Number</label>
+          <input type="text" class="form-control" id="contact_number" name="contact_number" required />
+        </div>
+        <div class="mb-3">
+          <label for="address" class="form-label">Address</label>
+          <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+        </div>
+        <div class="d-flex justify-content-between">
+          <div></div>
+          <button class="btn btn-primary" type="button" id="nextStep1">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 2: School Info -->
+      <div id="step-2" class="content">
+        <div class="mb-3">
+          <label for="id_num" class="form-label">ID Number</label>
+          <input type="text" class="form-control" id="id_num" name="id_num" required />
+        </div>
+        <div class="mb-3">
+          <label for="department" class="form-label">Department</label>
+          <input type="text" class="form-control" id="department" name="department" required />
+        </div>
+        <div class="mb-3">
+          <label for="program" class="form-label">Program</label>
+          <input type="text" class="form-control" id="program" name="program" required />
+        </div>
+        <div class="mb-3">
+          <label for="year_level" class="form-label">Year Level</label>
+          <input type="text" class="form-control" id="year_level" name="year_level" required />
+        </div>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-secondary" type="button" onclick="stepper.previous()">Previous</button>
+          <button class="btn btn-primary" type="button" id="nextStep2">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Account Details -->
+      <div id="step-3" class="content">
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" class="form-control" id="username" name="username" required />
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" required />
+        </div>
+        <div class="mb-3 form-password-toggle">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group input-group-merge">
+            <input type="password" class="form-control" id="password" name="password" required />
+            <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="student_id_image" class="form-label">Upload Student ID</label>
+          <input
+            type="file"
+            class="form-control"
+            id="student_id_image"
+            name="student_id_image"
+            accept="image/png, image/jpeg, image/jpg"
+            required
+          />
+        </div>
+        <div class="my-3">
+          <div class="form-check mb-0 ms-2">
+            <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" required />
+            <label class="form-check-label" for="terms-conditions">
+              I agree to <a href="#">privacy policy & terms</a>
+            </label>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-secondary" type="button" onclick="stepper.previous()">Previous</button>
+          <button class="btn btn-success" type="submit" id="submitForm">Sign up</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 
               <p class="text-center mt-4">
                 <span>Already have an account?</span>
@@ -110,47 +158,44 @@
               </p>
             </div>
           </div>
-          <!-- Register Card -->
         </div>
       </div>
     </div>
 
-    <!-- Include bs-stepper JS -->
     <script src="https://cdn.jsdelivr.net/npm/bs-stepper/dist/js/bs-stepper.min.js"></script>
     <script>
-      let stepper; // Declare globally
-
+      let stepper;
       document.addEventListener("DOMContentLoaded", function () {
-        stepper = new Stepper(document.querySelector("#stepper")); // Assign to global variable
-
-        function validateStep(step) {
-          let isValid = true;
-          const stepDiv = document.getElementById(step);
-          const inputs = stepDiv.querySelectorAll("input, select");
-
+        stepper = new Stepper(document.querySelector("#stepper"));
+    
+        function validateStep(stepId) {
+          const step = document.getElementById(stepId);
+          const inputs = step.querySelectorAll("input, textarea, select");
+          let valid = true;
+    
           inputs.forEach((input) => {
             if (input.hasAttribute("required") && !input.value.trim()) {
-              isValid = false;
+              valid = false;
               showError(input, "This field is required.");
             } else {
               hideError(input);
             }
           });
-
-          return isValid;
+    
+          return valid;
         }
-
+    
         function showError(input, message) {
           let error = input.nextElementSibling;
           if (!error || !error.classList.contains("error-message")) {
             error = document.createElement("small");
-            error.classList.add("error-message", "text-danger");
+            error.className = "error-message text-danger";
             input.parentNode.appendChild(error);
           }
           error.textContent = message;
           input.classList.add("is-invalid");
         }
-
+    
         function hideError(input) {
           let error = input.nextElementSibling;
           if (error && error.classList.contains("error-message")) {
@@ -158,22 +203,26 @@
           }
           input.classList.remove("is-invalid");
         }
-
-        document.querySelector("#nextStep1").addEventListener("click", function () {
+    
+        document.querySelector("#nextStep1").addEventListener("click", () => {
           if (validateStep("step-1")) stepper.next();
         });
-
-        document.querySelector("#submitForm").addEventListener("click", function (e) {
-          if (!validateStep("step-2")) {
+    
+        document.querySelector("#nextStep2").addEventListener("click", () => {
+          if (validateStep("step-2")) stepper.next();
+        });
+    
+        document.querySelector("#submitForm").addEventListener("click", (e) => {
+          if (!validateStep("step-3")) {
             e.preventDefault();
           }
         });
-
-        // Remove error message on input change
-        document.querySelectorAll("input, select").forEach((input) => {
+    
+        document.querySelectorAll("input, select, textarea").forEach((input) => {
           input.addEventListener("input", () => hideError(input));
         });
       });
     </script>
+    
   </body>
 </html>

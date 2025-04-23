@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          <div class="card" style="box-shadow: none !important;">
+            <h5 class="card-header">Students</h5>
+
+            <div class="card-body">
+              <div id="studentList">
+                <!-- Search + Filter -->
+                <div class="mb-3">
+                  <input class="search form-control mb-2" placeholder="Search students..." />
+                  <select id="mayorFilter" class="form-select">
+                    <option value="">All Students</option>
+                    <option value="true">Mayors</option>
+                    <option value="false">Not Mayors</option>
+                  </select>
+                </div>
+              
+                <!-- Desktop Table -->
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th class="sort" data-sort="name">Name</th>
+                        <th class="sort" data-sort="username">Username</th>
+                        <th class="sort" data-sort="email">Email</th>
+                        <th>ID Number</th>
+                        <th>Department</th>
+                        <th>Program</th>
+                        <th>Year Level</th>
+                        <th>Sex</th>
+                        <th>Contact</th>
+                        <th>Class</th>
+                        <th>ID Image</th>
+                        <th>Mayor</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="list">
+                      <% students.forEach(student => { %>
+                      <tr data-mayor="<%= student.is_class_mayor %>">
+                        <td class="name"><%= student.first_name %> <%= student.middle_name %> <%= student.last_name %></td>
+                        <td class="username"><%= student.username %></td>
+                        <td class="email"><%= student.email %></td>
+                        <td><%= student.id_num || 'N/A' %></td>
+                        <td><%= student.department || 'N/A' %></td>
+                        <td><%= student.program || 'N/A' %></td>
+                        <td><%= student.year_level || 'N/A' %></td>
+                        <td><%= student.sex || 'N/A' %></td>
+                        <td><%= student.contact_number || 'N/A' %></td>
+                        <td><%= student.class_name || 'Unassigned' %></td>
+                        <td>
+                          <% if (student.student_id_image_url) { %>
+                            <img src="<%= student.student_id_image_url %>" class="img-thumbnail" style="width: 50px; height: 50px; cursor: pointer;" onclick="showImageModal('<%= student.student_id_image_url %>')" />
+                          <% } else { %>
+                            N/A
+                          <% } %>
+                        </td>
+                        <td>
+                          <span class="badge <%= student.is_class_mayor ? 'bg-label-success' : 'bg-label-secondary' %>">
+                            <%= student.is_class_mayor ? 'Yes' : 'No' %>
+                          </span>
+                        </td>
+                        <td>
+                          <!-- Edit Button with Boxicons Icon -->
+                          <button class="btn btn-sm btn-outline-primary" onclick="editStudent(<%= student.id %>)">
+                            <i class="bx bx-edit"></i>
+                          </button>
+                        
+                          <!-- Assign Class Button with Bootstrap Icons, shown only if no class is assigned -->
+                          <% if (!student.class_name) { %>
+                            <button class="btn btn-sm btn-outline-success mt-1" onclick="showAssignClassModal(<%= student.id %>)">
+                              <i class="bi bi-person-badge"></i>
+                            </button>
+                          <% } %>
+                        </td>
+                      </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              
+                <!-- Pagination -->
+                <ul class="pagination pagination-sm mt-3 justify-content-center"></ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Image View Modal -->
+          <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-center">
+                <div class="modal-header">
+                  <h5 class="modal-title">Student ID</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <img id="modalImage" src="" class="img-fluid" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assign Class Modal -->
+          <div class="modal fade" id="assignClassModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Assign Class</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="assignClassForm">
+                  <div class="modal-body">
+                    <input type="hidden" id="assignStudentId">
+                    <div class="mb-3">
+                      <label class="form-label">Select Class</label>
+                      <select class="form-select" id="classSelect" required>
+                        <option value="">-- Select Class --</option>
+                        <% classes.forEach(cls => { %>
+                          <option value="<%= cls.id %>"><%= cls.class_name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                      <input type="checkbox" class="form-check-input" id="assignAsMayor">
+                      <label class="form-check-label" for="assignAsMayor">Assign as Class Mayor</label>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Student Modal -->
+          <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Student</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editStudentForm">
+                  <div class="modal-body">
+                    <input type="hidden" id="editStudentId">
+                    <div class="row">
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="editFirstName" required>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Middle Name</label>
+                        <input type="text" class="form-control" id="editMiddleName">
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="editLastName" required>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail">
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">ID Number</label>
+                        <input type="text" class="form-control" id="editIdNum">
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" id="editDepartment">
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Program</label>
+                        <input type="text" class="form-control" id="editProgram">
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Year Level</label>
+                        <input type="text" class="form-control" id="editYearLevel">
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Sex</label>
+                        <select class="form-select" id="editSex">
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Contact Number</label>
+                        <input type="text" class="form-control" id="editContactNumber">
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label">Is Mayor</label>
+                        <select class="form-select" id="editIsMayor">
+                          <option value="true">Yes</option>
+                          <option value="false">No</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Address</label>
+                      <textarea class="form-control" id="editAddress" rows="2"></textarea>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Modal -->
+          <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-success">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="successModalLabel">Success</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="successModalBody">
+                  Operation completed successfully!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Modal -->
+          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-danger">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="errorModalBody">
+                  Failed to complete the operation. Please try again.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-backdrop fade"></div>
+        </div>
+
+        <%- include('../includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('../includes/scripts.ejs') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+
+  <script>
+    const options = {
+      valueNames: ['name', 'username', 'email'],
+      page: 10,
+      pagination: {
+        paginationClass: "pagination"
+      }
+    };
+
+    const studentList = new List('studentList', options);
+
+    // Mayor filter
+    document.getElementById('mayorFilter').addEventListener('change', function () {
+      const value = this.value;
+      studentList.filter(item => {
+        const isMayor = item.elm.getAttribute('data-mayor');
+        return value === '' || isMayor === value;
+      });
+    });
+
+    function showImageModal(imageUrl) {
+      document.getElementById('modalImage').src = imageUrl;
+      new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
+
+    function showAssignClassModal(studentId) {
+      document.getElementById('assignStudentId').value = studentId;
+      new bootstrap.Modal(document.getElementById('assignClassModal')).show();
+    }
+
+    document.getElementById('assignClassForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('assignStudentId').value;
+      const classId = document.getElementById('classSelect').value;
+      const isMayor = document.getElementById('assignAsMayor').checked;
+      
+      fetch(`/students/assign-class`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          student_id: studentId,
+          class_id: classId,
+          is_mayor: isMayor
+        })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          document.getElementById('successModalBody').textContent = 'Student assigned to class successfully!';
+          const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+          successModal.show();
+          setTimeout(() => {
+            successModal.hide();
+            location.reload();
+          }, 1500);
+        } else {
+          document.getElementById('errorModalBody').textContent = result.message || 'Failed to assign student to class';
+          new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+      });
+    });
+
+    function editStudent(id) {
+      fetch(`/students/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('editStudentId').value = data.id;
+          document.getElementById('editFirstName').value = data.first_name || '';
+          document.getElementById('editMiddleName').value = data.middle_name || '';
+          document.getElementById('editLastName').value = data.last_name || '';
+          document.getElementById('editEmail').value = data.email || '';
+          document.getElementById('editIdNum').value = data.id_num || '';
+          document.getElementById('editDepartment').value = data.department || '';
+          document.getElementById('editProgram').value = data.program || '';
+          document.getElementById('editYearLevel').value = data.year_level || '';
+          document.getElementById('editSex').value = data.sex || 'Male';
+          document.getElementById('editContactNumber').value = data.contact_number || '';
+          document.getElementById('editAddress').value = data.address || '';
+          document.getElementById('editIsMayor').value = data.is_class_mayor ? 'true' : 'false';
+          
+          new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+        });
+    }
+    
+    document.getElementById('editStudentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('editStudentId').value;
+      const data = {
+        first_name: document.getElementById('editFirstName').value,
+        middle_name: document.getElementById('editMiddleName').value,
+        last_name: document.getElementById('editLastName').value,
+        email: document.getElementById('editEmail').value,
+        id_num: document.getElementById('editIdNum').value,
+        department: document.getElementById('editDepartment').value,
+        program: document.getElementById('editProgram').value,
+        year_level: document.getElementById('editYearLevel').value,
+        sex: document.getElementById('editSex').value,
+        contact_number: document.getElementById('editContactNumber').value,
+        address: document.getElementById('editAddress').value,
+        is_class_mayor: document.getElementById('editIsMayor').value === 'true'
+      };
+    
+      fetch(`/students/edit/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          document.getElementById('successModalBody').textContent = 'Student updated successfully!';
+          const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+          successModal.show();
+          setTimeout(() => {
+            successModal.hide();
+            location.reload();
+          }, 1500);
+        } else {
+          document.getElementById('errorModalBody').textContent = result.message || 'Failed to update student';
+          new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

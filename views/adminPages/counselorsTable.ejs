@@ -1,0 +1,208 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+  <!-- DataTables CSS -->
+
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          
+
+            <div class="card">
+                <h5 class="card-header">Counselors</h5>
+                <div class="card-body">
+                  <div class="table-responsive text-nowrap">
+                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createCounselorModal">
+                      Add Counselor
+                    </button>
+                    
+                    <table id="table" class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>First Name</th>
+                          <th>Middle Name</th>
+                          <th>Last Name</th>
+                          <th>Username</th>
+                          <th>Email</th>
+                          <th>Contact Number</th>
+                          <th>Position</th>
+                          <th>Educational Attainment</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if (counselors.length > 0) { %>
+                          <% counselors.forEach(counselor => { %>
+                            <tr>
+                              <td><%= counselor.first_name %></td>
+                              <td><%= counselor.middle_name || 'N/A' %></td>
+                              <td><%= counselor.last_name %></td>
+                              <td><%= counselor.username %></td>
+                              <td><%= counselor.email || 'N/A' %></td>
+                              <td><%= counselor.contact_number || 'N/A' %></td>
+                              <td><%= counselor.position || 'N/A' %></td>
+                              <td><%= counselor.educational_attainment || 'N/A' %></td>
+                              <td>
+                                <% if (counselor.is_available) { %>
+                                  <span class="badge bg-label-success me-1">Available</span>
+                                <% } else { %>
+                                  <span class="badge bg-label-danger me-1">Unavailable</span>
+                                <% } %>
+                              </td>
+                              <td>
+                                <button class="btn btn-sm btn-icon text-primary editBtn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editCounselorModal"
+                                        data-id="<%= counselor.id %>"
+                                        data-first_name="<%= counselor.first_name %>"
+                                        data-middle_name="<%= counselor.middle_name %>"
+                                        data-last_name="<%= counselor.last_name %>"
+                                        data-username="<%= counselor.username %>"
+                                        data-email="<%= counselor.email %>"
+                                        data-contact_number="<%= counselor.contact_number %>"
+                                        data-position="<%= counselor.position %>"
+                                        data-educational_attainment="<%= counselor.educational_attainment %>">
+                                  <i class="bx bx-edit-alt"></i>
+                                </button>
+                                <form action="/admin/counselors/<%= counselor.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this counselor?');">
+                                  <button type="submit" class="btn btn-sm btn-icon text-danger">
+                                    <i class="bx bx-trash"></i>
+                                  </button>
+                                </form>
+                              </td>
+                              
+                            </tr>
+                          <% }) %>
+                        <% } else { %>
+                          <tr>
+                            <td colspan="10" class="text-center">No counselors found.</td>
+                          </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <!-- Create Counselor Modal -->
+              <div class="modal fade" id="createCounselorModal" tabindex="-1" aria-labelledby="createCounselorModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <form action="/admin/counselors/create" method="POST">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="createCounselorModalLabel">Add New Counselor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+              
+                      <div class="modal-body row g-3">
+                        <% const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment']; %>
+                        <% fields.forEach(field => { %>
+                          <div class="col-md-6">
+                            <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
+                            <input type="text" name="<%= field %>" class="form-control" required />
+                          </div>
+                        <% }) %>
+              
+                        <!-- Password field -->
+                        <div class="col-md-6">
+                          <label class="form-label">Password</label>
+                          <input type="password" name="password" class="form-control" required />
+                        </div>
+                      </div>
+              
+                      <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Create</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              
+
+
+           <!-- Edit Counselor Modal -->
+           <div class="modal fade" id="editCounselorModal" tabindex="-1" aria-labelledby="editCounselorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <form id="editCounselorForm" method="POST">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="editCounselorModalLabel">Edit Counselor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+          
+                  <div class="modal-body row g-3">
+                    <% fields.forEach(field => { %>
+                      <div class="col-md-6">
+                        <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
+                        <input type="text" name="<%= field %>" id="edit_<%= field %>" class="form-control" required />
+                      </div>
+                    <% }) %>
+          
+                    <!-- Password field -->
+                    <div class="col-md-6">
+                      <label class="form-label">Password (Leave blank to keep current)</label>
+                      <input type="password" name="password" id="edit_password" class="form-control" />
+                    </div>
+                  </div>
+          
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+
+
+
+        <%- include('../includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('../includes/scripts.ejs') %>
+  <script>
+    $(document).ready(function () {
+        $('#table').DataTable({
+        pageLength: 5, // Default rows per page
+        lengthMenu: [5, 10, 25, 50],
+        });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      const editModal = document.getElementById('editCounselorModal');
+      const editForm = document.getElementById('editCounselorForm');
+  
+      document.querySelectorAll('.editBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment'];
+          fields.forEach(field => {
+            document.getElementById(`edit_${field}`).value = btn.dataset[field] || '';
+          });
+          const counselorId = btn.dataset.id;
+          editForm.action = `/admin/counselors/${counselorId}/edit`; // Set form action
+        });
+      });
+    });
+  </script>
+  
+
+</body>
+</html>

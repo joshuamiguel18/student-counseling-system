@@ -1120,6 +1120,9 @@ app.post('/counselor/register', async (req, res) => {
   }
 });
 
+
+
+
 app.get('/counselors/:id/availability', async (req, res) => {
     const counselorId = req.params.id;
 
@@ -1426,20 +1429,70 @@ app.get('/appointments/cancel/:id', async (req, res) => {
       if (result.rows.length > 0) {
         // Redirect to the appointments page with a success message
         req.flash('success', 'Appointment has been successfully cancelled.');
-        res.redirect('/appointments');
+        res.redirect('/admin/appointments');
       } else {
         // If no appointment found
         req.flash('error', 'Appointment not found.');
-        res.redirect('/appointments');
+        res.redirect('/admin/appointments');
       }
     } catch (err) {
       console.error(err);
       req.flash('error', 'Something went wrong while cancelling the appointment.');
-      res.redirect('/appointments');
+      res.redirect('/admin/appointments');
     }
   });
-
-
+  app.get('/admin/appointments/reject/:id', async (req, res) => {
+    const appointmentId = req.params.id;
+  
+    try {
+      // Update the appointment's status to 'Cancelled'
+      const result = await pool.query(
+        'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
+        ['rejected', appointmentId]
+      );
+  
+      // Check if appointment was found and updated
+      if (result.rows.length > 0) {
+        // Redirect to the appointments page with a success message
+        req.flash('success', 'Appointment has been successfully cancelled.');
+        res.redirect('/admin/appointments');
+      } else {
+        // If no appointment found
+        req.flash('error', 'Appointment not found.');
+        res.redirect('/admin/appointments');
+      }
+    } catch (err) {
+      console.error(err);
+      req.flash('error', 'Something went wrong while cancelling the appointment.');
+      res.redirect('/admin/appointments');
+    }
+  });
+  app.get('/admin/appointments/approve/:id', async (req, res) => {
+    const appointmentId = req.params.id;
+  
+    try {
+      // Update the appointment's status to 'Cancelled'
+      const result = await pool.query(
+        'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
+        ['approved', appointmentId]
+      );
+  
+      // Check if appointment was found and updated
+      if (result.rows.length > 0) {
+        // Redirect to the appointments page with a success message
+        req.flash('success', 'Appointment has been successfully cancelled.');
+        res.redirect('/admin/appointments');
+      } else {
+        // If no appointment found
+        req.flash('error', 'Appointment not found.');
+        res.redirect('/admin/appointments');
+      }
+    } catch (err) {
+      console.error(err);
+      req.flash('error', 'Something went wrong while cancelling the appointment.');
+      res.redirect('/admin/appointments');
+    }
+  });
 app.get('/mood/:emotion/:studentId', async (req, res) => {
     const { emotion, studentId } = req.params;
 
@@ -1489,43 +1542,77 @@ const extractFileName = (file) => file ? file[0].key : null;
 
 
 app.post("/register", uploadStudentIdImage, async (req, res) => {
-  const { first_name, middle_name, last_name, username, email, password } = req.body;
+  const {
+    first_name,
+    middle_initial,
+    last_name,
+    sex,
+    contact_number,
+    address,
+    id_num,
+    department,
+    program,
+    year_level,
+    username,
+    email,
+    password,
+  } = req.body;
 
-  if (!first_name || !last_name || !username || !email || !password) {
+  // Validate required fields
+  if (
+    !first_name || !last_name || !sex || !contact_number || !address ||
+    !id_num || !department || !program || !year_level ||
+    !username || !email || !password
+  ) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  // Ensure the file exists
+  // Ensure file upload exists
   const studentIdFile = req.files?.student_id_image?.[0];
   if (!studentIdFile) {
     return res.status(400).json({ error: "Student ID image is required" });
   }
 
-  const student_id_image_key = studentIdFile.key; // <- This is the S3 key/filename
+  const student_id_image_key = studentIdFile.key;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
       `INSERT INTO student (
-         first_name, middle_name, last_name, username, email, password, student_id_image, is_class_mayor, create_date, update_date
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       RETURNING id`,
+        first_name, middle_name, last_name, sex, contact_number, address,
+        id_num, department, program, year_level,
+        username, email, password, student_id_image,
+        is_class_mayor, create_date, update_date
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10,
+        $11, $12, $13, $14,
+        $15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+      RETURNING id`,
       [
         first_name,
-        middle_name || null,
+        middle_initial || null,
         last_name,
+        sex,
+        contact_number,
+        address,
+        id_num,
+        department,
+        program,
+        year_level,
         username,
         email,
         hashedPassword,
-        student_id_image_key, // Save image key to DB
-        false,
+        student_id_image_key,
+        false, // is_class_mayor
       ]
     );
 
     res.redirect('/login');
-    // or respond with JSON if this is an API
+    // Optionally use JSON:
     // res.json({ message: "Registration successful", student_id: result.rows[0].id });
 
   } catch (err) {
@@ -1533,6 +1620,7 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 
@@ -1730,30 +1818,224 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
 });
 
 
+// app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
+//   const classId = req.params.id;
+
+//   try {
+//     const classQuery = await pool.query('SELECT * FROM class WHERE id = $1', [classId]);
+//     const studentsQuery = await pool.query('SELECT * FROM student WHERE class_id = $1', [classId]);
+
+//     if (classQuery.rows.length === 0) {
+//       return res.status(404).send('Class not found');
+//     }
+
+//     res.render('adminPages/studentsTable', {
+//       classInfo: classQuery.rows[0],
+//       students: studentsQuery.rows,
+//       user: req.user.user,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching class students:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
   const classId = req.params.id;
 
   try {
-    const classQuery = await pool.query('SELECT * FROM class WHERE id = $1', [classId]);
-    const studentsQuery = await pool.query('SELECT * FROM student WHERE class_id = $1', [classId]);
+    // Get all classes (for dropdown/filtering)
+    const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
 
-    if (classQuery.rows.length === 0) {
+    // Get the selected class info
+    const selectedClassQuery = await pool.query(`SELECT * FROM class WHERE id = $1`, [classId]);
+    if (selectedClassQuery.rows.length === 0) {
       return res.status(404).send('Class not found');
     }
 
+    const selectedClass = selectedClassQuery.rows[0];
+
+    // Get students in that class
+    const studentResult = await pool.query(`
+      SELECT 
+        student.*, 
+        class.id AS class_id, 
+        class.class_name, 
+        class.create_date AS class_create_date, 
+        class.update_date AS class_update_date
+      FROM student 
+      LEFT JOIN class ON student.class_id = class.id
+      WHERE student.class_id = $1
+      ORDER BY student.create_date DESC
+    `, [classId]);
+
+    // Map student data with signed image URLs
+    const studentsWithSignedUrls = await Promise.all(
+      studentResult.rows.map(async (student) => {
+        const signedUrl = student.student_id_image
+          ? await getSignedS3Url(student.student_id_image)
+          : null;
+
+        const {
+          class_id,
+          class_name,
+          class_create_date,
+          class_update_date,
+          ...studentData
+        } = student;
+
+        return {
+          ...studentData,
+          student_id_image_url: signedUrl,
+          class: {
+            id: class_id,
+            class_name,
+            create_date: class_create_date,
+            update_date: class_update_date
+          }
+        };
+      })
+    );
+
     res.render('adminPages/studentsTable', {
-      classInfo: classQuery.rows[0],
-      students: studentsQuery.rows,
+      students: studentsWithSignedUrls,
+      classes: classResult.rows,
+      selectedClass, // Pass selected class if you want to highlight it in the UI
       user: req.user.user,
     });
+
   } catch (error) {
-    console.error('Error fetching class students:', error);
-    res.status(500).send('Internal Server Error');
+    console.error("Error fetching class students:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.post('/students/assign-class', authenticateTokenAdmin, async (req, res) => {
+  const { studentId, classId, isMayor } = req.body;
+  console.log(studentId, classId, isMayor);
+  try {
+    // Update student's class
+    await pool.query(
+      `UPDATE student SET class_id = $1, is_class_mayor = $2, update_date = NOW() WHERE id = $3`,
+      [classId, isMayor === 'true', studentId]
+    );
+
+    res.status(200).json({ success: true, message: "Student assigned successfully" });
+  } catch (error) {
+    console.error('Error assigning class:', error);
+    res.status(500).json({ success: false, message: "Failed to assign class" });
   }
 });
 
 
+app.get('/counselors', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+         id,
+         first_name,
+         middle_name,
+         last_name,
+         username,
+         email,
+         contact_number,
+         position,
+         educational_attainment,
+         is_available,
+         create_date,
+         update_date
+       FROM counselor`
+    );
 
+    res.render('adminPages/counselorsTable',{ counselors: result.rows, user: req.user.user });
+  } catch (err) {
+    console.error("Error fetching counselors:", err);
+    res.status(500).json({ error: "Server error fetching counselors" });
+  }
+});
+
+
+app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) => {
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    username,
+    email,
+    contact_number,
+    position,
+    educational_attainment,
+    password
+  } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10); // Securely hash the password
+
+    await pool.query(
+      `INSERT INTO counselor 
+        (first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, password, is_available, create_date, update_date) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW(), NOW())`,
+      [first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, hashedPassword]
+    );
+
+    res.redirect('/counselors');
+  } catch (err) {
+    console.error("Error creating counselor:", err);
+    res.status(500).send("Failed to create counselor");
+  }
+});
+
+app.post('/admin/counselors/:id/edit', authenticateTokenAdmin, async (req, res) => {
+  const { id } = req.params;
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    username,
+    email,
+    contact_number,
+    position,
+    educational_attainment
+  } = req.body;
+
+  try {
+    await pool.query(
+      `UPDATE counselor
+       SET first_name = $1,
+           middle_name = $2,
+           last_name = $3,
+           username = $4,
+           email = $5,
+           contact_number = $6,
+           position = $7,
+           educational_attainment = $8,
+           update_date = NOW()
+       WHERE id = $9`,
+      [first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, id]
+    );
+
+    res.redirect('/counselors');
+  } catch (err) {
+    console.error("Error updating counselor:", err);
+    res.status(500).send("Failed to update counselor");
+  }
+});
+
+app.post('/admin/counselors/:id/delete', authenticateTokenAdmin, async (req, res) => {
+  const counselorId = req.params.id;
+
+  try {
+    // First delete the related counselor availability records
+    await pool.query('DELETE FROM counselor_availability WHERE counselor_id = $1', [counselorId]);
+
+    // Now delete the counselor
+    await pool.query('DELETE FROM counselor WHERE id = $1', [counselorId]);
+
+    res.redirect('/counselors'); // Redirect back to the counselor list page
+  } catch (err) {
+    console.error("Error deleting counselor:", err);
+    res.status(500).send("Server error deleting counselor.");
+  }
+});
 
 // app.get('/students', authenticateTokenAdmin, async (req, res) => {
     
@@ -1772,16 +2054,16 @@ app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
 //     res.status(500).send("Server error");
 //   }
 // });
-
-app.get('/students', authenticateTokenAdmin, async (req, res) => {
+app.get('/mayors', authenticateTokenAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT student.*, class.class_name AS class_name 
       FROM student 
       LEFT JOIN class ON student.class_id = class.id
-      WHERE student.class_id IS NOT NULL
+      WHERE student.class_id IS NOT NULL AND student.is_class_mayor = TRUE
       ORDER BY student.create_date DESC
     `);
+    
 
     const studentsWithSignedUrls = await Promise.all(
       result.rows.map(async (student) => {
@@ -1794,7 +2076,7 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
       })
     );
 
-    res.render('adminPages/studentsTable', {
+    res.render('adminPages/mayorsTable', {
       students: studentsWithSignedUrls,
       user: req.user.user,
     });
@@ -1803,32 +2085,157 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+// app.get('/students', authenticateTokenAdmin, async (req, res) => {
+//   try {
+//     const result = await pool.query(`
+//       SELECT student.*, class.class_name AS class_name 
+//       FROM student 
+//       LEFT JOIN class ON student.class_id = class.id
+//       WHERE student.class_id IS NOT NULL
+//       ORDER BY student.create_date DESC
+//     `);
+
+//     const studentsWithSignedUrls = await Promise.all(
+//       result.rows.map(async (student) => {
+//         if (student.student_id_image) {
+//           student.student_id_image_url = await getSignedS3Url(student.student_id_image);
+//         } else {
+//           student.student_id_image_url = null;
+//         }
+//         return student;
+//       })
+//     );
+
+//     res.render('adminPages/studentsTable', {
+//       students: studentsWithSignedUrls,
+//       user: req.user.user,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Server error");
+//   }
+// });
+
+
+app.get('/students', authenticateTokenAdmin, async (req, res) => {
+  try {
+    // Get all students with their class info
+    const studentResult = await pool.query(`
+      SELECT 
+        student.*, 
+        class.id AS class_id, 
+        class.class_name, 
+        class.create_date AS class_create_date, 
+        class.update_date AS class_update_date
+      FROM student 
+      LEFT JOIN class ON student.class_id = class.id
+      WHERE student.class_id IS NOT NULL
+      ORDER BY student.create_date DESC
+    `);
+
+    // Get all classes
+    const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
+
+    const studentsWithSignedUrls = await Promise.all(
+      studentResult.rows.map(async (student) => {
+        const signedUrl = student.student_id_image
+          ? await getSignedS3Url(student.student_id_image)
+          : null;
+
+        // Destructure class info
+        const {
+          class_id,
+          class_name,
+          class_create_date,
+          class_update_date,
+          ...studentData
+        } = student;
+
+        return {
+          ...studentData,
+          student_id_image_url: signedUrl,
+          class: {
+            id: class_id,
+            class_name,
+            create_date: class_create_date,
+            update_date: class_update_date
+          }
+        };
+      })
+    );
+    // res.json({
+    //   students: studentsWithSignedUrls,
+    //   classes: classResult.rows,
+    //   user: req.user.user,
+    // })
+    res.render('adminPages/studentsTable', {
+      students: studentsWithSignedUrls,
+      classes: classResult.rows,
+      user: req.user.user,
+    });
+
+  } catch (error) {
+    console.error("Error fetching students and classes:", error);
+    res.status(500).send("Server error");
+  }
+});
+
 
 app.get('/students/unassigned', authenticateTokenAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM student 
-      WHERE class_id IS NULL
-      ORDER BY create_date DESC
+    // Get all students with their class info
+    const studentResult = await pool.query(`
+      SELECT 
+        student.*, 
+        class.id AS class_id, 
+        class.class_name, 
+        class.create_date AS class_create_date, 
+        class.update_date AS class_update_date
+      FROM student 
+      LEFT JOIN class ON student.class_id = class.id
+      WHERE student.class_id IS NULL
+      ORDER BY student.create_date DESC
     `);
 
+    // Get all classes
+    const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
+
     const studentsWithSignedUrls = await Promise.all(
-      result.rows.map(async (student) => {
-        if (student.student_id_image) {
-          student.student_id_image_url = await getSignedS3Url(student.student_id_image);
-        } else {
-          student.student_id_image_url = null;
-        }
-        return student;
+      studentResult.rows.map(async (student) => {
+        const signedUrl = student.student_id_image
+          ? await getSignedS3Url(student.student_id_image)
+          : null;
+
+        // Destructure class info
+        const {
+          class_id,
+          class_name,
+          class_create_date,
+          class_update_date,
+          ...studentData
+        } = student;
+
+        return {
+          ...studentData,
+          student_id_image_url: signedUrl,
+          class: {
+            id: class_id,
+            class_name,
+            create_date: class_create_date,
+            update_date: class_update_date
+          }
+        };
       })
     );
 
     res.render('adminPages/studentsTable', {
       students: studentsWithSignedUrls,
+      classes: classResult.rows,
       user: req.user.user,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching students and classes:", error);
     res.status(500).send("Server error");
   }
 });
@@ -1847,23 +2254,64 @@ app.get('/students/:id', async (req, res) => {
 });
 
 app.post('/students/edit/:id', async (req, res) => {
-  const { first_name, middle_name, last_name, email, is_class_mayor } = req.body;
+  console.log('Editing student:', req.params.id, req.body);
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    username,
+    email,
+    id_num,
+    department,
+    program,
+    year_level,
+    sex,
+    contact_number,
+    is_class_mayor
+  } = req.body;
+
   try {
     await pool.query(`
       UPDATE student
-      SET first_name = $1,
-          middle_name = $2,
-          last_name = $3,
-          email = $4,
-          is_class_mayor = $5,
-          update_date = CURRENT_TIMESTAMP
-      WHERE id = $6
-    `, [first_name, middle_name, last_name, email, is_class_mayor, req.params.id]);
+      SET 
+        first_name = $1,
+        middle_name = $2,
+        last_name = $3,
+        username = $4,
+        email = $5,
+        id_num = $6,
+        department = $7,
+        program = $8,
+        year_level = $9,
+        sex = $10,
+        contact_number = $11,
+        is_class_mayor = $12,
+        update_date = CURRENT_TIMESTAMP
+      WHERE id = $13
+    `, [
+      first_name,
+      middle_name,
+      last_name,
+      username,
+      email,
+      id_num,
+      department,
+      program,
+      year_level,
+      sex,
+      contact_number,
+      is_class_mayor,
+      req.params.id
+    ]);
 
-    res.json({ success: true });
+    res.json({ success: true, message: 'Student updated successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false });
+    console.error('Error updating student:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update student',
+      error: err.message 
+    });
   }
 });
 
@@ -1976,7 +2424,7 @@ app.get('/counselor/logout', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 8181;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

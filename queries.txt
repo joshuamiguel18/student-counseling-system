@@ -27,6 +27,17 @@ CREATE TABLE student (
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE student ADD COLUMN student_id_image VARCHAR(50);
+ALTER TABLE student ADD COLUMN id_num VARCHAR(50);
+ALTER TABLE student ADD COLUMN middle_initial VARCHAR(10);
+ALTER TABLE student ADD COLUMN department VARCHAR(255);
+ALTER TABLE student ADD COLUMN program VARCHAR(255);
+ALTER TABLE student ADD COLUMN year_level VARCHAR(10);
+ALTER TABLE student ADD COLUMN sex VARCHAR(10);
+ALTER TABLE student ADD COLUMN contact_number VARCHAR(20);
+ALTER TABLE student ADD COLUMN address TEXT;
+
+
 
 CREATE TABLE counselor (
     id SERIAL PRIMARY KEY,
@@ -40,6 +51,11 @@ CREATE TABLE counselor (
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE counselor ADD COLUMN contact_number VARCHAR(20);
+ALTER TABLE counselor ADD COLUMN position VARCHAR(255);
+ALTER TABLE counselor ADD COLUMN educational_attainment VARCHAR(255);
+
 
 CREATE TABLE forum (
     id SERIAL PRIMARY KEY,

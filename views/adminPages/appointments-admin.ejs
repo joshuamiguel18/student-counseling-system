@@ -15,11 +15,29 @@
         <div class="content-wrapper">
           
 
-            <div class="card" style="box-shadow: none !important;">
-              <h5 class="card-header">Pending Appointments</h5>
-              <div class="card-body">
-                <div class="table-responsive d-none d-sm-block">
-                  <table class="table table-bordered">
+          <div class="card">
+            <h5 class="card-header">Appointments</h5>
+            <div class="card-body">
+                <div class="table-responsive text-nowrap">
+                  <div class="d-flex justify-content-between mb-3">
+                    <div class="d-flex">
+                      <select id="statusFilter" class="form-select me-2">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <select id="dateFilter" class="form-select">
+                        <option value="">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="this-week">This Week</option>
+                        <option value="this-month">This Month</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <table id="table" class="table table-bordered">
                     <thead>
                       <tr>
                         <th>Title</th>
@@ -51,23 +69,25 @@
                             <td><%= new Date(appointment.appointment_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
 
 
-                            <td>
-                              <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                  Action
-                                </button>
-                                <ul class="dropdown-menu">
-                                  <% if (appointment.status === 'pending') { %>
-                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/appointments/approve/<%= appointment.id %>')">Approve</a></li>
-                                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/appointments/reject/<%= appointment.id %>')">Reject</a></li>
-                                  <% } %>
-                                  <% if (appointment.status === 'approved') { %>
-                                    <li><a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/admin/appointments/cancel/<%= appointment.id %>')">Cancel</a></li>
-                                  <% } %>
-                                  <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">Edit</a></li>
-                                </ul>
-                              </div>
+                            <td class="actions">
+                              <% if (appointment.status === 'pending') { %>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/admin/appointments/approve/<%= appointment.id %>')">
+                                  <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
+                                </a>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/admin/appointments/reject/<%= appointment.id %>')">
+                                  <i class="bi bi-x-circle-fill text-danger" title="Reject"></i>
+                                </a>
+                              <% } %>
+                              <% if (appointment.status === 'approved') { %>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/admin/appointments/cancel/<%= appointment.id %>')">
+                                  <i class="bi bi-x-circle-fill text-warning" title="Cancel"></i>
+                                </a>
+                              <% } %>
+                              <a href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">
+                                <i class="bi bi-pencil-fill text-primary" title="Edit"></i>
+                              </a>
                             </td>
+                          </tr>
                           </tr>
                         <% }) %>
                       <% } else { %>
@@ -77,49 +97,7 @@
                   </table>
                 </div>
 
-                <!-- Mobile Cards -->
-              <div class="d-block d-sm-none">
-                <% if (appointments.length > 0) { %>
-                  <% appointments.forEach(appointment => { %>
-                    <div class="card mb-3 border shadow-sm">
-                      <div class="card-body">
-                        <h5 class="card-title mb-2"><%= appointment.title %></h5>
-                        <p><strong>Student:</strong> <%= appointment.student_first_name %> <%= appointment.student_last_name %></p>
-                        <p><strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %></p>
-                        <p><strong>Status:</strong>
-                          <span class="badge 
-                            <%= appointment.status === 'approved' ? 'bg-label-success' : 
-                                appointment.status === 'pending' ? 'bg-label-warning' : 
-                                appointment.status === 'rejected' ? 'bg-label-danger' : 
-                                appointment.status === 'cancelled' ? 'bg-label-danger' : 
-                                'bg-label-default' %>">
-                            <%= appointment.status %>
-                          </span>
-                        </p>
-                        <p><strong>Date:</strong> <%= new Date(appointment.appointment_date).toLocaleString() %></p>
 
-                        <div class="dropdown w-100">
-                          <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
-                            Action
-                          </button>
-                          <ul class="dropdown-menu w-100">
-                            <% if (appointment.status === 'pending') { %>
-                              <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/appointments/approve/<%= appointment.id %>')">Approve</a></li>
-                              <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/appointments/reject/<%= appointment.id %>')">Reject</a></li>
-                            <% } %>
-                            <% if (appointment.status === 'approved') { %>
-                              <li><a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/appointments/cancel/<%= appointment.id %>')">Cancel</a></li>
-                            <% } %>
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">Edit</a></li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  <% }) %>
-                <% } else { %>
-                  <div class="text-center">No pending appointments found.</div>
-                <% } %>
-              </div>
 
               </div>
             </div>
@@ -159,7 +137,7 @@
                       <label for="appointmentDate" class="form-label">Date</label>
                       <input type="datetime-local" class="form-control" id="appointmentDate" name="appointment_date" required>
                     </div>
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                       <label for="appointmentStatus" class="form-label">Status</label>
                       <select class="form-select" id="appointmentStatus" name="status" required>
                         <option value="pending">Pending</option>
@@ -167,7 +145,7 @@
                         <option value="rejected">Rejected</option>
                         <option value="cancelled">Cancelled</option>
                       </select>
-                    </div>
+                    </div> -->
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                   </form>
                   
@@ -269,5 +247,65 @@
   
   
   </script>
+
+<script>
+  $(document).ready(function () {
+    var table = $('#table').DataTable({
+      "order": [[4, 'desc']],
+      "columnDefs": [
+        { "targets": 4, "type": "date" },
+      ]
+    });
+
+    let minDate, maxDate;
+
+    // Custom filtering function for date range
+    $.fn.dataTable.ext.search.push(
+      function (settings, data, dataIndex) {
+        if (!minDate || !maxDate) return true;
+
+        var appointmentDate = new Date(data[4]); // Column index 4
+        return appointmentDate >= minDate && appointmentDate <= maxDate;
+      }
+    );
+
+    // Filter by Status
+    $('#statusFilter').on('change', function () {
+      table.column(3).search(this.value).draw();
+    });
+
+    // Filter by Date Range
+    $('#dateFilter').on('change', function () {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var selected = $(this).val();
+
+      if (selected === 'today') {
+        minDate = new Date(today);
+        maxDate = new Date(today);
+        maxDate.setHours(23, 59, 59, 999);
+      } else if (selected === 'this-week') {
+        var day = today.getDay(); // 0 (Sun) to 6 (Sat)
+        var diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1); // Get Monday
+        minDate = new Date(today.setDate(diffToMonday));
+        minDate.setHours(0, 0, 0, 0);
+        maxDate = new Date(minDate);
+        maxDate.setDate(maxDate.getDate() + 6);
+        maxDate.setHours(23, 59, 59, 999);
+      } else if (selected === 'this-month') {
+        minDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        maxDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        maxDate.setHours(23, 59, 59, 999);
+      } else {
+        minDate = null;
+        maxDate = null;
+      }
+
+      table.draw(); // Redraw with new date filter
+    });
+  });
+</script>
+
+
 </body>
 </html>
