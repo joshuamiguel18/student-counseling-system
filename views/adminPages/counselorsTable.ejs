@@ -76,12 +76,14 @@
                                         data-educational_attainment="<%= counselor.educational_attainment %>">
                                   <i class="bx bx-edit-alt"></i>
                                 </button>
+                              
                                 <form action="/admin/counselors/<%= counselor.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this counselor?');">
                                   <button type="submit" class="btn btn-sm btn-icon text-danger">
                                     <i class="bx bx-trash"></i>
                                   </button>
                                 </form>
                               </td>
+                              
                               
                             </tr>
                           <% }) %>
@@ -106,13 +108,19 @@
                       </div>
               
                       <div class="modal-body row g-3">
-                        <% const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment']; %>
+                        <% const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'position', 'educational_attainment']; %>
                         <% fields.forEach(field => { %>
                           <div class="col-md-6">
                             <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
                             <input type="text" name="<%= field %>" class="form-control" required />
                           </div>
                         <% }) %>
+              
+                        <!-- Contact Number field -->
+                        <div class="col-md-6">
+                          <label class="form-label">Contact number</label>
+                          <input type="tel" name="contact_number" pattern="[0-9]*" inputmode="numeric" class="form-control" required />
+                        </div>
               
                         <!-- Password field -->
                         <div class="col-md-6">
@@ -130,41 +138,50 @@
                 </div>
               </div>
               
+              
 
 
-           <!-- Edit Counselor Modal -->
-           <div class="modal fade" id="editCounselorModal" tabindex="-1" aria-labelledby="editCounselorModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-              <div class="modal-content">
-                <form id="editCounselorForm" method="POST">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="editCounselorModalLabel">Edit Counselor</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-          
-                  <div class="modal-body row g-3">
-                    <% fields.forEach(field => { %>
-                      <div class="col-md-6">
-                        <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
-                        <input type="text" name="<%= field %>" id="edit_<%= field %>" class="form-control" required />
-                      </div>
-                    <% }) %>
-          
-                    <!-- Password field -->
-                    <div class="col-md-6">
-                      <label class="form-label">Password (Leave blank to keep current)</label>
-                      <input type="password" name="password" id="edit_password" class="form-control" />
-                    </div>
-                  </div>
-          
-                  <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save Changes</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  </div>
-                </form>
-              </div>
+          <!-- Edit Counselor Modal -->
+<div class="modal fade" id="editCounselorModal" tabindex="-1" aria-labelledby="editCounselorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editCounselorForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editCounselorModalLabel">Edit Counselor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body row g-3">
+          <% const fields2 = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'position', 'educational_attainment']; %>
+          <% fields2.forEach(field => { %>
+            <div class="col-md-6">
+              <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
+              <input type="text" name="<%= field %>" id="edit_<%= field %>" class="form-control" required />
             </div>
+          <% }) %>
+
+          <!-- Contact Number field -->
+          <div class="col-md-6">
+            <label class="form-label">Contact number</label>
+            <input type="tel" name="contact_number" id="edit_contact_number" pattern="[0-9]*" inputmode="numeric" class="form-control" required />
           </div>
+
+          <!-- Password field -->
+          <div class="col-md-6">
+            <label class="form-label">Password (Leave blank to keep current)</label>
+            <input type="password" name="password" id="edit_password" class="form-control" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
           
 
 
@@ -179,11 +196,12 @@
   <%- include('../includes/scripts.ejs') %>
   <script>
     $(document).ready(function () {
-        $('#table').DataTable({
-        pageLength: 5, // Default rows per page
+      $('#table').DataTable({
+        pageLength: 5,
         lengthMenu: [5, 10, 25, 50],
-        });
+      });
     });
+  
     document.addEventListener('DOMContentLoaded', () => {
       const editModal = document.getElementById('editCounselorModal');
       const editForm = document.getElementById('editCounselorForm');
@@ -192,14 +210,16 @@
         btn.addEventListener('click', () => {
           const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment'];
           fields.forEach(field => {
-            document.getElementById(`edit_${field}`).value = btn.dataset[field] || '';
+            const input = document.getElementById(`edit_${field}`);
+            if (input) input.value = btn.dataset[field] || '';
           });
           const counselorId = btn.dataset.id;
-          editForm.action = `/admin/counselors/${counselorId}/edit`; // Set form action
+          editForm.action = `/admin/counselors/${counselorId}/edit`;
         });
       });
     });
   </script>
+  
   
 
 </body>
