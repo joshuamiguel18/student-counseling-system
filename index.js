@@ -1653,7 +1653,7 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
     // Send verification email
     await sendVerificationEmail(email, token);
 
-    res.status(200).json({ message: "Registration successful. Please check your email to verify your account." });
+    res.render('emailSentPage');
 
   } catch (err) {
     console.error("Registration error:", err);
@@ -2818,7 +2818,7 @@ app.get("/student/verify", async (req, res) => {
     await pool.query("DELETE FROM verification_tokens WHERE token = $1", [token]);
 
     // Step 4: Send a success response (could redirect to frontend)
-    res.send("Your email has been successfully verified. You may now log in.");
+    res.render('verified');
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error while verifying email.");
