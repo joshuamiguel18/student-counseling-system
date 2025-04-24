@@ -1,350 +1,273 @@
 <!DOCTYPE html>
-<html
-  lang="en"
-  class="light-style layout-menu-fixed"
-  data-assets-path=""
-  data-base-url=""
-  data-framework="django"
-  data-template="vertical-menu-free"
->
-  <head>
-    <%- include('../includes/head.ejs') %>
-  </head>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+</head>
 
-  <body>
-    <div class="layout-wrapper layout-content-navbar">
-      <div class="layout-container">
-        <%- include('../includes/sidebar-admin.ejs') %>
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
 
-        <div class="layout-page">
-          <%- include('../includes/header.ejs') %>
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
 
-          <div class="content-wrapper">
-            <div class="card" style="box-shadow: none !important;"  >
-              <h5 class="card-header">Psychological Tests</h5>
-              <div class="card-body">
-                <div class="table-responsive d-none d-sm-block">
-                  <table class="table table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Test Title</th>
-                        <th>Student</th>
-                        <th>Counselor</th>
-                        <th>Test Number</th>
-                        <th>Status</th>
-                        <th>Test Date</th>
-                        <th>Type</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <% if (tests.length > 0) { %> <% tests.forEach(test => {
-                      %>
-                      <tr>
-                        <td><%= test.test_title %></td>
-                        <td>
-                          <%= test.student_first_name %> <%=
-                          test.student_last_name %>
-                        </td>
-                        <td>
-                          <%= test.counselor_first_name %> <%=
-                          test.counselor_last_name %>
-                        </td>
-                        <td><%= test.test_number %></td>
-                        <td>
-                          <span class="badge bg-label-warning"
-                            ><%= test.status %></span
-                          >
-                        </td>
-                        <td>
-                          <%= new Date(test.test_date).toLocaleString() %>
-                        </td>
-                        <td>
-                          <%= test.is_online_test ? 'Online' : 'In-Person' %>
-                        </td>
-                        <td>
-                          <div class="dropdown">
-                            <button
-                              class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                              type="button"
-                              data-bs-toggle="dropdown"
-                            >
-                              Action
-                            </button>
-                            <ul class="dropdown-menu">
-                              <% if (test.status === 'pending') { %>
-                              <li>
-                                <a
-                                  class="dropdown-item"
-                                  href="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#actionModal"
-                                  onclick="setModal('Approve', '/psycho-tests/approve/<%= test.id %>')"
-                                  >Approve</a
-                                >
-                              </li>
-                              <li>
-                                <a
-                                  class="dropdown-item text-danger"
-                                  href="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#actionModal"
-                                  onclick="setModal('Reject', '/psycho-tests/reject/<%= test.id %>')"
-                                  >Reject</a
-                                >
-                              </li>
-                              <% } %>
-                              <li>
-                                <a
-                                  class="dropdown-item"
-                                  href="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#editTestModal"
-                                  onclick="populateEditForm('<%= test.id %>', '<%= test.test_title %>', '<%= test.test_date %>', '<%= test.status %>')"
-                                  >Edit</a
-                                >
-                              </li>
-                            </ul>
-                          </div>
-                        </td>
-                      </tr>
-                      <% }) %> <% } else { %>
-                      <tr>
-                        <td colspan="8" class="text-center">
-                          No psychological tests found.
-                        </td>
-                      </tr>
-                      <% } %>
-                    </tbody>
-                  </table>
-                </div>
+        <div class="content-wrapper">
+          <div class="card" style="box-shadow: none !important;">
+            <h5 class="card-header">Psychological Tests</h5>
+            <div class="card-body">
+              <div class="table-responsive text-nowrap">
+
+                
+                <!-- Desktop Table -->
+                <table id="table" class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Purpose</th>
+                      <th>Class</th>
+                      <th>Mayor</th>
+                      <th>Counselor</th>
+                      <th>Test Number</th>
+                      <th>Status</th>
+                      <th>Test Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if (tests.length > 0) { %>
+                      <% tests.forEach(test => { %>
+                        <tr>
+                          <td><%= test.test_title %></td>
+                          <td><%= test.class_name %></td>
+                          <td><%= test.mayor_first_name %> <%= test.mayor_last_name %></td>
+                          <td><%= test.counselor_first_name %> <%= test.counselor_last_name %></td>
+                          <td><%= test.test_number %></td>
+                          <td>
+                            <span class="badge 
+                              <%= test.status === 'approved' ? 'bg-label-success' : 
+                                  test.status === 'pending' ? 'bg-label-warning' : 
+                                  test.status === 'rejected' ? 'bg-label-danger' : 
+                                  'bg-label-default' %>">
+                              <%= test.status %>
+                            </span>
+                          </td>
+                          <td><%= new Date(test.test_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                          <td class="actions">
+                            <% if (test.status === 'pending') { %>
+                              <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/psycho-tests/approve/<%= test.id %>')">
+                                <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
+                              </a>
+                              <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/psycho-tests/reject/<%= test.id %>')">
+                                <i class="bi bi-x-circle-fill text-danger" title="Reject"></i>
+                              </a>
+                            <% } %>
+                            
+                          </td>
+                        </tr>
+                      <% }) %>
+                    <% } else { %>
+                      <tr><td colspan="9" class="text-center">No psychological tests found.</td></tr>
+                    <% } %>
+                  </tbody>
+                </table>
+                
+
               </div>
             </div>
-
-            <!-- Mobile Cards -->
-            <div class="d-block d-sm-none">
-              <% if (tests.length > 0) { %> <% tests.forEach(test => { %>
-              <div class="card mb-3 border shadow-sm">
-                <div class="card-body">
-                  <h5 class="card-title mb-2"><%= test.test_title %></h5>
-                  <p>
-                    <strong>Student:</strong> <%= test.student_first_name %> <%=
-                    test.student_last_name %>
-                  </p>
-                  <p>
-                    <strong>Counselor:</strong> <%= test.counselor_first_name %>
-                    <%= test.counselor_last_name %>
-                  </p>
-                  <p><strong>Test Number:</strong> <%= test.test_number %></p>
-                  <p>
-                    <strong>Status:</strong>
-                    <span class="badge bg-label-warning"
-                      ><%= test.status %></span
-                    >
-                  </p>
-                  <p>
-                    <strong>Type:</strong> <%= test.is_online_test ? 'Online' :
-                    'In-Person' %>
-                  </p>
-                  <p>
-                    <strong>Date:</strong> <%= new
-                    Date(test.test_date).toLocaleString() %>
-                  </p>
-
-                  <div class="dropdown w-100">
-                    <button
-                      class="btn btn-outline-secondary btn-sm dropdown-toggle w-100"
-                      type="button"
-                      data-bs-toggle="dropdown"
-                    >
-                      Action
-                    </button>
-                    <ul class="dropdown-menu w-100">
-                      <li>
-                        <a
-                          class="dropdown-item"
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#actionModal"
-                          onclick="setModal('Approve', '/psycho-tests/approve/<%= test.id %>')"
-                          >Approve</a
-                        >
-                      </li>
-                      <li>
-                        <a
-                          class="dropdown-item text-danger"
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#actionModal"
-                          onclick="setModal('Reject', '/psycho-tests/reject/<%= test.id %>')"
-                          >Reject</a
-                        >
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <% }) %> <% } else { %>
-              <div class="text-center">No psychological tests found.</div>
-              <% } %>
-            </div>
-
-            <!-- Action Confirmation Modal -->
-            <div
-              class="modal fade"
-              id="actionModal"
-              tabindex="-1"
-              aria-labelledby="actionModalLabel"
-              aria-hidden="true"
-            >
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="actionModalLabel">
-                      Confirm Action
-                    </h5>
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                    ></button>
-                  </div>
-                  <div class="modal-body" id="actionModalBody">
-                    Are you sure you want to perform this action?
-                  </div>
-                  <div class="modal-footer">
-                    <button
-                      type="button"
-                      class="btn btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      Cancel
-                    </button>
-                    <a href="#" class="btn btn-primary" id="actionModalBtn"
-                      >Yes, Proceed</a
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Edit Modal -->
-            <div
-              class="modal fade"
-              id="editTestModal"
-              tabindex="-1"
-              aria-labelledby="editTestModalLabel"
-              aria-hidden="true"
-            >
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="editTestModalLabel">
-                      Edit Psychological Test
-                    </h5>
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                    ></button>
-                  </div>
-                  <div class="modal-body">
-                    <form id="editTestForm">
-                      <div class="mb-3">
-                        <label for="testTitle" class="form-label"
-                          >Test Title</label
-                        >
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="testTitle"
-                          required
-                        />
-                      </div>
-                      <div class="mb-3">
-                        <label for="testDate" class="form-label"
-                          >Test Date</label
-                        >
-                        <input
-                          type="datetime-local"
-                          class="form-control"
-                          id="testDate"
-                          required
-                        />
-                      </div>
-                      <div class="mb-3">
-                        <label for="testStatus" class="form-label"
-                          >Status</label
-                        >
-                        <select class="form-select" id="testStatus" required>
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
-                      </div>
-                      <button type="submit" class="btn btn-primary">
-                        Save Changes
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="content-backdrop fade"></div>
           </div>
 
-          <%- include('../includes/footer.ejs') %>
+          <!-- Action Confirmation Modal -->
+          <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="actionModalLabel">Confirm Action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="actionModalBody">Are you sure you want to perform this action?</div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <a href="#" class="btn btn-primary" id="actionModalBtn">Yes, Proceed</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Modal -->
+          <div class="modal fade" id="editTestModal" tabindex="-1" aria-labelledby="editTestModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editTestModalLabel">Edit Psychological Test</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="editTestForm">
+                    <div class="mb-3">
+                      <label for="testTitle" class="form-label">Test Title</label>
+                      <input type="text" class="form-control" id="testTitle" name="test_title" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="testDate" class="form-label">Test Date</label>
+                      <input type="datetime-local" class="form-control" id="testDate" name="test_date" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="testStatus" class="form-label">Status</label>
+                      <select class="form-select" id="testStatus" name="status" required>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Modal -->
+          <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-success">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="successModalLabel">Success</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Test updated successfully!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Modal -->
+          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content text-danger">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Failed to update the test. Please try again.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-backdrop fade"></div>
         </div>
+
+        <%- include('../includes/footer.ejs') %>
       </div>
-      <div class="layout-overlay layout-menu-toggle"></div>
-      <div class="drag-target"></div>
     </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
 
-    <%- include('../includes/scripts.ejs') %>
+  <%- include('../includes/scripts.ejs') %>
 
-    <script>
-      function setModal(actionType, actionLink) {
-        document.getElementById(
-          "actionModalLabel"
-        ).textContent = `Confirm ${actionType}`;
-        document.getElementById(
-          "actionModalBody"
-        ).textContent = `Are you sure you want to ${actionType.toLowerCase()} this psychological test?`;
-        document
-          .getElementById("actionModalBtn")
-          .setAttribute("href", actionLink);
-      }
+  <script>
+    // Sets the modal for actions like Approve / Reject
+    function setModal(actionType, actionLink) {
+      document.getElementById('actionModalLabel').textContent = `Confirm ${actionType}`;
+      document.getElementById('actionModalBody').textContent = `Are you sure you want to ${actionType.toLowerCase()} this psychological test?`;
+      document.getElementById('actionModalBtn').setAttribute('href', actionLink);
+    }
 
-      function populateEditForm(id, testTitle, testDate, status) {
-        document.getElementById("testTitle").value = testTitle;
-        document.getElementById("testDate").value = new Date(testDate)
-          .toISOString()
-          .slice(0, 16);
-        document.getElementById("testStatus").value = status;
-        document.getElementById("editTestForm").action =
-          "/psycho-tests/edit/" + id;
-      }
+    // Sets the form values for editing
+    function populateEditForm(id, testTitle, testDate, status) {
+      document.getElementById('testTitle').value = testTitle;
+      document.getElementById('testDate').value = new Date(testDate).toISOString().slice(0, 16);
+      document.getElementById('testStatus').value = status;
+      document.getElementById('editTestForm').action = '/psycho-tests/edit/' + id;
+    }
 
-      document
-        .getElementById("editTestForm")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          const formData = new FormData(event.target);
-          fetch(event.target.action, {
-            method: "POST",
-            body: formData,
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              if (data.success) {
-                alert("Test updated successfully.");
-                location.reload();
-              } else {
-                alert("Error updating test.");
-              }
-            });
-        });
-    </script>
-  </body>
+    // Submit Edit Test Form
+    document.getElementById('editTestForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const data = {
+        test_title: document.getElementById('testTitle').value,
+        test_date: document.getElementById('testDate').value,
+        status: document.getElementById('testStatus').value
+      };
+
+      fetch(event.target.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          new bootstrap.Modal(document.getElementById('successModal')).show();
+          location.reload();
+        } else {
+          new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+      });
+    });
+
+    // DataTable initialization with filtering
+    $(document).ready(function () {
+      var table = $('#table').DataTable({
+        "order": [[6, 'desc']], // Sort by test date column (index 6)
+        "columnDefs": [
+          { "targets": 6, "type": "date" }, // Test date column is index 6
+        ]
+      });
+
+      let minDate, maxDate;
+
+      // Custom filtering function for date range
+      $.fn.dataTable.ext.search.push(
+        function (settings, data, dataIndex) {
+          if (!minDate || !maxDate) return true;
+
+          var testDate = new Date(data[6]); // Column index 6 for test date
+          return testDate >= minDate && testDate <= maxDate;
+        }
+      );
+
+      // Filter by Status
+      $('#statusFilter').on('change', function () {
+        table.column(5).search(this.value).draw(); // Status column is index 5
+      });
+
+      // Filter by Date Range
+      $('#dateFilter').on('change', function () {
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var selected = $(this).val();
+
+        if (selected === 'today') {
+          minDate = new Date(today);
+          maxDate = new Date(today);
+          maxDate.setHours(23, 59, 59, 999);
+        } else if (selected === 'this-week') {
+          var day = today.getDay(); // 0 (Sun) to 6 (Sat)
+          var diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1); // Get Monday
+          minDate = new Date(today.setDate(diffToMonday));
+          minDate.setHours(0, 0, 0, 0);
+          maxDate = new Date(minDate);
+          maxDate.setDate(maxDate.getDate() + 6);
+          maxDate.setHours(23, 59, 59, 999);
+        } else if (selected === 'this-month') {
+          minDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          maxDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+          maxDate.setHours(23, 59, 59, 999);
+        } else {
+          minDate = null;
+          maxDate = null;
+        }
+
+        table.draw(); // Redraw with new date filter
+      });
+    });
+  </script>
+</body>
 </html>

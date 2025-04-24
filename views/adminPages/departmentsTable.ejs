@@ -26,8 +26,9 @@
                 <table id="table" class="table table-bordered">
                   <thead>
                     <tr>
+                      <th>ID</th>
                       <th>Department Name</th>
-                      <th>Description</th>
+                      
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -35,15 +36,15 @@
                     <% if (departments.length > 0) { %>
                       <% departments.forEach(department => { %>
                         <tr>
+                          <td><%= department.id %></td>
                           <td><%= department.name %></td>
-                          <td><%= department.description %></td>
                           <td>
                             <button class="btn btn-sm btn-icon text-primary editBtn" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#editDepartmentModal"
                                     data-id="<%= department.id %>"
                                     data-name="<%= department.name %>"
-                                    data-description="<%= department.description %>">
+                                    >
                               <i class="bx bx-edit-alt"></i>
                             </button>
                             <!-- <form action="/admin/departments/<%= department.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this department?');">
@@ -81,10 +82,6 @@
                       <input type="text" name="name" class="form-control" required />
                     </div>
 
-                    <div class="mb-3">
-                      <label for="description" class="form-label">Description</label>
-                      <input type="text" name="description" class="form-control" required />
-                    </div>
                   </div>
 
                   <div class="modal-footer">
@@ -111,10 +108,7 @@
                       <label for="name" class="form-label">Department Name</label>
                       <input type="text" name="name" id="edit_name" class="form-control" required />
                     </div>
-                    <div class="mb-3">
-                      <label for="description" class="form-label">Description</label>
-                      <input type="text" name="description" id="edit_description" class="form-control" required />
-                    </div>
+
                   </div>
 
                   <div class="modal-footer">

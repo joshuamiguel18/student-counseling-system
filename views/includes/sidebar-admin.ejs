@@ -4,74 +4,79 @@
   <div class="menu-inner-shadow"></div>
 
   <ul class="menu-inner py-1">
+    <!-- Dashboard -->
     <li class="menu-item">
       <a href="/admin-app" class="menu-link">
         <i class="menu-icon tf-icons bx bx-home-alt"></i>
-        <div class="text-truncate" data-i18n="Dashboard">Dashboard</div>
+        <div class="text-truncate">Dashboard</div>
       </a>
     </li>
 
-    <li class="menu-item">
-      <a href="/admin/appointments" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-calendar-check"></i>
-        <div class="text-truncate" data-i18n="Forms">Appointments</div>
+    <!-- Transactions Dropdown -->
+    <li class="menu-item has-sub">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-transfer-alt"></i>
+        <div class="text-truncate">Transactions</div>
       </a>
+      <ul class="menu-sub">
+        <li class="menu-item">
+          <a href="/admin/appointments" class="menu-link">
+            <div>Appointments</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/admin/psycho-testing" class="menu-link">
+            <div>Psycho Testing</div>
+          </a>
+        </li>
+      </ul>
     </li>
 
-    <li class="menu-item">
-      <a href="/admin/psycho-testing" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-brain"></i>
-        <div class="text-truncate" data-i18n="Forms">Psycho Testing</div>
+    <!-- Libraries Dropdown -->
+    <li class="menu-item has-sub">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-library"></i>
+        <div class="text-truncate">Libraries</div>
       </a>
+      <ul class="menu-sub">
+        <li class="menu-item">
+          <a href="/students" class="menu-link">
+            <div>Students</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/counselors" class="menu-link">
+            <div>Counselors</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/mayors" class="menu-link">
+            <div>Mayors</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/classes" class="menu-link">
+            <div>Classes</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/programs" class="menu-link">
+            <div>Programs</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="/departments" class="menu-link">
+            <div>Colleges</div>
+          </a>
+        </li>
+      </ul>
     </li>
 
-    <li class="menu-item">
-      <a href="/classes" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-chalkboard"></i>
-        <div class="text-truncate" data-i18n="Forms">Classes</div>
-      </a>
-    </li>
-
-    <li class="menu-item">
-      <a href="/students" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-id-card"></i>
-        <div class="text-truncate" data-i18n="Forms">Students</div>
-      </a>
-    </li>
-
-    <li class="menu-item">
-      <a href="/counselors" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-user-voice"></i>
-        <div class="text-truncate" data-i18n="Forms">Counselors</div>
-      </a>
-    </li>
-
-    <li class="menu-item">
-      <a href="/mayors" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-crown"></i>
-        <div class="text-truncate" data-i18n="Forms">Mayors</div>
-      </a>
-    </li>
-
+    <!-- Pending Students -->
     <li class="menu-item">
       <a href="/students/unassigned" class="menu-link">
         <i class="menu-icon tf-icons bx bx-time-five"></i>
-        <div class="text-truncate" data-i18n="Forms">Pending Students</div>
-      </a>
-    </li>
-
-    <!-- New menu items for Departments and Programs -->
-    <li class="menu-item">
-      <a href="/departments" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-buildings"></i>
-        <div class="text-truncate" data-i18n="Departments">Departments</div>
-      </a>
-    </li>
-
-    <li class="menu-item">
-      <a href="/programs" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-layer"></i>
-        <div class="text-truncate" data-i18n="Programs">Programs</div>
+        <div class="text-truncate">Pending Students</div>
       </a>
     </li>
   </ul>

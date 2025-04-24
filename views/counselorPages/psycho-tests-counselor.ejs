@@ -15,7 +15,7 @@
 
         <div class="content-wrapper">
           <div class="card">
-            <h5 class="card-header">Psychological Tests</h5>
+            <h5 class="card-header">Psychological Tests by Class</h5>
             <div class="card-body">
                 <div class="table-responsive text-nowrap">
                   <div class="d-flex justify-content-between mb-3">
@@ -45,7 +45,7 @@
                     <thead>
                       <tr>
                         <th>Purpose</th>
-                        <th>Student</th>
+                        <th>Class</th>
                         <th>Test Date</th>
                         <th>Test #</th>
                         <th>Status</th>
@@ -57,7 +57,7 @@
                         <% psychoTests.forEach(test => { %>
                           <tr>
                             <td><%= test.test_title %></td>
-                            <td><%= test.student_first_name %> <%= test.student_last_name %></td>
+                            <td><%= test.class_name %></td>
                             <td><%= new Date(test.test_date).toLocaleString() %></td>
                             <td><%= test.test_number %></td>
                             <td>
@@ -95,7 +95,7 @@
                           </tr>
                         <% }) %>
                       <% } else { %>
-                        <tr><td colspan="7" class="text-center">No psychological tests found.</td></tr>
+                        <tr><td colspan="6" class="text-center">No psychological tests found.</td></tr>
                       <% } %>
                     </tbody>
                   </table>
@@ -162,7 +162,7 @@
 
       // Filter by Status
       $('#statusFilter').on('change', function () {
-        table.column(5).search(this.value).draw(); // Column index 5 (status)
+        table.column(4).search(this.value).draw(); // Column index 4 (status)
       });
 
       // Filter by Type

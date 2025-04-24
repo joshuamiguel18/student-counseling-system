@@ -996,34 +996,68 @@ app.get('/admin/appointments',authenticateTokenAdmin, async (req, res) => {
     }
 });
 
+// app.get('/admin/psycho-testing', authenticateTokenAdmin, async (req, res) => {
+//   try {
+//       const result = await pool.query(`
+//           SELECT 
+//               psycho_tests.id,
+//               psycho_tests.test_title,
+//               psycho_tests.status,
+//               psycho_tests.test_date,
+//               psycho_tests.test_number,
+//               psycho_tests.is_online_test,
+//               student.first_name AS student_first_name,
+//               student.last_name AS student_last_name,
+//               counselor.first_name AS counselor_first_name,
+//               counselor.last_name AS counselor_last_name
+//           FROM psycho_tests
+//           JOIN student ON psycho_tests.student_id = student.id
+//           JOIN counselor ON psycho_tests.counselor_id = counselor.id
+//           ORDER BY psycho_tests.test_date DESC
+//       `);
+
+//       const tests = result.rows;
+
+//       res.render('adminPages/psycho-testing-admin', { tests, user: req.user.user });
+//   } catch (err) {
+//       console.error('Error fetching psycho tests:', err);
+//       res.status(500).send('Server Error');
+//   }
+// });
+
 app.get('/admin/psycho-testing', authenticateTokenAdmin, async (req, res) => {
   try {
-      const result = await pool.query(`
-          SELECT 
-              psycho_tests.id,
-              psycho_tests.test_title,
-              psycho_tests.status,
-              psycho_tests.test_date,
-              psycho_tests.test_number,
-              psycho_tests.is_online_test,
-              student.first_name AS student_first_name,
-              student.last_name AS student_last_name,
-              counselor.first_name AS counselor_first_name,
-              counselor.last_name AS counselor_last_name
-          FROM psycho_tests
-          JOIN student ON psycho_tests.student_id = student.id
-          JOIN counselor ON psycho_tests.counselor_id = counselor.id
-          ORDER BY psycho_tests.test_date DESC
-      `);
+    const result = await pool.query(`
+      SELECT 
+          psycho_tests.id,
+          class.class_name AS class_name,
+          psycho_tests.test_title,
+          psycho_tests.status,
+          psycho_tests.test_date,
+          psycho_tests.test_number,
+          mayor.first_name AS mayor_first_name,
+          mayor.last_name AS mayor_last_name,
+          counselor.first_name AS counselor_first_name,
+          counselor.last_name AS counselor_last_name
+      FROM psycho_tests
+      JOIN student AS test_taker ON psycho_tests.student_id = test_taker.id
+      JOIN counselor ON psycho_tests.counselor_id = counselor.id
+      JOIN class ON psycho_tests.class_id = class.id
+      LEFT JOIN student AS mayor ON mayor.class_id = class.id AND mayor.is_class_mayor = true
+      ORDER BY psycho_tests.test_date DESC
+    `);
 
-      const tests = result.rows;
+    const tests = result.rows;
 
-      res.render('adminPages/psycho-testing-admin', { tests, user: req.user.user });
+    res.render('adminPages/psycho-testing-admin', { tests, user: req.user.user });
   } catch (err) {
-      console.error('Error fetching psycho tests:', err);
-      res.status(500).send('Server Error');
+    console.error('Error fetching psycho tests:', err);
+    res.status(500).send('Server Error');
   }
 });
+
+
+
 
 app.get('/admin/appointments/cancelled', authenticateTokenAdmin, async (req, res) => {
     try {
@@ -2926,34 +2960,76 @@ app.get("/student/verify", async (req, res) => {
 });
 
 
+// app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) => {
+//   try {
+//     const counselorId = req.user.user.id;
+
+//     const query = `
+//       SELECT 
+//         pt.*,
+//         s.first_name AS student_first_name,
+//         s.last_name AS student_last_name
+//       FROM psycho_tests pt
+//       JOIN student s ON pt.student_id = s.id
+//       WHERE pt.counselor_id = $1
+//       ORDER BY pt.test_date DESC
+//     `;
+    
+//     const { rows } = await pool.query(query, [counselorId]);
+    
+//     res.render('counselorPages/psycho-tests-counselor', { 
+//       title: 'Psychological Tests',
+//       psychoTests: rows,
+//       user: req.user.user, 
+//     });
+    
+//   } catch (err) {
+//     console.error('Error fetching psycho tests:', err);
+//     res.status(500).send('Server Error');
+//   }
+// });
+
 app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) => {
   try {
     const counselorId = req.user.user.id;
 
     const query = `
       SELECT 
-        pt.*,
-        s.first_name AS student_first_name,
-        s.last_name AS student_last_name
+          pt.id,
+          c.class_name AS class_name,
+          pt.test_title,
+          pt.status,
+          pt.test_date,
+          pt.test_number,
+          mayor.first_name AS mayor_first_name,
+          mayor.last_name AS mayor_last_name,
+          counselor.first_name AS counselor_first_name,
+          counselor.last_name AS counselor_last_name,
+          s.first_name AS student_first_name,
+          s.last_name AS student_last_name
       FROM psycho_tests pt
       JOIN student s ON pt.student_id = s.id
+      JOIN counselor ON pt.counselor_id = counselor.id
+      JOIN class c ON pt.class_id = c.id
+      LEFT JOIN student AS mayor ON mayor.class_id = c.id AND mayor.is_class_mayor = true
       WHERE pt.counselor_id = $1
       ORDER BY pt.test_date DESC
     `;
-    
+
     const { rows } = await pool.query(query, [counselorId]);
-    
+
     res.render('counselorPages/psycho-tests-counselor', { 
-      title: 'Psychological Tests',
+      title: 'Psychological Tests by Class',
       psychoTests: rows,
-      user: req.user.user, 
+      user: req.user.user,
     });
-    
+
   } catch (err) {
     console.error('Error fetching psycho tests:', err);
     res.status(500).send('Server Error');
   }
 });
+
 
 
 
@@ -3007,6 +3083,71 @@ app.get('/counselor/psycho-tests/cancel/:id', authenticateTokenCounselor, async 
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get('/psycho-tests/approve/:id', authenticateTokenAdmin, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    const updateQuery = `
+      UPDATE psycho_tests
+      SET status = 'approved'
+      WHERE id = $1
+      RETURNING *;
+    `;
+
+    const { rows } = await pool.query(updateQuery, [testId]);
+
+    if (rows.length === 0) {
+      return res.status(404).send('Psychological test not found');
+    }
+
+    res.redirect('/admin/psycho-testing'); // or wherever you want to redirect
+  } catch (err) {
+    console.error('Error approving psycho test:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+app.get('/psycho-tests/reject/:id', authenticateTokenAdmin, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    const updateQuery = `
+      UPDATE psycho_tests
+      SET status = 'rejected'
+      WHERE id = $1
+      RETURNING *;
+    `;
+
+    const { rows } = await pool.query(updateQuery, [testId]);
+
+    if (rows.length === 0) {
+      return res.status(404).send('Psychological test not found');
+    }
+
+    res.redirect('/admin/psycho-testing'); // Adjust as needed
+  } catch (err) {
+    console.error('Error rejecting psycho test:', err);
+    res.status(500).send('Server Error');
+  }
+});
 
 
 
