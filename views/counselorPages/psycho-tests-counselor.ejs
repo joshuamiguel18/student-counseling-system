@@ -44,10 +44,9 @@
                   <table id="testsTable" class="table table-bordered">
                     <thead>
                       <tr>
-                        <th>Test Title</th>
+                        <th>Purpose</th>
                         <th>Student</th>
                         <th>Test Date</th>
-                        <th>Type</th>
                         <th>Test #</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -60,7 +59,6 @@
                             <td><%= test.test_title %></td>
                             <td><%= test.student_first_name %> <%= test.student_last_name %></td>
                             <td><%= new Date(test.test_date).toLocaleString() %></td>
-                            <td><%= test.is_online_test ? 'Online' : 'Offline' %></td>
                             <td><%= test.test_number %></td>
                             <td>
                               <span class="badge 
