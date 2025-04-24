@@ -25,6 +25,10 @@
             
             <div class="card-body">
               <div class="table-responsive text-nowrap">
+                <form action="/admin/students/import" method="POST" enctype="multipart/form-data">
+                  <input type="file" name="csvFile" accept=".csv" required />
+                  <button type="submit">Upload</button>
+                </form>
                 <table id="studentTable" class="table table-bordered">
                   <thead>
                     <tr>

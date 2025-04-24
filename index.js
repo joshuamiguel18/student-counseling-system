@@ -1,6 +1,5 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const path = require('path');
 const pool = require('./db')
 const app = express();
 const multer = require("multer");
@@ -12,7 +11,12 @@ const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 const session = require('express-session');
 const cors = require('cors');
+const csv = require('csv-parser');
 
+
+const path = require('path');
+const fs = require('fs');
+const upload = require('./multerConfigCSV'); // Make sure this is configured correctly
 
 const token = crypto.randomBytes(32).toString("hex");
 
@@ -23,6 +27,12 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const { uploadStudentIdImage } = require('./multerConfig');
 
+// Ensure the uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+//const upload = multer({ dest: 'uploads/' }); // temporarily save in the 'uploads' folder
 
 
 app.use(express.static(path.join(__dirname + '/public')));
@@ -39,8 +49,6 @@ app.use(cors({
     origin: 'https://counseling-system.vercel.app',
     credentials: true // if you use cookies/sessions
 }));
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 const JWT_SECRET = 'studentCounseling'; // Make sure to use the same secret as in the login route
 
@@ -2922,6 +2930,72 @@ app.post('/savePsychotesting', async (req, res) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
+  const filePath = path.join(__dirname, '..', req.file.path);
+  const students = [];
+
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (row) => {
+      students.push(row);
+    })
+    .on('end', async () => {
+      try {
+        for (const student of students) {
+          await pool.query(`
+            INSERT INTO student (
+              username, password, email, first_name, middle_name, last_name,
+              middle_initial, id_num, department, program, year_level,
+              sex, contact_number, address, class_id
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              $7, $8, $9, $10, $11,
+              $12, $13, $14, $15
+            )
+          `, [
+            student.username,
+            student.password,
+            student.email,
+            student.first_name,
+            student.middle_name,
+            student.last_name,
+            student.middle_initial,
+            student.id_num,
+            student.department,
+            student.program,
+            student.year_level,
+            student.sex,
+            student.contact_number,
+            student.address,
+            student.class_id
+          ]);
+        }
+
+        fs.unlinkSync(filePath);
+        res.send('Students imported successfully!');
+      } catch (err) {
+        console.error('Error inserting students:', err);
+        res.status(500).send('Server Error');
+      }
+    });
+});
+
+
+
+
+
+
+
+
 app.get("/student/verify", async (req, res) => {
   const { token } = req.query;
 
@@ -3084,7 +3158,124 @@ app.get('/counselor/psycho-tests/cancel/:id', authenticateTokenCounselor, async 
 
 
 
-
+  app.post('/upload-csv', upload.single('csvFile'), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+  
+    const filePath = req.file.path;
+    console.log(`Processing file at: ${filePath}`);
+  
+    try {
+      // Verify file exists
+      await fs.access(filePath);
+  
+      const results = [];
+      const errors = [];
+  
+      // Process CSV file
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on('data', (row) => {
+            try {
+              // Validate required fields
+              if (!row.username || !row.password || !row.email || !row.first_name || !row.last_name) {
+                errors.push(`Missing required fields in row: ${JSON.stringify(row)}`);
+                return;
+              }
+  
+              // Transform data types
+              const processedRow = {
+                ...row,
+                is_class_mayor: row.is_class_mayor === 'TRUE',
+                year_level: parseInt(row.year_level) || 1
+              };
+  
+              results.push(processedRow);
+            } catch (parseError) {
+              errors.push(`Error processing row: ${parseError.message}`);
+            }
+          })
+          .on('end', resolve)
+          .on('error', reject);
+      });
+  
+      if (errors.length > 0) {
+        console.error('CSV processing errors:', errors);
+        return res.status(400).json({
+          success: false,
+          message: 'CSV contained errors',
+          errors: errors.slice(0, 10) // Return first 10 errors
+        });
+      }
+  
+      // Insert into database
+      await pool.query('BEGIN');
+      
+      for (const row of results) {
+        try {
+          const hashedPassword = await bcrypt.hash(row.password, 10);
+          
+          await pool.query(
+            `INSERT INTO students (
+              username, password, email, first_name, middle_name, last_name, 
+              is_class_mayor, class_id, student_id_image, id_num, middle_initial, 
+              department, program, year_level, sex, contact_number, address
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+            [
+              row.username, hashedPassword, row.email, row.first_name, row.middle_name, row.last_name,
+              row.is_class_mayor, row.class_id, row.student_id_image, row.id_num, row.middle_initial,
+              row.department, row.program, row.year_level, row.sex, row.contact_number, row.address
+            ]
+          );
+        } catch (dbError) {
+          errors.push(`Error inserting ${row.username}: ${dbError.message}`);
+        }
+      }
+  
+      if (errors.length > 0) {
+        await pool.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          message: 'Some records failed to import',
+          errors: errors.slice(0, 10),
+          successful: results.length - errors.length
+        });
+      }
+  
+      await pool.query('COMMIT');
+  
+      // Clean up file
+      try {
+        await fs.unlink(filePath);
+      } catch (cleanupError) {
+        console.error('Error deleting temp file:', cleanupError);
+      }
+  
+      return res.json({
+        success: true,
+        imported: results.length,
+        message: 'Students imported successfully'
+      });
+  
+    } catch (error) {
+      console.error('Upload processing error:', error);
+      try {
+        await pool.query('ROLLBACK');
+        if (filePath) await fs.unlink(filePath).catch(console.error);
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Error processing CSV file',
+        error: error.message
+      });
+    }
+  });
+  
 
 
 
@@ -3150,7 +3341,9 @@ app.get('/psycho-tests/reject/:id', authenticateTokenAdmin, async (req, res) => 
 });
 
 
-
+app.get('/import', authenticateTokenAdmin, (req,res) => {
+  res.render('adminPages/importPage', {user: req.user.user});
+});
 
 
 app.get('/logout', (req, res) => {

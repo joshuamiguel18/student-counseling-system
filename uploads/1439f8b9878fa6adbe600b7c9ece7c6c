@@ -1,0 +1,3 @@
+username,password,email,first_name,middle_name,last_name,is_class_mayor,class_id,student_id_image,id_num,middle_initial,department,program,year_level,sex,contact_number,address
+john_doe,12345,john.doe@example.com,John,Doe,Smith,TRUE,1,john_image.jpg,12345,J,1,1,1,Male,9123456789,"123 Street Name, City, Country"
+jane_doe,67890,jane.doe@example.com,Jane,Doe,Johnson,FALSE,2,jane_image.jpg,67890,D,1,1,2,Female,9234567890,"456 Another St, City, Country"

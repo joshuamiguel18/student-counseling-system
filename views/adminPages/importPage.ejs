@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+  <head>
+    <%- include('../includes/head.ejs') %>
+  </head>
+
+  <body>
+    <!-- Layout wrapper: Start -->
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+        <%- include('../includes/sidebar-admin.ejs') %>
+    
+        <!-- Layout page: Start -->
+        <div class="layout-page">
+          <!-- Navbar: Start -->
+          <%- include('../includes/header-admin.ejs') %>
+          <!-- Navbar: End -->
+    
+          <!-- Content wrapper: Start -->
+          <div class="content-wrapper">
+            <!-- Content: Start -->
+            <div class="container-xxl flex-grow-1 container-p-y">
+              <div class="container mt-5">
+                <div class="card shadow">
+                  <div class="card-body">
+                    <h2 class="card-title mb-4">📥 Import Students via CSV</h2>
+                    
+                    <!-- Progress bar (hidden by default) -->
+                    <div class="progress mb-3" id="progress-bar" style="height: 20px; display: none;">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                           role="progressbar" 
+                           style="width: 0%" 
+                           aria-valuenow="0" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100"></div>
+                    </div>
+                
+                    <form action="/admin/students/import" method="POST" enctype="multipart/form-data" id="csv-upload-form">
+                      <div class="mb-3">
+                        <label for="csvFile" class="form-label">Upload CSV File</label>
+                        <input type="file" name="csvFile" class="form-control" id="csvFile" accept=".csv" required />
+                        <div class="form-text">Max file size: 5MB</div>
+                      </div>
+                
+                      <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <span class="spinner-border spinner-border-sm" id="spinner" style="display: none;"></span>
+                        <i class="bi bi-upload" id="upload-icon"></i> Import CSV
+                      </button>
+                    </form>
+                
+                    <!-- Feedback messages -->
+                    <div id="feedback" class="mt-3"></div>
+                
+                    <div class="mt-4">
+                      <h5 class="mb-2">📋 CSV Format Requirements:</h5>
+                      <ul class="list-group mb-3">
+                        <li class="list-group-item">• Required columns: username, password, email, first_name, last_name</li>
+                        <li class="list-group-item">• Optional columns: middle_name, is_class_mayor, class_id, etc.</li>
+                        <li class="list-group-item">• First row should be headers</li>
+                        <li class="list-group-item">• File must be UTF-8 encoded</li>
+                      </ul>
+                      
+                      <div class="alert alert-info">
+                        💡 <strong>Tip:</strong> Download our <a href="/sample-template/students.csv" download class="alert-link">CSV template</a> 
+                        to ensure proper formatting.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- / Content: End -->
+    
+            <div class="content-backdrop fade"></div>
+          </div>
+          <!-- / Layout page: End -->
+    
+          <%- include('../includes/footer.ejs') %>
+        </div>
+    
+        <!-- Overlay -->
+        <div class="layout-overlay layout-menu-toggle"></div>
+        <!-- Drag Target Area To SlideIn Menu On Small Screens -->
+        <div class="drag-target"></div>
+      </div>
+      <!-- Layout wrapper: End -->
+    
+      <%- include('../includes/scripts.ejs') %>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const form = document.getElementById('csv-upload-form');
+          const feedback = document.getElementById('feedback');
+          const submitBtn = document.getElementById('submit-btn');
+          const spinner = document.getElementById('spinner');
+          const uploadIcon = document.getElementById('upload-icon');
+          const progressBar = document.getElementById('progress-bar');
+          const progressBarInner = progressBar.querySelector('.progress-bar');
+          const csvFileInput = document.getElementById('csvFile');
+
+          // Validate file size before upload
+          csvFileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file && file.size > 5 * 1024 * 1024) { // 5MB limit
+              showFeedback('File size exceeds 5MB limit', 'danger');
+              this.value = ''; // Clear the file input
+            }
+          });
+
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Reset feedback and UI
+            feedback.innerHTML = '';
+            submitBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            uploadIcon.style.display = 'none';
+            progressBar.style.display = 'block';
+            
+            showFeedback('📂 Uploading and processing file... Please wait.', 'info');
+
+            const formData = new FormData(form);
+            
+            try {
+              const response = await fetch('/admin/students/import', {
+                method: 'POST',
+                body: formData
+              });
+
+              // Handle progress (if your backend supports it)
+              if (response.body) {
+                const reader = response.body.getReader();
+                const contentLength = +response.headers.get('Content-Length');
+                let receivedLength = 0;
+                let chunks = [];
+                
+                while(true) {
+                  const {done, value} = await reader.read();
+                  
+                  if (done) break;
+                  
+                  chunks.push(value);
+                  receivedLength += value.length;
+                  
+                  // Update progress bar
+                  if (contentLength) {
+                    const percent = Math.round((receivedLength / contentLength) * 100);
+                    progressBarInner.style.width = `${percent}%`;
+                    progressBarInner.setAttribute('aria-valuenow', percent);
+                  }
+                }
+              }
+
+              const result = await response.json();
+
+              if (result.success) {
+                showFeedback(`✅ Success! ${result.processed || ''} students imported.`, 'success');
+                form.reset(); // Reset the form after successful upload
+              } else {
+                let errorMessage = '❌ Error importing students';
+                if (result.message) {
+                  errorMessage += `: ${result.message}`;
+                }
+                if (result.errors) {
+                  errorMessage += `<ul class="mt-2">${result.errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
+                }
+                showFeedback(errorMessage, 'danger');
+              }
+            } catch (error) {
+              console.error('Upload error:', error);
+              showFeedback('❌ Network error or server unavailable. Please try again later.', 'danger');
+            } finally {
+              submitBtn.disabled = false;
+              spinner.style.display = 'none';
+              uploadIcon.style.display = 'inline-block';
+              progressBar.style.display = 'none';
+              progressBarInner.style.width = '0%';
+            }
+          });
+
+          function showFeedback(message, type) {
+            feedback.innerHTML = message;
+            feedback.className = 'mt-3'; // Reset classes
+            feedback.classList.add(`text-${type}`);
+            
+            // For errors, add alert styling
+            if (type === 'danger') {
+              feedback.classList.add('alert', 'alert-danger');
+            } else if (type === 'success') {
+              feedback.classList.add('alert', 'alert-success');
+            } else if (type === 'info') {
+              feedback.classList.add('alert', 'alert-info');
+            }
+          }
+        });
+      </script>
+    </body>
+</html>
