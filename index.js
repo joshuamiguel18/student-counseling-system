@@ -1879,36 +1879,115 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
 //     res.status(500).send('Internal Server Error');
 //   }
 // });
+// app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
+//   const classId = req.params.id;
+
+//   try {
+//     // Get all classes (for dropdown/filtering)
+//     const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
+
+//     // Get the selected class info
+//     const selectedClassQuery = await pool.query(`SELECT * FROM class WHERE id = $1`, [classId]);
+//     if (selectedClassQuery.rows.length === 0) {
+//       return res.status(404).send('Class not found');
+//     }
+
+//     const selectedClass = selectedClassQuery.rows[0];
+
+//     // Get students in that class
+//     const studentResult = await pool.query(`
+//       SELECT 
+//         student.*, 
+//         class.id AS class_id, 
+//         class.class_name, 
+//         class.create_date AS class_create_date, 
+//         class.update_date AS class_update_date
+//       FROM student 
+//       LEFT JOIN class ON student.class_id = class.id
+//       WHERE student.class_id = $1
+//       ORDER BY student.create_date DESC
+//     `, [classId]);
+
+//     // Map student data with signed image URLs
+//     const studentsWithSignedUrls = await Promise.all(
+//       studentResult.rows.map(async (student) => {
+//         const signedUrl = student.student_id_image
+//           ? await getSignedS3Url(student.student_id_image)
+//           : null;
+
+//         const {
+//           class_id,
+//           class_name,
+//           class_create_date,
+//           class_update_date,
+//           ...studentData
+//         } = student;
+
+//         return {
+//           ...studentData,
+//           student_id_image_url: signedUrl,
+//           class: {
+//             id: class_id,
+//             class_name,
+//             create_date: class_create_date,
+//             update_date: class_update_date
+//           }
+//         };
+//       })
+//     );
+
+//     res.render('adminPages/studentsTable', {
+//       students: studentsWithSignedUrls,
+//       classes: classResult.rows,
+//       selectedClass, // Pass selected class if you want to highlight it in the UI
+//       user: req.user.user,
+//       unAssignedPage: false,
+//mayorsPage: false,
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching class students:", error);
+//     res.status(500).send("Server error");
+//   }
+// });
+
 app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
   const classId = req.params.id;
 
   try {
-    // Get all classes (for dropdown/filtering)
+    // Get all classes (for filter dropdown)
     const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
 
-    // Get the selected class info
+    // Check if the selected class exists
     const selectedClassQuery = await pool.query(`SELECT * FROM class WHERE id = $1`, [classId]);
     if (selectedClassQuery.rows.length === 0) {
       return res.status(404).send('Class not found');
     }
-
     const selectedClass = selectedClassQuery.rows[0];
 
-    // Get students in that class
+    // Get all departments and programs for filter dropdowns
+    const departmentResult = await pool.query(`SELECT id, name FROM departments ORDER BY name ASC`);
+    const programResult = await pool.query(`SELECT id, name, department_id FROM programs ORDER BY name ASC`);
+
+    // Fetch students for the specific class, with joined department/program info
     const studentResult = await pool.query(`
       SELECT 
         student.*, 
         class.id AS class_id, 
         class.class_name, 
         class.create_date AS class_create_date, 
-        class.update_date AS class_update_date
+        class.update_date AS class_update_date,
+        departments.name AS department_name,
+        programs.name AS program_name
       FROM student 
       LEFT JOIN class ON student.class_id = class.id
+      LEFT JOIN departments ON student.department_id = departments.id
+      LEFT JOIN programs ON student.program_id = programs.id
       WHERE student.class_id = $1
       ORDER BY student.create_date DESC
     `, [classId]);
 
-    // Map student data with signed image URLs
+    // Attach signed URLs to each student
     const studentsWithSignedUrls = await Promise.all(
       studentResult.rows.map(async (student) => {
         const signedUrl = student.student_id_image
@@ -1920,6 +1999,8 @@ app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
           class_name,
           class_create_date,
           class_update_date,
+          department_name,
+          program_name,
           ...studentData
         } = student;
 
@@ -1931,16 +2012,23 @@ app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
             class_name,
             create_date: class_create_date,
             update_date: class_update_date
-          }
+          },
+          department_name,
+          program_name
         };
       })
     );
 
+    // Render view with complete data
     res.render('adminPages/studentsTable', {
       students: studentsWithSignedUrls,
       classes: classResult.rows,
-      selectedClass, // Pass selected class if you want to highlight it in the UI
+      departments: departmentResult.rows,
+      programs: programResult.rows,
+      selectedClass,
       user: req.user.user,
+      unAssignedPage: false,
+      mayorsPage: false,
     });
 
   } catch (error) {
@@ -1948,6 +2036,7 @@ app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 app.post('/students/assign-class', authenticateTokenAdmin, async (req, res) => {
   const { studentId, classId, isMayor } = req.body;
@@ -2250,37 +2339,86 @@ app.post('/admin/counselors/:id/delete', authenticateTokenAdmin, async (req, res
 //     res.status(500).send("Server error");
 //   }
 // });
+
 app.get('/mayors', authenticateTokenAdmin, async (req, res) => {
   try {
+    // Get all class info
+    const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
+
+    // Get all departments
+    const departmentResult = await pool.query(`SELECT id, name FROM departments ORDER BY name ASC`);
+
+    // Get all programs
+    const programResult = await pool.query(`SELECT id, name, department_id FROM programs ORDER BY name ASC`);
+
+    // Get only class mayors with class, department, and program info
     const result = await pool.query(`
-      SELECT student.*, class.class_name AS class_name 
+      SELECT 
+        student.*, 
+        class.id AS class_id, 
+        class.class_name, 
+        class.create_date AS class_create_date, 
+        class.update_date AS class_update_date,
+        departments.name AS department_name,
+        programs.name AS program_name
       FROM student 
       LEFT JOIN class ON student.class_id = class.id
+      LEFT JOIN departments ON student.department_id = departments.id
+      LEFT JOIN programs ON student.program_id = programs.id
       WHERE student.class_id IS NOT NULL AND student.is_class_mayor = TRUE
       ORDER BY student.create_date DESC
     `);
-    
 
+    // Attach signed image URLs
     const studentsWithSignedUrls = await Promise.all(
       result.rows.map(async (student) => {
-        if (student.student_id_image) {
-          student.student_id_image_url = await getSignedS3Url(student.student_id_image);
-        } else {
-          student.student_id_image_url = null;
-        }
-        return student;
+        const signedUrl = student.student_id_image
+          ? await getSignedS3Url(student.student_id_image)
+          : null;
+
+        const {
+          class_id,
+          class_name,
+          class_create_date,
+          class_update_date,
+          department_name,
+          program_name,
+          ...studentData
+        } = student;
+
+        return {
+          ...studentData,
+          student_id_image_url: signedUrl,
+          class: {
+            id: class_id,
+            class_name,
+            create_date: class_create_date,
+            update_date: class_update_date
+          },
+          department_name,
+          program_name
+        };
       })
     );
 
-    res.render('adminPages/mayorsTable', {
+    // Render same template but filtered to mayors only
+    res.render('adminPages/studentsTable', {
       students: studentsWithSignedUrls,
+      classes: classResult.rows,
+      departments: departmentResult.rows,
+      programs: programResult.rows,
       user: req.user.user,
+      unAssignedPage: false,
+      mayorsPage: true,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching mayors:", error);
     res.status(500).send("Server error");
   }
 });
+
+
 // app.get('/students', authenticateTokenAdmin, async (req, res) => {
 //   try {
 //     const result = await pool.query(`
@@ -2388,7 +2526,8 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
       departments: departmentResult.rows,
       programs: programResult.rows,
       user: req.user.user,
-      unAssignedPage: false
+      unAssignedPage: false,
+      mayorsPage: false,
     });
 
   } catch (error) {
