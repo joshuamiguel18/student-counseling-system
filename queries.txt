@@ -205,3 +205,11 @@ ALTER TABLE student
 
 ALTER TABLE student DROP COLUMN department;
 ALTER TABLE student DROP COLUMN program;
+
+
+CREATE TABLE verification_tokens (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES student(id) ON DELETE CASCADE,
+    token TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

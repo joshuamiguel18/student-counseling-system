@@ -13,6 +13,10 @@ const flash = require('connect-flash');
 const session = require('express-session');
 const cors = require('cors');
 
+
+const token = crypto.randomBytes(32).toString("hex");
+
+
 const { S3Client, PutObjectCommand ,GetObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require('uuid');
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -1583,7 +1587,6 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
     password,
   } = req.body;
 
-  // Validate required fields
   if (
     !first_name || !last_name || !sex || !contact_number || !address ||
     !id_num || !department || !program || !year_level ||
@@ -1592,7 +1595,6 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  // Ensure file upload exists
   const studentIdFile = req.files?.student_id_image?.[0];
   if (!studentIdFile) {
     return res.status(400).json({ error: "Student ID image is required" });
@@ -1603,18 +1605,19 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Insert the student
     const result = await pool.query(
       `INSERT INTO student (
         first_name, middle_name, last_name, sex, contact_number, address,
         id_num, department_id, program_id, year_level,
         username, email, password, student_id_image,
-        is_class_mayor, create_date, update_date
+        is_class_mayor, is_verified, create_date, update_date
       )
       VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10,
         $11, $12, $13, $14,
-        $15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        $15, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
       RETURNING id`,
       [
@@ -1636,9 +1639,21 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
       ]
     );
 
-    res.redirect('/login');
-    // Optionally use JSON:
-    // res.json({ message: "Registration successful", student_id: result.rows[0].id });
+    const studentId = result.rows[0].id;
+
+    // Generate a verification token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // Save token to verification_tokens table
+    await pool.query(
+      `INSERT INTO verification_tokens (student_id, token, created_at) VALUES ($1, $2, CURRENT_TIMESTAMP)`,
+      [studentId, token]
+    );
+
+    // Send verification email
+    await sendVerificationEmail(email, token);
+
+    res.status(200).json({ message: "Registration successful. Please check your email to verify your account." });
 
   } catch (err) {
     console.error("Registration error:", err);
@@ -2632,6 +2647,46 @@ app.post('/savePsychotesting', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+app.get("/student/verify", async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).send("Verification token is missing.");
+  }
+
+  try {
+    // Step 1: Find the token in the database
+    const tokenResult = await pool.query(
+      "SELECT student_id FROM verification_tokens WHERE token = $1",
+      [token]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(400).send("Invalid or expired verification token.");
+    }
+
+    const studentId = tokenResult.rows[0].student_id;
+
+    // Step 2: Update the student's is_verified field
+    await pool.query(
+      "UPDATE student SET is_verified = true WHERE id = $1",
+      [studentId]
+    );
+
+    // Step 3: Optionally, delete the used token
+    await pool.query("DELETE FROM verification_tokens WHERE token = $1", [token]);
+
+    // Step 4: Send a success response (could redirect to frontend)
+    res.send("Your email has been successfully verified. You may now log in.");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error while verifying email.");
+  }
+});
+
+
 
 
 

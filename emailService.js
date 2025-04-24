@@ -3,44 +3,47 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
-  secure: false, 
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
 
-
-
 const sendVerificationEmail = async (email, token) => {
-    const verificationLink = `${process.env.BASE_URL}/verify?token=${token}`;
+  const verificationLink = `${process.env.BASE_URL}/student/verify?token=${token}`;
 
-    const mailOptions = {
-        from: process.env.SMTP_USER,
-        to: email,
-        subject: "Verify Your Email - RateSmart",
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                <h2 style="color: #333; text-align: center;">Welcome to RateSmart!</h2>
-                <p style="color: #555; font-size: 16px;">You're almost there! Click the button below to verify your email and activate your account.</p>
-                
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="${verificationLink}" style="background-color: #007bff; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify Email</a>
-                </div>
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: "Welcome to EagleMind – Verify Your Email",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f4f8fb;">
+        <h2 style="color: #2c3e50; text-align: center;">Welcome to EagleMind 🦅</h2>
+        <p style="color: #34495e; font-size: 16px;">
+          Thank you for joining <strong>EagleMind</strong>, your personal support system for student mental wellness and growth.
+        </p>
+        <p style="color: #34495e; font-size: 16px;">
+          Please verify your email to activate your account and start exploring resources, booking appointments, and connecting with counselors.
+        </p>
+        
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${verificationLink}" style="background-color: #3498db; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify My Email</a>
+        </div>
 
-                <p style="color: #555; font-size: 14px;">If you did not sign up for a RateSmart account, you can safely ignore this email.</p>
-                
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                
-                <p style="color: #777; font-size: 12px; text-align: center;">
-                    Need help? Contact our support team at <a href="mailto:support@ratesmart.com">support@ratesmart.com</a>.
-                </p>
-            </div>
-        `,
-    };
+        <p style="color: #7f8c8d; font-size: 14px;">If you didn’t sign up for EagleMind, please ignore this email. No action is needed.</p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        
+        <p style="color: #95a5a6; font-size: 12px; text-align: center;">
+          Questions? Reach out to our support team at 
+          <a href="mailto:support@eaglemind.app" style="color: #2980b9;">support@eaglemind.app</a>
+        </p>
+      </div>
+    `,
+  };
 
-    await transporter.sendMail(mailOptions);
+  await transporter.sendMail(mailOptions);
 };
 
-  
-  module.exports = sendVerificationEmail;
+module.exports = sendVerificationEmail;
