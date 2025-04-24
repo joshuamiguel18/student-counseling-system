@@ -2,6 +2,7 @@
 <html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
 <head>
   <%- include('../includes/head.ejs') %>
+  <title><%= title %></title>
 </head>
 
 <body>
@@ -14,7 +15,7 @@
 
         <div class="content-wrapper">
           <div class="card">
-            <h5 class="card-header">My Appointments</h5>
+            <h5 class="card-header">Psychological Tests</h5>
             <div class="card-body">
                 <div class="table-responsive text-nowrap">
                   <div class="d-flex justify-content-between mb-3">
@@ -22,14 +23,14 @@
                       <select id="statusFilter" class="form-select me-2">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
+                        <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                       </select>
                       <select id="typeFilter" class="form-select me-2">
                         <option value="">All Types</option>
                         <option value="online">Online</option>
-                        <option value="f2f">Face-to-Face</option>
+                        <option value="offline">Offline</option>
                       </select>
                       <select id="dateFilter" class="form-select">
                         <option value="">All Dates</option>
@@ -40,68 +41,63 @@
                     </div>
                   </div>
                   
-                  <table id="table" class="table table-bordered">
+                  <table id="testsTable" class="table table-bordered">
                     <thead>
                       <tr>
-                        <th>Title</th>
+                        <th>Test Title</th>
                         <th>Student</th>
-                        <th>Date</th>
+                        <th>Test Date</th>
                         <th>Type</th>
-                        <th>Appointment #</th>
+                        <th>Test #</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <% if (appointments.length > 0) { %>
-                        <% appointments.forEach(appointment => { %>
+                      <% if (psychoTests.length > 0) { %>
+                        <% psychoTests.forEach(test => { %>
                           <tr>
-                            <td><%= appointment.title %></td>
-                            <td><%= appointment.student_first_name %> <%= appointment.student_last_name %></td>
-                            <td><%= new Date(appointment.appointment_date).toLocaleString() %></td>
-                            <td><%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %></td>
-                            <td><%= appointment.appointment_number %></td>
+                            <td><%= test.test_title %></td>
+                            <td><%= test.student_first_name %> <%= test.student_last_name %></td>
+                            <td><%= new Date(test.test_date).toLocaleString() %></td>
+                            <td><%= test.is_online_test ? 'Online' : 'Offline' %></td>
+                            <td><%= test.test_number %></td>
                             <td>
                               <span class="badge 
-                                <%= appointment.status === 'approved' ? 'bg-label-success' : 
-                                    appointment.status === 'pending' ? 'bg-label-warning' : 
-                                    appointment.status === 'rejected' ? 'bg-label-danger' : 
-                                    appointment.status === 'cancelled' ? 'bg-label-danger' : 
-                                    appointment.status === 'completed' ? 'bg-label-success' : 
+                                <%= test.status === 'completed' ? 'bg-label-success' : 
+                                    test.status === 'in_progress' ? 'bg-label-primary' :
+                                    test.status === 'pending' ? 'bg-label-warning' : 
+                                    test.status === 'cancelled' ? 'bg-label-danger' : 
                                     'bg-label-default' %>">
-                                <%= appointment.status.toUpperCase() %>
+                                <%= test.status.replace('_', ' ').toUpperCase() %>
                               </span>
                             </td>
                             <td class="actions">
-                              <% if (appointment.status !== 'cancelled' && appointment.status !== 'completed') { %>
-                                <% if (appointment.status === 'pending') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/counselor/appointments/approve/<%= appointment.id %>')">
-                                    <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.status === 'pending' || appointment.status === 'approved') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/appointments/cancel/<%= appointment.id %>')">
-                                    <i class="bi bi-x-circle-fill text-danger" title="Cancel"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.status === 'approved') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Mark as Completed', '/counselor/appointments/completed/<%= appointment.id %>')">
-                                    <i class="bi bi-check-circle-fill text-success" title="Mark as Completed"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.is_online_appointment && appointment.status == 'approved') { %>
-                                  <a href="/counselor/appointments/<%= appointment.id %>/chat">
-                                    <i class="bi bi-chat-dots-fill text-primary" title="Go to Chat"></i>
-                                  </a>
-                                <% } %>
-                              <% } else { %>
-                                <small class="text-muted">No actions</small>
+                              <% if (test.status !== 'cancelled' && test.status !== 'completed') { %>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" 
+                                   onclick="setModal('Start Test', '/counselor/psycho-tests/start/<%= test.id %>')">
+                                  <i class="bi bi-play-circle-fill text-primary" title="Start Test"></i>
+                                </a>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" 
+                                   onclick="setModal('Cancel', '/counselor/psycho-tests/cancel/<%= test.id %>')">
+                                  <i class="bi bi-x-circle-fill text-danger" title="Cancel"></i>
+                                </a>
+                              <% } %>
+                              <% if (test.is_online_test && test.status === 'in_progress') { %>
+                                <a href="/counselor/psycho-tests/<%= test.id %>/conduct">
+                                  <i class="bi bi-pencil-square text-info" title="Conduct Test"></i>
+                                </a>
+                              <% } %>
+                              <% if (test.status === 'completed') { %>
+                                <a href="/counselor/psycho-tests/<%= test.id %>/results">
+                                  <i class="bi bi-file-earmark-text-fill text-success" title="View Results"></i>
+                                </a>
                               <% } %>
                             </td>
                           </tr>
                         <% }) %>
                       <% } else { %>
-                        <tr><td colspan="7" class="text-center">No appointments found.</td></tr>
+                        <tr><td colspan="7" class="text-center">No psychological tests found.</td></tr>
                       <% } %>
                     </tbody>
                   </table>
@@ -126,36 +122,6 @@
             </div>
           </div>
 
-          <!-- Success Modal -->
-          <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content text-success">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="successModalLabel">Success</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  Action completed successfully!
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Error Modal -->
-          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content text-danger">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="errorModalLabel">Error</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  Failed to complete the action. Please try again.
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div class="content-backdrop fade"></div>
         </div>
 
@@ -169,18 +135,18 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-    // Sets the modal for actions like Approve / Cancel / Mark as Completed
+    // Sets the modal for actions
     function setModal(actionType, actionLink) {
       document.getElementById('actionModalLabel').textContent = `Confirm ${actionType}`;
-      document.getElementById('actionModalBody').textContent = `Are you sure you want to ${actionType.toLowerCase()} this appointment?`;
+      document.getElementById('actionModalBody').textContent = `Are you sure you want to ${actionType.toLowerCase()} this test?`;
       document.getElementById('actionModalBtn').setAttribute('href', actionLink);
     }
 
     $(document).ready(function () {
-      var table = $('#table').DataTable({
-        "order": [[2, 'desc']], // Sort by date column (index 2)
+      var table = $('#testsTable').DataTable({
+        "order": [[2, 'desc']], // Sort by test date column (index 2)
         "columnDefs": [
-          { "targets": 2, "type": "date" }, // Date column (index 2)
+          { "targets": 2, "type": "date" }, // Test date column (index 2)
         ]
       });
 
@@ -191,8 +157,8 @@
         function (settings, data, dataIndex) {
           if (!minDate || !maxDate) return true;
 
-          var appointmentDate = new Date(data[2]); // Column index 2 (date column)
-          return appointmentDate >= minDate && appointmentDate <= maxDate;
+          var testDate = new Date(data[2]); // Column index 2 (test date)
+          return testDate >= minDate && testDate <= maxDate;
         }
       );
 
@@ -205,8 +171,8 @@
       $('#typeFilter').on('change', function () {
         if (this.value === 'online') {
           table.column(3).search('Online').draw(); // Column index 3 (type)
-        } else if (this.value === 'f2f') {
-          table.column(3).search('Face-to-Face').draw();
+        } else if (this.value === 'offline') {
+          table.column(3).search('Offline').draw();
         } else {
           table.column(3).search('').draw();
         }
@@ -223,8 +189,8 @@
           maxDate = new Date(today);
           maxDate.setHours(23, 59, 59, 999);
         } else if (selected === 'this-week') {
-          var day = today.getDay(); // 0 (Sun) to 6 (Sat)
-          var diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1); // Get Monday
+          var day = today.getDay();
+          var diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
           minDate = new Date(today.setDate(diffToMonday));
           minDate.setHours(0, 0, 0, 0);
           maxDate = new Date(minDate);
@@ -239,7 +205,7 @@
           maxDate = null;
         }
 
-        table.draw(); // Redraw with new date filter
+        table.draw();
       });
     });
   </script>
