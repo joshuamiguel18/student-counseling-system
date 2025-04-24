@@ -567,9 +567,34 @@ app.post('/appointments/reschedule', async (req, res) => {
 app.get('/login', (req, res) => {
     res.render('login', { error: null, username: '' }); // Ensure username is always defined
 });
-app.get('/register', (req, res) => {
-    res.render('register', { error: null, username: '', email: '' }); 
+
+
+app.get('/register', async (req, res) => {
+  try {
+    const departments = await pool.query('SELECT * FROM departments');
+    const programs = await pool.query('SELECT * FROM programs');
+    res.render('register', { departments: departments.rows, programs: programs.rows, error: null, username: '', email: '' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
 });
+
+app.get('/programs/:departmentId', async (req, res) => {
+  const departmentId = req.params.departmentId;
+
+  try {
+    // Fetch programs that belong to the selected department by ID
+    const programs = await pool.query('SELECT * FROM programs WHERE department_id = $1', [departmentId]);
+    
+    res.json(programs.rows);  // Send the programs as a JSON response
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch programs' });
+  }
+});
+
+
 
 app.get('/profile/:id',authenticateToken, (req, res) => {
   
@@ -1581,7 +1606,7 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
     const result = await pool.query(
       `INSERT INTO student (
         first_name, middle_name, last_name, sex, contact_number, address,
-        id_num, department, program, year_level,
+        id_num, department_id, program_id, year_level,
         username, email, password, student_id_image,
         is_class_mayor, create_date, update_date
       )
@@ -1953,6 +1978,162 @@ app.get('/counselors', authenticateTokenAdmin, async (req, res) => {
   }
 });
 
+// Route for Departments
+app.get('/departments', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+         id,
+         name,
+         description
+       FROM departments`
+    );
+
+    res.render('adminPages/departmentsTable', { departments: result.rows, user: req.user.user });
+  } catch (err) {
+    console.error("Error fetching departments:", err);
+    res.status(500).json({ error: "Server error fetching departments" });
+  }
+});
+
+
+app.post('/admin/departments/create', async (req, res) => {
+  const { name, description } = req.body;
+
+  try {
+    await pool.query(
+      'INSERT INTO departments (name, description) VALUES ($1, $2)',
+      [name, description]
+    );
+    res.redirect('/departments'); // Redirect back to the departments page
+  } catch (err) {
+    console.error('Error creating department:', err);
+    res.status(500).send('Failed to create department');
+  }
+});
+
+
+
+app.post('/admin/departments/:id/edit', async (req, res) => {
+  const departmentId = req.params.id;
+  const { name, description } = req.body;
+
+  console.log('Updating department:', departmentId, req.body);
+
+  if (!name) {
+    return res.status(400).json({
+      success: false,
+      message: 'Department name is required.'
+    });
+  }
+
+  try {
+    const result = await pool.query(`
+      UPDATE departments
+      SET 
+        name = $1,
+        description = $2
+      WHERE id = $3
+      RETURNING *
+    `, [name, description, departmentId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Department not found.'
+      });
+    }
+
+    // res.json({
+    //   success: true,
+    //   message: 'Department updated successfully.',
+    //   department: result.rows[0]
+    // });
+
+    res.redirect('/departments')
+  } catch (err) {
+    console.error('Error updating department:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update department.',
+      error: err.message
+    });
+  }
+});
+
+app.post('/admin/departments/:id/delete', async (req, res) => {
+  const departmentId = req.params.id;
+
+  try {
+    await pool.query('DELETE FROM departments WHERE id = $1', [departmentId]);
+    res.redirect('/departments')
+  } catch (err) {
+    console.error('Error deleting department:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete department', error: err.message });
+  }
+});
+
+
+// Route for Programs
+app.get('/programs', authenticateTokenAdmin, async (req, res) => {
+  try {
+    // Fetch programs
+    const programResult = await pool.query(
+      `SELECT 
+         p.id,
+         p.name AS program_name,
+         p.description,
+         p.department_id,
+         d.name AS department_name
+       FROM programs p
+       JOIN departments d ON p.department_id = d.id`
+    );
+
+    // Fetch departments for dropdown
+    const departmentResult = await pool.query(
+      `SELECT id, name FROM departments`
+    );
+
+    res.render('adminPages/programsTable', {
+      programs: programResult.rows,
+      departments: departmentResult.rows,
+      user: req.user.user
+    });
+  } catch (err) {
+    console.error("Error fetching programs or departments:", err);
+    res.status(500).json({ error: "Server error fetching programs or departments" });
+  }
+});
+
+
+
+app.post('/admin/programs/create', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const { name, description, department_id } = req.body;
+
+    await pool.query(
+      `INSERT INTO programs (name, description, department_id) VALUES ($1, $2, $3)`,
+      [name, description, department_id]
+    );
+
+    res.redirect('/programs');
+  } catch (err) {
+    console.error("Error creating program:", err);
+    res.status(500).json({ error: "Server error creating program" });
+  }
+});
+app.post('/admin/programs/:id/delete', authenticateTokenAdmin, async (req, res) => {
+  const programId = req.params.id;
+
+  try {
+    await pool.query('DELETE FROM programs WHERE id = $1', [programId]);
+    res.redirect('/programs');
+  } catch (err) {
+    console.error('Error deleting program:', err);
+    res.status(500).json({ error: 'Server error deleting program' });
+  }
+});
+
 
 app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) => {
   const {
@@ -2119,16 +2300,20 @@ app.get('/mayors', authenticateTokenAdmin, async (req, res) => {
 
 app.get('/students', authenticateTokenAdmin, async (req, res) => {
   try {
-    // Get all students with their class info
+    // Get all students with their class, department, and program info
     const studentResult = await pool.query(`
       SELECT 
         student.*, 
         class.id AS class_id, 
         class.class_name, 
         class.create_date AS class_create_date, 
-        class.update_date AS class_update_date
+        class.update_date AS class_update_date,
+        departments.name AS department_name,
+        programs.name AS program_name
       FROM student 
       LEFT JOIN class ON student.class_id = class.id
+      LEFT JOIN departments ON student.department_id = departments.id
+      LEFT JOIN programs ON student.program_id = programs.id
       WHERE student.class_id IS NOT NULL
       ORDER BY student.create_date DESC
     `);
@@ -2136,18 +2321,27 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
     // Get all classes
     const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
 
+    // Get all departments
+    const departmentResult = await pool.query(`SELECT id, name FROM departments ORDER BY name ASC`);
+
+    // Get all programs
+    const programResult = await pool.query(`SELECT id, name, department_id FROM programs ORDER BY name ASC`);
+
+    // Attach signed S3 URLs for student ID images
     const studentsWithSignedUrls = await Promise.all(
       studentResult.rows.map(async (student) => {
         const signedUrl = student.student_id_image
           ? await getSignedS3Url(student.student_id_image)
           : null;
 
-        // Destructure class info
+        // Destructure joined info
         const {
           class_id,
           class_name,
           class_create_date,
           class_update_date,
+          department_name,
+          program_name,
           ...studentData
         } = student;
 
@@ -2159,19 +2353,27 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
             class_name,
             create_date: class_create_date,
             update_date: class_update_date
-          }
+          },
+          department_name,
+          program_name
         };
       })
     );
-    // res.json({
+    // console.log({
     //   students: studentsWithSignedUrls,
     //   classes: classResult.rows,
+    //   departments: departmentResult.rows,
+    //   programs: programResult.rows,
     //   user: req.user.user,
-    // })
+    // });
+    // Render with all required data
     res.render('adminPages/studentsTable', {
       students: studentsWithSignedUrls,
       classes: classResult.rows,
+      departments: departmentResult.rows,
+      programs: programResult.rows,
       user: req.user.user,
+      unAssignedPage: false
     });
 
   } catch (error) {
@@ -2179,66 +2381,93 @@ app.get('/students', authenticateTokenAdmin, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 
 app.get('/students/unassigned', authenticateTokenAdmin, async (req, res) => {
-  try {
-    // Get all students with their class info
-    const studentResult = await pool.query(`
-      SELECT 
-        student.*, 
-        class.id AS class_id, 
-        class.class_name, 
-        class.create_date AS class_create_date, 
-        class.update_date AS class_update_date
-      FROM student 
-      LEFT JOIN class ON student.class_id = class.id
-      WHERE student.class_id IS NULL
-      ORDER BY student.create_date DESC
-    `);
-
-    // Get all classes
-    const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
-
-    const studentsWithSignedUrls = await Promise.all(
-      studentResult.rows.map(async (student) => {
-        const signedUrl = student.student_id_image
-          ? await getSignedS3Url(student.student_id_image)
-          : null;
-
-        // Destructure class info
-        const {
-          class_id,
-          class_name,
-          class_create_date,
-          class_update_date,
-          ...studentData
-        } = student;
-
-        return {
-          ...studentData,
-          student_id_image_url: signedUrl,
-          class: {
-            id: class_id,
+    try {
+      // Get all students with their class, department, and program info
+      const studentResult = await pool.query(`
+        SELECT 
+          student.*, 
+          class.id AS class_id, 
+          class.class_name, 
+          class.create_date AS class_create_date, 
+          class.update_date AS class_update_date,
+          departments.name AS department_name,
+          programs.name AS program_name
+        FROM student 
+        LEFT JOIN class ON student.class_id = class.id
+        LEFT JOIN departments ON student.department_id = departments.id
+        LEFT JOIN programs ON student.program_id = programs.id
+        WHERE student.class_id IS NULL
+        ORDER BY student.create_date DESC
+      `);
+  
+      // Get all classes
+      const classResult = await pool.query(`SELECT * FROM class ORDER BY class_name ASC`);
+  
+      // Get all departments
+      const departmentResult = await pool.query(`SELECT id, name FROM departments ORDER BY name ASC`);
+  
+      // Get all programs
+      const programResult = await pool.query(`SELECT id, name, department_id FROM programs ORDER BY name ASC`);
+  
+      // Attach signed S3 URLs for student ID images
+      const studentsWithSignedUrls = await Promise.all(
+        studentResult.rows.map(async (student) => {
+          const signedUrl = student.student_id_image
+            ? await getSignedS3Url(student.student_id_image)
+            : null;
+  
+          // Destructure joined info
+          const {
+            class_id,
             class_name,
-            create_date: class_create_date,
-            update_date: class_update_date
-          }
-        };
-      })
-    );
-
-    res.render('adminPages/studentsTable', {
-      students: studentsWithSignedUrls,
-      classes: classResult.rows,
-      user: req.user.user,
-    });
-
-  } catch (error) {
-    console.error("Error fetching students and classes:", error);
-    res.status(500).send("Server error");
-  }
-});
+            class_create_date,
+            class_update_date,
+            department_name,
+            program_name,
+            ...studentData
+          } = student;
+  
+          return {
+            ...studentData,
+            student_id_image_url: signedUrl,
+            class: {
+              id: class_id,
+              class_name,
+              create_date: class_create_date,
+              update_date: class_update_date,
+            },
+            department_name,
+            program_name
+          };
+        })
+      );
+      // console.log({
+      //   students: studentsWithSignedUrls,
+      //   classes: classResult.rows,
+      //   departments: departmentResult.rows,
+      //   programs: programResult.rows,
+      //   user: req.user.user,
+      // });
+      // Render with all required data
+      res.render('adminPages/studentsTable', {
+        students: studentsWithSignedUrls,
+        classes: classResult.rows,
+        departments: departmentResult.rows,
+        programs: programResult.rows,
+        user: req.user.user,
+        unAssignedPage: true,
+      });
+  
+    } catch (error) {
+      console.error("Error fetching students and classes:", error);
+      res.status(500).send("Server error");
+    }
+  });
+  
 
 
 app.get('/students/:id', async (req, res) => {
@@ -2280,8 +2509,8 @@ app.post('/students/edit/:id', async (req, res) => {
         username = $4,
         email = $5,
         id_num = $6,
-        department = $7,
-        program = $8,
+        department_id = $7,
+        program_id = $8,
         year_level = $9,
         sex = $10,
         contact_number = $11,

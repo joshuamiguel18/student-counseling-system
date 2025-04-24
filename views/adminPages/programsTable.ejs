@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+  <!-- DataTables CSS -->
+
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          <div class="card" style="box-shadow: none !important;">
+            <h5 class="card-header">Programs</h5>
+            <div class="card-body">
+              <div class="table-responsive text-nowrap">
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createProgramModal">
+                  Add Program
+                </button>
+                
+                <table id="table" class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Program Name</th>
+                      <th>Department</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if (programs.length > 0) { %>
+                      <% programs.forEach(program => { %>
+                        <tr>
+                          <td><%= program.program_name %></td>
+                          <td><%= program.department_name %></td>
+                          <td>
+                            <button class="btn btn-sm btn-icon text-primary editBtn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editProgramModal"
+                                    data-id="<%= program.id %>"
+                                    data-name="<%= program.program_name %>"
+                                    data-department_id="<%= program.department_id %>">
+                              <i class="bx bx-edit-alt"></i>
+                            </button>
+                            <form action="/admin/programs/<%= program.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this program?');">
+                              <button type="submit" class="btn btn-sm btn-icon text-danger">
+                                <i class="bx bx-trash"></i>
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    <% } else { %>
+                      <tr>
+                        <td colspan="3" class="text-center">No programs found.</td>
+                      </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Create Program Modal -->
+          <div class="modal fade" id="createProgramModal" tabindex="-1" aria-labelledby="createProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form action="/admin/programs/create" method="POST">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="createProgramModalLabel">Add New Program</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label for="name" class="form-label">Program Name</label>
+                      <input type="text" name="name" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="department" class="form-label">Department</label>
+                      <select name="department_id" class="form-control" required>
+                        <option value="" disabled selected>Select Department</option>
+                        <% departments.forEach(dep => { %>
+                          <option value="<%= dep.id %>"><%= dep.name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Create</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Program Modal -->
+          <div class="modal fade" id="editProgramModal" tabindex="-1" aria-labelledby="editProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form id="editProgramForm" method="POST">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="editProgramModalLabel">Edit Program</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label for="name" class="form-label">Program Name</label>
+                      <input type="text" name="name" id="edit_name" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="department" class="form-label">Department</label>
+                      <select name="department_id" id="edit_department" class="form-control" required>
+                        <% departments.forEach(dep => { %>
+                          <option value="<%= dep.id %>"><%= dep.name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="layout-overlay layout-menu-toggle"></div>
+      <div class="drag-target"></div>
+    </div>
+
+  </div>
+  
+  <%- include('../includes/scripts.ejs') %>
+  <script>
+    $(document).ready(function () {
+      $('#table').DataTable({
+        pageLength: 5, // Default rows per page
+        lengthMenu: [5, 10, 25, 50],
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const editModal = document.getElementById('editProgramModal');
+      const editForm = document.getElementById('editProgramForm');
+  
+      document.querySelectorAll('.editBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('edit_name').value = btn.dataset.name || '';
+          document.getElementById('edit_department').value = btn.dataset.department_id || '';
+          const programId = btn.dataset.id;
+          editForm.action = `/admin/programs/${programId}/edit`; // Set form action
+        });
+      });
+    });
+  </script>
+</body>
+</html>

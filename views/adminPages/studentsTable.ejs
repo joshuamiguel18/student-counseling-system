@@ -14,8 +14,14 @@
         <%- include('../includes/header.ejs') %>
 
         <div class="content-wrapper">
-          <div class="card">
-            <h5 class="card-header">Students</h5>
+          <div class="card" style="box-shadow: none !important;">
+              <% if (unAssignedPage) { %>
+                <h5 class="card-header">Unassigned Students</h5>
+
+                <% } else { %>
+                  <h5 class="card-header">Students</h5>
+
+                  <% } %>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
                 <table id="studentTable" class="table table-bordered">
@@ -32,6 +38,7 @@
                       <th>Year Level</th>
                       <th>Sex</th>
                       <th>Contact</th>
+                      <th>STUDENT ID IMAGE</th>
                       <th>Class</th>
                       <th>Mayor</th>
                       <th>Actions</th>
@@ -47,12 +54,23 @@
                           <td><%= student.username %></td>
                           <td><%= student.email || 'N/A' %></td>
                           <td><%= student.id_num || 'N/A' %></td>
-                          <td><%= student.department || 'N/A' %></td>
-                          <td><%= student.program || 'N/A' %></td>
+                          <td><%= student.department_name || 'N/A' %></td>
+                          <td><%= student.program_name || 'N/A' %></td>
                           <td><%= student.year_level || 'N/A' %></td>
                           <td><%= student.sex || 'N/A' %></td>
                           <td><%= student.contact_number || 'N/A' %></td>
-                          <td><%= student.class?.class_name || 'Unassigned' %></td>
+                          <td>
+                            <% if (student.student_id_image_url) { %>
+                              <img src="<%= student.student_id_image_url %>" alt="Student ID"
+                                   class="img-thumbnail" style="max-width: 50px; cursor: pointer;"
+                                   data-bs-toggle="modal" data-bs-target="#imageModal"
+                                   onclick="setModalImage('<%= student.student_id_image_url %>')">
+                            <% } else { %>
+                              NO ID IMAGE
+                            <% } %>
+                          </td>
+                          <td><%= student.class.class_name || 'N/A' %></td>
+                          
                           <td>
                             <span class="badge <%= student.is_class_mayor ? 'bg-label-success' : 'bg-label-secondary' %>">
                               <%= student.is_class_mayor ? 'Yes' : 'No' %>
@@ -69,14 +87,15 @@
                                     data-username="<%= student.username %>"
                                     data-email="<%= student.email %>"
                                     data-id_num="<%= student.id_num %>"
-                                    data-department="<%= student.department %>"
-                                    data-program="<%= student.program %>"
+                                    data-department="<%= student.department_id %>"
+                                    data-program="<%= student.program_id %>"
                                     data-year_level="<%= student.year_level %>"
                                     data-sex="<%= student.sex %>"
                                     data-contact_number="<%= student.contact_number %>"
                                     data-is_class_mayor="<%= student.is_class_mayor %>">
-                              <i class="bx bx-edit-alt"></i>
+                                <i class="bx bx-edit-alt"></i>
                             </button>
+
                             <% if (!student.class.id) { %>
                               <button class="btn btn-sm btn-icon text-success assignBtn" 
                                       data-bs-toggle="modal" 
@@ -99,6 +118,23 @@
             </div>
           </div>
 
+          
+          <!-- Bootstrap Modal -->
+          <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                  <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                  <img id="modalImage" src="" alt="Full ID" class="img-fluid rounded">
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
           <!-- Assign Class Modal -->
           <div class="modal fade" id="assignClassModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
@@ -119,10 +155,10 @@
                         <% }) %>
                       </select>
                     </div>
-                    <div class="mb-3 form-check">
+                    <!-- <div class="mb-3 form-check">
                       <input type="checkbox" class="form-check-input" name="isMayor" id="assignAsMayor">
                       <label class="form-check-label" for="assignAsMayor">Assign as Class Mayor</label>
-                    </div>
+                    </div> -->
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -197,6 +233,7 @@
                   </div>
                   <div class="modal-body row g-3">
                     <input type="hidden" name="id" id="editStudentId">
+
                     <div class="col-md-4">
                       <label class="form-label">First Name</label>
                       <input type="text" name="first_name" id="editFirstName" class="form-control" required>
@@ -209,6 +246,7 @@
                       <label class="form-label">Last Name</label>
                       <input type="text" name="last_name" id="editLastName" class="form-control" required>
                     </div>
+
                     <div class="col-md-6">
                       <label class="form-label">Username</label>
                       <input type="text" name="username" id="editUsername" class="form-control" required>
@@ -217,6 +255,7 @@
                       <label class="form-label">Email</label>
                       <input type="email" name="email" id="editEmail" class="form-control">
                     </div>
+
                     <div class="col-md-6">
                       <label class="form-label">ID Number</label>
                       <input type="text" name="id_num" id="editIdNum" class="form-control">
@@ -225,18 +264,43 @@
                       <label class="form-label">Contact Number</label>
                       <input type="text" name="contact_number" id="editContactNumber" class="form-control">
                     </div>
+
+                    <!-- Department Dropdown -->
                     <div class="col-md-4">
                       <label class="form-label">Department</label>
-                      <input type="text" name="department" id="editDepartment" class="form-control">
+                      <select name="department" id="editDepartment" class="form-select" required>
+                        <option value="" disabled selected>Select Department</option>
+                        <% departments.forEach(dep => { %>
+                          <option value="<%= dep.id %>"><%= dep.name %></option>
+                        <% }) %>
+                      </select>
                     </div>
+
+                    <!-- Program Dropdown -->
                     <div class="col-md-4">
                       <label class="form-label">Program</label>
-                      <input type="text" name="program" id="editProgram" class="form-control">
+                      <select name="program" id="editProgram" class="form-select" required>
+                        <option value="" disabled selected>Select Program</option>
+                        <% programs.forEach(prog => { %>
+                          <option value="<%= prog.id %>"><%= prog.name %></option>
+                        <% }) %>
+                      </select>
                     </div>
+
+                    <!-- Year Level Dropdown -->
                     <div class="col-md-4">
                       <label class="form-label">Year Level</label>
-                      <input type="text" name="year_level" id="editYearLevel" class="form-control">
+                      <select name="year_level" id="editYearLevel" class="form-select" required>
+                        <option value="" disabled selected>Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                        <option value="5">5th Year</option>
+                      </select>
                     </div>
+
+                    <!-- Sex -->
                     <div class="col-md-4">
                       <label class="form-label">Sex</label>
                       <select class="form-select" name="sex" id="editSex">
@@ -245,6 +309,8 @@
                         <option value="Other">Other</option>
                       </select>
                     </div>
+
+                    <!-- Is Mayor -->
                     <div class="col-md-4">
                       <label class="form-label">Is Mayor</label>
                       <select class="form-select" name="is_class_mayor" id="editIsMayor">
@@ -253,14 +319,16 @@
                       </select>
                     </div>
                   </div>
+
                   <div class="modal-footer">
-                    <button type="submit" class="btn btn-success" data-bs-dismiss="modal">Save Changes</button>
+                    <button type="submit" class="btn btn-success">Save Changes</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                   </div>
                 </form>
               </div>
             </div>
           </div>
+
 
           <%- include('../includes/footer.ejs') %>
         </div>
@@ -273,20 +341,22 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-    $(document).ready(function () {
-      // Initialize DataTable
-      $('#studentTable').DataTable({
+   $(document).ready(function () {
+    // Initialize DataTable
+    $('#studentTable').DataTable({
         pageLength: 5,
         lengthMenu: [5, 10, 25, 50],
         columnDefs: [
-          { orderable: false, targets: [13] } // Make actions column non-sortable
+            { orderable: false, targets: [13] } // Make actions column non-sortable
         ]
-      });
+    });
 
-      // Edit Student Modal Handling
-      $(document).on('click', '.editBtn', function() {
+    // Edit Student Modal Handling
+    // Edit Student Modal Handling
+    $(document).on('click', '.editBtn', function() {
         const studentData = $(this).data();
-        
+
+        // Fill the fields with the data
         $('#editStudentId').val(studentData.id);
         $('#editFirstName').val(studentData.first_name);
         $('#editMiddleName').val(studentData.middle_name || '');
@@ -294,16 +364,17 @@
         $('#editUsername').val(studentData.username);
         $('#editEmail').val(studentData.email || '');
         $('#editIdNum').val(studentData.id_num || '');
-        $('#editDepartment').val(studentData.department || '');
-        $('#editProgram').val(studentData.program || '');
-        $('#editYearLevel').val(studentData.year_level || '');
+        $('#editDepartment').val(studentData.department || '').trigger('change');
+        $('#editProgram').val(studentData.program || '').trigger('change');
+        $('#editYearLevel').val(studentData.year_level || '').trigger('change');
         $('#editSex').val(studentData.sex || 'Male');
         $('#editContactNumber').val(studentData.contact_number || '');
         $('#editIsMayor').val(studentData.is_class_mayor ? 'true' : 'false');
-      });
+    });
 
-      // Edit Form Submission
-      $('#editStudentForm').on('submit', function(e) {
+
+    // Edit Form Submission
+    $('#editStudentForm').on('submit', function(e) {
         e.preventDefault();
         
         const submitBtn = $(this).find('[type="submit"]');
@@ -313,40 +384,40 @@
         const studentId = $('#editStudentId').val();
         
         $.ajax({
-          url: `/students/edit/${studentId}`,
-          type: 'POST',
-          data: formData,
-          success: function(response) {
-            if (response.success) {
-              $('#successMessage').text('Student updated successfully!');
-              $('#successModal').modal('show');
-              setTimeout(() => {
-                $('#editStudentModal').modal('hide');
-                location.reload();
-              }, 1500);
-            } else {
-              alert(response.message || 'Failed to update student');
+            url: `/students/edit/${studentId}`,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#successMessage').text('Student updated successfully!');
+                    $('#successModal').modal('show');
+                    setTimeout(() => {
+                        $('#editStudentModal').modal('hide');
+                        location.reload(); // Refresh the page to show the updated data
+                    }, 1500);
+                } else {
+                    alert(response.message || 'Failed to update student');
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
+                alert(errorMsg);
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html('Save Changes');
             }
-          },
-          error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
-            alert(errorMsg);
-          },
-          complete: function() {
-            submitBtn.prop('disabled', false).html('Save Changes');
-          }
         });
-      });
+    });
 
-      // Assign Class Modal Handling
-      $(document).on('click', '.assignBtn', function() {
+    // Assign Class Modal Handling
+    $(document).on('click', '.assignBtn', function() {
         $('#assignStudentId').val($(this).data('id'));
-        $('#classSelect').val('').trigger('change');
-        $('#assignAsMayor').prop('checked', false);
-      });
+        $('#classSelect').val('').trigger('change'); // Reset class dropdown when opening modal
+        $('#assignAsMayor').prop('checked', false);  // Reset checkbox for mayor
+    });
 
-      // Assign Class Form Submission
-      $('#assignClassForm').on('submit', function(e) {
+    // Assign Class Form Submission
+    $('#assignClassForm').on('submit', function(e) {
         e.preventDefault();
         
         const submitBtn = $(this).find('[type="submit"]');
@@ -355,31 +426,35 @@
         const formData = $(this).serialize();
         
         $.ajax({
-          url: '/students/assign-class',
-          type: 'POST',
-          data: formData,
-          success: function(response) {
-            if (response.success) {
-              $('#successMessage').text('Class assigned successfully!');
-              $('#successModal').modal('show');
-              setTimeout(() => {
-                $('#assignClassModal').modal('hide');
-                location.reload();
-              }, 1500);
-            } else {
-              alert(response.message || 'Failed to assign class');
+            url: '/students/assign-class',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#successMessage').text('Class assigned successfully!');
+                    $('#successModal').modal('show');
+                    setTimeout(() => {
+                        $('#assignClassModal').modal('hide');
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert(response.message || 'Failed to assign class');
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
+                alert(errorMsg);
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html('Assign Class');
             }
-          },
-          error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
-            alert(errorMsg);
-          },
-          complete: function() {
-            submitBtn.prop('disabled', false).html('Assign Class');
-          }
         });
-      });
     });
+});
+
+
+
+
   </script>
 </body>
 </html>

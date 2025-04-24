@@ -88,18 +88,43 @@
           <label for="id_num" class="form-label">ID Number</label>
           <input type="text" class="form-control" id="id_num" name="id_num" required />
         </div>
+
+
         <div class="mb-3">
           <label for="department" class="form-label">Department</label>
-          <input type="text" class="form-control" id="department" name="department" required />
+          <select class="form-control" id="department" name="department" required>
+            <option value="" disabled selected>Select Department</option>
+            <% departments.forEach(dep => { %>
+              <option value="<%= dep.id %>"><%= dep.name %></option>
+            <% }) %>
+          </select>
         </div>
+        
+        <!-- Program Dropdown -->
         <div class="mb-3">
           <label for="program" class="form-label">Program</label>
-          <input type="text" class="form-control" id="program" name="program" required />
+          <select class="form-control" id="program" name="program" required>
+            <option value="" disabled selected>Select Program</option>
+            <!-- Programs will be populated dynamically via AJAX -->
+          </select>
         </div>
+
+
         <div class="mb-3">
           <label for="year_level" class="form-label">Year Level</label>
-          <input type="text" class="form-control" id="year_level" name="year_level" required />
+          <select class="form-control" id="year_level" name="year_level" required>
+            <option value="" disabled selected>Select Year Level</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+            <option value="5">5th Year</option>
+          </select>
         </div>
+
+
+
+
         <div class="d-flex justify-content-between">
           <button class="btn btn-secondary" type="button" onclick="stepper.previous()">Previous</button>
           <button class="btn btn-primary" type="button" id="nextStep2">Next</button>
@@ -223,6 +248,43 @@
         });
       });
     </script>
+    
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const departmentSelect = document.getElementById("department");
+        const programSelect = document.getElementById("program");
+    
+        departmentSelect.addEventListener("change", function () {
+          const departmentId = this.value;
+          
+          if (departmentId) {
+            // Make an AJAX request to fetch programs based on the selected department ID
+            fetch(`/programs/${departmentId}`)
+              .then(response => response.json())
+              .then(programs => {
+                // Clear existing program options
+                programSelect.innerHTML = '<option value="" disabled selected>Select Program</option>';
+    
+                // Add the new options based on the department selected
+                programs.forEach(program => {
+                  const option = document.createElement('option');
+                  option.value = program.id;  // Store program ID, not name
+                  option.textContent = program.name;  // Display program name
+                  programSelect.appendChild(option);
+                });
+              })
+              .catch(error => {
+                console.error('Error fetching programs:', error);
+              });
+          } else {
+            // Clear program options if no department is selected
+            programSelect.innerHTML = '<option value="" disabled selected>Select Program</option>';
+          }
+        });
+      });
+    </script>
+
+
     
   </body>
 </html>

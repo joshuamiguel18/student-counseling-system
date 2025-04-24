@@ -172,3 +172,36 @@ CREATE TABLE resources (
     details_link TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+
+CREATE TABLE programs (
+    id SERIAL PRIMARY KEY,
+    department_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
+);
+
+
+
+
+
+
+ALTER TABLE student ADD COLUMN department_id INTEGER;
+ALTER TABLE student ADD COLUMN program_id INTEGER;
+
+
+ALTER TABLE student
+    ADD CONSTRAINT fk_department FOREIGN KEY (department_id) REFERENCES departments(id),
+    ADD CONSTRAINT fk_program FOREIGN KEY (program_id) REFERENCES programs(id);
+
+ALTER TABLE student DROP COLUMN department;
+ALTER TABLE student DROP COLUMN program;
