@@ -1377,43 +1377,47 @@ app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-      // Query to get student data along with class name
-      const result = await pool.query(`
-          SELECT student.*, class.class_name
-          FROM student
-          LEFT JOIN class ON student.class_id = class.id
-          WHERE student.username = $1
-      `, [username]);
+    // Query to get student data along with class name
+    const result = await pool.query(`
+      SELECT student.*, class.class_name
+      FROM student
+      LEFT JOIN class ON student.class_id = class.id
+      WHERE student.username = $1
+    `, [username]);
 
-      if (result.rows.length === 0) {
-          return res.render('login', { error: 'Invalid username or password', username });
-      }
+    if (result.rows.length === 0) {
+      return res.render('login', { error: 'Invalid username or password', username });
+    }
 
-      const user = result.rows[0];
+    const user = result.rows[0];
 
-      const passwordMatch = await bcrypt.compare(password, user.password);
+    // Check if the student is verified
+    if (!user.is_verified) {
+      return res.render('login', { error: 'Your account is not yet verified.', username });
+    }
 
-      if (!passwordMatch) {
-          return res.render('login', { error: 'Invalid username or password', username });
-      }
+    // Check password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.render('login', { error: 'Invalid username or password', username });
+    }
 
-      // Create a JWT token with user data (avoid putting sensitive data like password in the token)
-      const token = jwt.sign(
-          { user }, // payload (store minimal info)
-          JWT_SECRET, // secret key
-          { expiresIn: '1h' } // token expiration time
-      );
+    // Create JWT token without sensitive data
+    const token = jwt.sign(
+      { user_id: user.id, username: user.username, class_name: user.class_name }, // minimal payload
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
-      // Optionally, set the token as a cookie (for client-side session)
-      res.cookie('jwt', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('jwt', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
 
-      // Redirect or render user-specific view (you could pass user info to the next page if needed)
-      res.redirect('/student-app');
+    res.redirect('/student-app');
   } catch (err) {
-      console.error('Error logging in user:', err);
-      res.status(500).render('login', { error: 'Internal server error', username });
+    console.error('Error logging in user:', err);
+    res.status(500).render('login', { error: 'Internal server error', username });
   }
 });
+
 
 
 
