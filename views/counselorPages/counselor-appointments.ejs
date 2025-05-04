@@ -46,6 +46,7 @@
                         <th>Purpose</th>
                         <th>Student</th>
                         <th>Date</th>
+                        <th>Time</th>
                         <th>Type</th>
                         <th>Appointment #</th>
                         <th>Status</th>
@@ -58,7 +59,17 @@
                           <tr>
                             <td><%= appointment.title %></td>
                             <td><%= appointment.student_first_name %> <%= appointment.student_last_name %></td>
-                            <td><%= new Date(appointment.appointment_date).toLocaleString() %></td>
+                            <td>
+                              <%= new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+                                year: 'numeric', month: 'long', day: 'numeric'
+                              }) %>
+                            </td>
+                            <td>
+                              <%= new Date('1970-01-01T' + appointment.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %> 
+                              to 
+                              <%= new Date('1970-01-01T' + appointment.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
+
+                            </td>
                             <td><%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %></td>
                             <td><%= appointment.appointment_number %></td>
                             <td>
@@ -74,30 +85,54 @@
                             </td>
                             <td class="actions">
                               <% if (appointment.status !== 'cancelled' && appointment.status !== 'completed') { %>
-                                <% if (appointment.status === 'pending') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/counselor/appointments/approve/<%= appointment.id %>')">
-                                    <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.status === 'pending' || appointment.status === 'approved') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/appointments/cancel/<%= appointment.id %>')">
-                                    <i class="bi bi-x-circle-fill text-danger" title="Cancel"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.status === 'approved') { %>
-                                  <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Mark as Completed', '/counselor/appointments/completed/<%= appointment.id %>')">
-                                    <i class="bi bi-check-circle-fill text-success" title="Mark as Completed"></i>
-                                  </a>
-                                <% } %>
-                                <% if (appointment.is_online_appointment && appointment.status == 'approved') { %>
-                                  <a href="/counselor/appointments/<%= appointment.id %>/chat">
-                                    <i class="bi bi-chat-dots-fill text-primary" title="Go to Chat"></i>
-                                  </a>
-                                <% } %>
+                                <div class="dropdown">
+                                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Actions
+                                  </button>
+                                  <ul class="dropdown-menu">
+                                    <% if (appointment.status === 'pending') { %>
+                                      <% if (appointment.turn_to_approve === 'counselor') { %>
+                                        <li>
+                                          <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/counselor/appointments/approve/<%= appointment.id %>')">
+                                            Approve Appointment
+                                          </a>
+                                        </li>
+                                      <% } %>
+                                      <li>
+                                        <button 
+                                          class="dropdown-item"
+                                          data-bs-toggle="modal"
+                                          data-bs-target="#rescheduleModal"
+                                          data-appointment-id="<%= appointment.id %>"
+                                          data-current-date="<%= appointment.appointment_date %>"
+                                          data-counselor-id="<%= appointment.counselor_id %>">
+                                          <i class="bi bi-calendar2-plus me-2"></i>Reschedule
+                                        </button>
+                                      </li>
+                                    <% } %>
+                                    <% if (appointment.status === 'pending' || appointment.status === 'approved') { %>
+                                      <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/counselor/appointments/cancel/<%= appointment.id %>')">
+                                          Cancel Appointment
+                                        </a>
+                                      </li>
+                                    <% } %>
+                                    <% if (appointment.status === 'approved') { %>
+                                      <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Mark as Completed', '/counselor/appointments/completed/<%= appointment.id %>')">
+                                          Mark as Completed
+                                        </a>
+                                      </li>
+                                    <% } %>
+                                  </ul>
+                                </div>
                               <% } else { %>
                                 <small class="text-muted">No actions</small>
                               <% } %>
                             </td>
+                            
+                            
+                            
                           </tr>
                         <% }) %>
                       <% } else { %>
@@ -125,6 +160,50 @@
               </div>
             </div>
           </div>
+
+
+          <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <form method="POST" action="/counselor/appointments/reschedule">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="rescheduleModalLabel">
+                      <i class="bi bi-calendar2-plus me-1"></i> Reschedule Appointment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="hidden" name="appointment_id" id="modalAppointmentId">
+                    <input type="hidden" name="counselor_id" id="modalCounselorId">
+          
+                    <div class="mb-3">
+                      <label for="newDate" class="form-label">New Date</label>
+                      <input type="date" class="form-control" id="newDate" name="new_date" required>
+                    </div>
+          
+                    <div class="mb-3">
+                      <label for="startTime" class="form-label">Start Time</label>
+                      <input type="time" class="form-control" id="startTime" name="start_time" required>
+                    </div>
+          
+                    <div class="mb-3">
+                      <label for="endTime" class="form-label">End Time</label>
+                      <input type="time" class="form-control" id="endTime" name="end_time" required>
+                    </div>
+          
+                    <div id="availabilityFeedback" class="text-danger small d-none">Selected schedule is not available or invalid.</div>
+                  </div>
+          
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Reschedule</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
 
           <!-- Success Modal -->
           <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
@@ -169,6 +248,13 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
+
+      flatpickr("#newDate", {
+        dateFormat: "Y-m-d",  // Format as yyyy-mm-dd
+        minDate: "today",     // Prevent selection of past dates
+      });
+
+
     // Sets the modal for actions like Approve / Cancel / Mark as Completed
     function setModal(actionType, actionLink) {
       document.getElementById('actionModalLabel').textContent = `Confirm ${actionType}`;
@@ -242,6 +328,18 @@
         table.draw(); // Redraw with new date filter
       });
     });
+
+
+    document.querySelector('table').addEventListener('click', function (e) {
+      if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
+        const appointmentId = e.target.dataset.appointmentId;
+        console.log("APPOINTMENT ID: " + appointmentId);
+        document.getElementById('modalAppointmentId').value = appointmentId;
+        // If needed, set the date or other fields
+      }
+    });
+
+
   </script>
 </body>
 </html>

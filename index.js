@@ -170,7 +170,7 @@ const authenticateToken = async (req, res, next) => {
 
       // Make available to all EJS templates
       res.locals.notifications = notifications;
-      console.log(res.locals.notifications);
+      //console.log(res.locals.notifications);
       next(); 
   } catch (err) {
       console.error('JWT error or DB error:', err);
@@ -226,19 +226,30 @@ app.get('/appointments', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
-                a.*, 
-                s.first_name AS student_first_name,
-                s.middle_name AS student_middle_name,
-                s.last_name AS student_last_name,
-                c.first_name AS counselor_first_name,
-                c.middle_name AS counselor_middle_name,
-                c.last_name AS counselor_last_name
-            FROM 
-                appointment a
-            JOIN student s ON a.student_id = s.id
-            JOIN counselor c ON a.counselor_id = c.id
-            WHERE a.student_id = $1
-            ORDER BY a.appointment_date ASC
+    a.id,
+    a.title,
+    a.appointment_date,
+    a.start_time,
+    a.end_time,
+    a.status, -- make sure this is included
+    a.is_online_appointment,
+    a.appointment_number,
+    a.turn_to_approve,
+    a.counselor_id,
+    s.first_name AS student_first_name,
+    s.middle_name AS student_middle_name,
+    s.last_name AS student_last_name,
+    c.first_name AS counselor_first_name,
+    c.middle_name AS counselor_middle_name,
+    c.last_name AS counselor_last_name
+FROM 
+    appointment a
+JOIN student s ON a.student_id = s.id
+JOIN counselor c ON a.counselor_id = c.id
+WHERE a.student_id = $1
+ORDER BY a.appointment_date ASC
+
+
         `, [studentId]);
         res.render('appointments', { appointments: result.rows, user: req.user.user });
     } catch (err) {
@@ -416,6 +427,156 @@ app.get('/appointments/approve/:id', async (req, res) => {
     }
 });
   
+app.get('/student/appointments/reschedule/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Update the appointment status to 'approved'
+    await pool.query(
+      'UPDATE appointment SET turn_to_approve = $1, update_date = NOW() WHERE id = $3',
+      ['counselor', appointmentId] // Correct order of values
+    );
+
+    // Redirect back to the appointments page
+    res.redirect('/appointments'); // Adjust the route as needed
+  } catch (err) {
+    console.error('Error approving appointment:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.get('/student/appointments/approve/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Update the appointment status to 'approved'
+    await pool.query(
+      'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+      ['approved', appointmentId] // Correct order of values
+    );
+
+    // Redirect back to the appointments page
+    res.redirect('/appointments'); // Adjust the route as needed
+  } catch (err) {
+    console.error('Error approving appointment:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+// app.post('/appointments/check-availability', async (req, res) => {
+//   const { date, start_time, end_time, appointment_id, counselor_id } = req.body;
+//   try {
+//     // Get day of the week (0 = Sunday, 6 = Saturday)
+//     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+//     const dayOfWeek = new Date(date).getDay(); // 0 = Sunday, 1 = Monday, etc.
+//     const dayName = daysOfWeek[dayOfWeek]; // Get the day name
+
+
+//     console.log(date, start_time, end_time, appointment_id, counselor_id, dayName)
+
+//     // Check if counselor is available on that day and time
+//     const availability = await pool.query(`
+//       SELECT * FROM counselor_availability
+//       WHERE counselor_id = $1
+//         AND available_day = $2
+//         AND start_time <= $3
+//         AND end_time >= $4
+//     `, [counselor_id, dayName, start_time, end_time]);
+//       console.log(availability.rows);
+//     if (availability.rows.length === 0) {
+//       return res.json({ available: false, reason: 'Counselor not available during this time.' });
+//     }
+
+//     // Check for conflicting appointments
+//     const conflict = await pool.query(`
+//       SELECT * FROM appointment 
+//       WHERE appointment_date = $1
+//         AND counselor_id = $2
+//         AND id != $3
+//         AND (
+//           (start_time < $4 AND end_time > $5)
+//         )
+//     `, [date, counselor_id, appointment_id, end_time, start_time]);
+
+//     if (conflict.rows.length > 0) {
+//       return res.json({ available: false, reason: 'Time slot is already booked.' });
+//     }
+//     console.log("RUN")
+//     // No conflicts, and within counselor's availability
+//     res.json({ available: true });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ available: false, reason: 'Server error' });
+//   }
+// });
+
+
+app.post('/student/appointments/reschedule', async (req, res) => {
+  const { date, start_time, end_time, appointment_id, counselor_id } = req.body;
+  try {
+    // Get day of the week (0 = Sunday, 6 = Saturday)
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayOfWeek = new Date(date).getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayName = daysOfWeek[dayOfWeek]; // Get the day name
+
+    console.log(date, start_time, end_time, appointment_id, counselor_id, dayName)
+
+    // Check if counselor is available on that day and time
+    const availability = await pool.query(`
+      SELECT * FROM counselor_availability
+      WHERE counselor_id = $1
+        AND available_day = $2
+        AND start_time <= $3
+        AND end_time >= $4
+    `, [counselor_id, dayName, start_time, end_time]);
+
+    console.log(availability.rows);
+
+    if (availability.rows.length === 0) {
+      return res.json({ available: false, reason: 'Counselor not available during this time.' });
+    }
+
+    // Check for conflicting appointments
+    const conflict = await pool.query(`
+      SELECT * FROM appointment
+      WHERE appointment_date = $1
+        AND counselor_id = $2
+        AND id != $3
+        AND (
+          (start_time < $4 AND end_time > $5)
+        )
+    `, [date, counselor_id, appointment_id, end_time, start_time]);
+
+    if (conflict.rows.length > 0) {
+      return res.json({ available: false, reason: 'Time slot is already booked.' });
+    }
+
+    console.log("RUN");
+
+    // Update the appointment if available
+    const updateQuery = `
+      UPDATE appointment
+      SET appointment_date = $1,
+          start_time = $2,
+          end_time = $3,
+          turn_to_approve = $4
+      WHERE id = $5
+    `;
+
+    await pool.query(updateQuery, [date, start_time, end_time, "counselor",appointment_id]);
+    createNotification(8, 'counselor', 'Your appointment has been rescheduled to ' + date 
+      +" at " + start_time + " - " + end_time, 'reschedule')
+    // No conflicts, and within counselor's availability
+    res.json({ available: true, message: 'Appointment rescheduled successfully and set for approval.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ available: false, reason: 'Server error' });
+  }
+});
+
+
 
 app.get('/counselor/appointments/approve/:id', async (req, res) => {
   const appointmentId = req.params.id;
@@ -786,7 +947,7 @@ app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res)
 
 app.post('/appointments/reschedule', async (req, res) => {
   const { appointment_id, new_date } = req.body;
-
+  console.log("reschedule")
   try {
     // Optional: Validate inputs here
 
@@ -806,6 +967,36 @@ app.post('/appointments/reschedule', async (req, res) => {
     res.status(500).send('Something went wrong');
   }
 });
+
+app.post('/counselor/appointments/reschedule', async (req, res) => {
+  const { appointment_id, new_date, start_time, end_time } = req.body;
+  console.log(appointment_id, new_date, start_time, end_time)
+  if (!appointment_id || !new_date || !start_time || !end_time) {
+    return res.status(400).send('Missing required fields');
+  }
+
+  try {
+    const updateQuery = `
+      UPDATE appointment
+      SET 
+        appointment_date = $1,
+        start_time = $2,
+        end_time = $3,
+        update_date = NOW(),
+        turn_to_approve = 'student'
+      WHERE id = $4
+    `;
+
+    await pool.query(updateQuery, [new_date, start_time, end_time, appointment_id]);
+
+    // You can either redirect or respond with JSON
+    res.redirect('/counselor/appointments'); // or res.json({ success: true });
+  } catch (err) {
+    console.error('Error rescheduling appointment:', err);
+    res.status(500).send('Something went wrong');
+  }
+});
+
 
 
 
@@ -1495,6 +1686,39 @@ app.get('/counselor-app', authenticateTokenCounselor, async (req, res) => {
   }
 });
 
+// app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) => {
+//   try {
+//     const counselorId = req.user.user.id;
+
+//     const result = await pool.query(
+//       `
+//       SELECT 
+//         a.id, 
+//         a.title, 
+//         a.status, 
+//         a.appointment_date,
+//         a.is_online_appointment,
+//         a.appointment_number,
+//         s.first_name AS student_first_name,
+//         s.last_name AS student_last_name
+//       FROM appointment a
+//       JOIN student s ON a.student_id = s.id
+//       WHERE a.counselor_id = $1
+//       ORDER BY a.appointment_date DESC
+//       `,
+//       [counselorId]
+//     );
+
+//     const appointments = result.rows;
+//     console.log(appointments)
+//     res.render('counselorPages/counselor-appointments', { appointments });
+//   } catch (err) {
+//     console.error('Error fetching counselor appointments:', err);
+//     res.status(500).send('Server error');
+//   }
+// });
+
+
 app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) => {
   try {
     const counselorId = req.user.user.id;
@@ -1506,6 +1730,8 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
         a.title, 
         a.status, 
         a.appointment_date,
+        a.start_time,        -- Add start time here
+        a.end_time,          -- Add end time here
         a.is_online_appointment,
         a.appointment_number,
         s.first_name AS student_first_name,
@@ -1519,13 +1745,15 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
     );
 
     const appointments = result.rows;
-    console.log(appointments)
+    console.log(appointments);
     res.render('counselorPages/counselor-appointments', { appointments });
   } catch (err) {
     console.error('Error fetching counselor appointments:', err);
     res.status(500).send('Server error');
   }
 });
+
+
 
 app.get('/counselor/appointments/:id/chat', authenticateTokenCounselor, async (req, res) => {
   const appointmentId = req.params.id;
@@ -1695,7 +1923,32 @@ app.post('/login', async (req, res) => {
 });
 
 
+app.get('/counselor/appointments/cancel/:id', async (req, res) => {
+  const appointmentId = req.params.id;
 
+  try {
+    // Update the appointment's status to 'Cancelled'
+    const result = await pool.query(
+      'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
+      ['cancelled', appointmentId]
+    );
+
+    // Check if appointment was found and updated
+    if (result.rows.length > 0) {
+      // Redirect to the appointments page with a success message
+      req.flash('success', 'Appointment has been successfully cancelled.');
+      res.redirect('/counselor/appointments');
+    } else {
+      // If no appointment found
+      req.flash('error', 'Appointment not found.');
+      res.redirect('/counselor/appointments');
+    }
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Something went wrong while cancelling the appointment.');
+    res.redirect('/counselor/appointments');
+  }
+});
 
 app.get('/appointments/cancel/:id', async (req, res) => {
     const appointmentId = req.params.id;
@@ -1949,32 +2202,69 @@ app.post("/register", uploadStudentIdImage, async (req, res) => {
 
 
 // SAVE THE AVAILABLITY
+// app.post('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
+//   const counselorId = req.user.user.id;
+//   const selectedDays = req.body.availableDays; // Check the structure of this value
+
+//   console.log('Selected Days:', selectedDays); // Log to debug
+
+//   try {
+//     // Clear existing availability for counselor
+//     await pool.query('DELETE FROM counselor_availability WHERE counselor_id = $1', [counselorId]);
+
+//     // Insert new availability
+//     if (Array.isArray(selectedDays)) {
+//       const insertPromises = selectedDays.map(day =>
+//         pool.query(
+//           'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
+//           [counselorId, day]
+//         )
+//       );
+//       await Promise.all(insertPromises);
+//     } else if (typeof selectedDays === 'string') {
+//       // Handle single day case
+//       await pool.query(
+//         'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
+//         [counselorId, selectedDays]
+//       );
+//     }
+
+//     res.redirect('/counselor/availability?success=true');
+//   } catch (err) {
+//     console.error('Error saving availability:', err);
+//     res.status(500).send('Something went wrong while saving your availability.');
+//   }
+// });
+
 app.post('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
   const counselorId = req.user.user.id;
-  const selectedDays = req.body.availableDays; // Check the structure of this value
+  const selectedDays = req.body.availableDays || [];
+  const startTimes = req.body.startTime || {};
+  const endTimes = req.body.endTime || {};
 
-  console.log('Selected Days:', selectedDays); // Log to debug
+  console.log('Selected Days:', selectedDays);
+  console.log('Start Times:', startTimes);
+  console.log('End Times:', endTimes);
 
   try {
-    // Clear existing availability for counselor
+    // Clear existing availability for the counselor
     await pool.query('DELETE FROM counselor_availability WHERE counselor_id = $1', [counselorId]);
 
-    // Insert new availability
-    if (Array.isArray(selectedDays)) {
-      const insertPromises = selectedDays.map(day =>
-        pool.query(
-          'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
-          [counselorId, day]
-        )
+    // Normalize selectedDays to an array if it's a single string
+    const daysArray = Array.isArray(selectedDays) ? selectedDays : [selectedDays];
+
+    // Insert availability with time
+    const insertPromises = daysArray.map(day => {
+      const start = startTimes[day];
+      const end = endTimes[day];
+
+      return pool.query(
+        'INSERT INTO counselor_availability (counselor_id, available_day, start_time, end_time) VALUES ($1, $2, $3, $4)',
+        [counselorId, day, start, end]
       );
-      await Promise.all(insertPromises);
-    } else if (typeof selectedDays === 'string') {
-      // Handle single day case
-      await pool.query(
-        'INSERT INTO counselor_availability (counselor_id, available_day) VALUES ($1, $2)',
-        [counselorId, selectedDays]
-      );
-    }
+    });
+
+    await Promise.all(insertPromises);
 
     res.redirect('/counselor/availability?success=true');
   } catch (err) {
@@ -1984,20 +2274,53 @@ app.post('/counselor/availability', authenticateTokenCounselor, async (req, res)
 });
 
 
+
+
+
 // FETCH
+// app.get('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
+//   const counselorId = req.user.user.id;
+
+//   try {
+//     const result = await pool.query(
+//       'SELECT available_day FROM counselor_availability WHERE counselor_id = $1',
+//       [counselorId]
+//     );
+
+//     const selectedDays = result.rows.map(row => row.available_day);
+//     console.log(counselorId, selectedDays)
+//     res.render('counselorPages/counselor-availability', {
+//       selectedDays
+//     });
+//   } catch (err) {
+//     console.error('Error loading availability page:', err);
+//     res.status(500).send('Error loading availability.');
+//   }
+// });
+
+  
 app.get('/counselor/availability', authenticateTokenCounselor, async (req, res) => {
   const counselorId = req.user.user.id;
 
   try {
     const result = await pool.query(
-      'SELECT available_day FROM counselor_availability WHERE counselor_id = $1',
+      'SELECT available_day, start_time, end_time FROM counselor_availability WHERE counselor_id = $1',
       [counselorId]
     );
 
-    const selectedDays = result.rows.map(row => row.available_day);
-    console.log(counselorId, selectedDays)
+    const selectedAvailability = {};
+    result.rows.forEach(row => {
+      selectedAvailability[row.available_day] = {
+        start: row.start_time ? row.start_time.slice(0, 5) : '',  // Trim "HH:MM:SS" to "HH:MM"
+        end: row.end_time ? row.end_time.slice(0, 5) : ''
+      };
+    });
+
+    const selectedDays = Object.keys(selectedAvailability);
+
     res.render('counselorPages/counselor-availability', {
-      selectedDays
+      selectedDays,
+      selectedAvailability
     });
   } catch (err) {
     console.error('Error loading availability page:', err);
@@ -2005,7 +2328,8 @@ app.get('/counselor/availability', authenticateTokenCounselor, async (req, res) 
   }
 });
 
-  
+
+
 
 app.get("/verify", async (req, res) => {
 const { token } = req.query;
@@ -3229,11 +3553,63 @@ app.post('/classes/create', async (req, res) => {
 
 
 
-app.post('/saveAppointment', async (req, res) => {
-    const { title, student_id, counselor_id, appointment_date, isOnlineAppointment } = req.body;
+// app.post('/saveAppointment', async (req, res) => {
+//     const { title, student_id, counselor_id, appointment_date, isOnlineAppointment } = req.body;
 
-    // Default status
-    const status = req.body.status || 'pending';
+//     // Default status
+//     const status = req.body.status || 'pending';
+
+//     // Format date
+//     const formattedAppointmentDate = moment(appointment_date).format('YYYY-MM-DD HH:mm:ss');
+//     const todayFormatted = moment().format('YYYYMMDD');
+
+//     // Generate 6-digit random number
+//     const randomDigits = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
+
+//     // Generate appointment number
+//     const appointmentNumber = `${randomDigits}${todayFormatted}${student_id}${counselor_id}`;
+
+//     try {
+//         // Insert appointment into DB
+//         const result = await pool.query(
+//             `INSERT INTO appointment 
+//               (title, student_id, counselor_id, status, appointment_date, is_online_appointment, appointment_number, create_date, update_date)
+//              VALUES 
+//               ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+//              RETURNING id`,
+//             [title, student_id, counselor_id, status, formattedAppointmentDate, isOnlineAppointment, appointmentNumber]
+//         );
+
+//         const appointmentId = result.rows[0].id;
+
+//         // Log and redirect
+//         console.log("Appointment created successfully");
+//         res.redirect('/student-app');
+//     } catch (error) {
+//         console.error('Error saving appointment:', error);
+//         res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// });
+
+
+app.post('/saveAppointment', authenticateToken, async (req, res) => {
+  const { student_id, title, isOnlineAppointment, counselor_id, appointment_date, appointment_start_time, appointment_end_time } = req.body;
+
+  try {
+    const appointmentDay = new Date(appointment_date).toLocaleString('en-US', { weekday: 'long' });
+
+    // 1. Get counselor availability for that day
+    const availabilityQuery = `
+      SELECT start_time, end_time FROM counselor_availability
+      WHERE counselor_id = $1 AND available_day = $2
+    `;
+    const availabilityResult = await pool.query(availabilityQuery, [counselor_id, appointmentDay]);
+
+    if (availabilityResult.rowCount === 0) {
+      return res.status(400).send("Counselor is not available on this day.");
+    }
+
+
 
     // Format date
     const formattedAppointmentDate = moment(appointment_date).format('YYYY-MM-DD HH:mm:ss');
@@ -3245,27 +3621,76 @@ app.post('/saveAppointment', async (req, res) => {
     // Generate appointment number
     const appointmentNumber = `${randomDigits}${todayFormatted}${student_id}${counselor_id}`;
 
-    try {
-        // Insert appointment into DB
-        const result = await pool.query(
-            `INSERT INTO appointment 
-              (title, student_id, counselor_id, status, appointment_date, is_online_appointment, appointment_number, create_date, update_date)
-             VALUES 
-              ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             RETURNING id`,
-            [title, student_id, counselor_id, status, formattedAppointmentDate, isOnlineAppointment, appointmentNumber]
-        );
+    const { start_time, end_time } = availabilityResult.rows[0];
 
-        const appointmentId = result.rows[0].id;
-
-        // Log and redirect
-        console.log("Appointment created successfully");
-        res.redirect('/student-app');
-    } catch (error) {
-        console.error('Error saving appointment:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    // 2. Ensure appointment time is within availability
+    if (
+      appointment_start_time < start_time ||
+      appointment_end_time > end_time ||
+      appointment_start_time >= appointment_end_time
+    ) {
+      return res.status(400).send("Appointment time is outside counselor's availability.");
     }
+
+    // 3. Check for overlapping appointments
+    const conflictQuery = `
+      SELECT * FROM appointment
+      WHERE counselor_id = $1
+      AND appointment_date = $2
+      AND (
+        (start_time, end_time) OVERLAPS ($3::time, $4::time)
+      )
+    `;
+    const conflictResult = await pool.query(conflictQuery, [
+      counselor_id,
+      appointment_date,
+      appointment_start_time,
+      appointment_end_time,
+    ]);
+
+    if (conflictResult.rowCount > 0) {
+      return res.status(400).send("This time slot is already booked.");
+    }
+
+    // 4. Save appointment
+    const insertQuery = `
+      INSERT INTO appointment (
+        student_id,
+        counselor_id,
+        appointment_date,
+        start_time,
+        end_time,
+        title,
+        is_online_appointment,
+        status,
+        appointment_number,
+        turn_to_approve
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `;
+    await pool.query(insertQuery, [
+      student_id,
+      counselor_id,
+      appointment_date,
+      appointment_start_time,
+      appointment_end_time,
+      title,
+      isOnlineAppointment,
+      "pending",
+      appointmentNumber,
+      "counselor",
+    ]);
+
+    res.status(200).json({ success: true, message: 'Appointment saved successfully.' });
+
+  } catch (err) {
+    console.error('Error saving appointment:', err);
+    res.status(500).send('Internal server error while saving appointment.');
+  }
 });
+
+
+
 app.post('/savePsychotesting', async (req, res) => {
   const { title, student_id, counselor_id, test_date, isOnlineTest } = req.body;
 

@@ -72,6 +72,18 @@
                   </div>
                 </div>
                 
+                <div class="col-md mb-4">
+                  <div id="appointment-time-wrapper">
+                    <label class="form-label" for="appointment_start_time">Start Time</label>
+                    <input type="time" id="appointment_start_time" name="appointment_start_time" class="form-control" required>
+                
+                    <label class="form-label mt-2" for="appointment_end_time">End Time</label>
+                    <input type="time" id="appointment_end_time" name="appointment_end_time" class="form-control" required>
+                
+                    <small id="available-time-note" class="text-muted"></small>
+                  </div>
+                </div>
+                
         
                 <button type="submit" class="btn btn-primary">Book Appointment</button>
               </div>
@@ -79,6 +91,23 @@
           </div>
         </form>
         
+<!-- Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="errorModalLabel">Appointment Error</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="errorModalBody">
+        <!-- Error message will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 	
 			  <!-- / Content: End -->
@@ -225,16 +254,25 @@
 
 
       document.getElementById('appointment-form').addEventListener('submit', function (e) {
-        const title = document.getElementById('title').value.trim();
-        const isOnline = document.getElementById('isOnlineAppointment').value;
-        const counselor = document.getElementById('counselor_id').value;
-        const appointmentDate = document.getElementById('appointment_date').value.trim();
+  const title = document.getElementById('title').value.trim();
+  const isOnline = document.getElementById('isOnlineAppointment').value;
+  const counselor = document.getElementById('counselor_id').value;
+  const appointmentDate = document.getElementById('appointment_date').value.trim();
+  const startTime = document.getElementById('appointment_start_time').value;
+  const endTime = document.getElementById('appointment_end_time').value;
 
-        if (!title || !isOnline || !counselor || !appointmentDate) {
-          e.preventDefault();
-          alert('Please fill in all required fields before submitting the form.');
-        }
-      });
+  if (!title || !isOnline || !counselor || !appointmentDate || !startTime || !endTime) {
+    e.preventDefault();
+    alert('Please fill in all required fields before submitting the form.');
+    return;
+  }
+
+  if (startTime >= endTime) {
+    e.preventDefault();
+    alert('Start time must be before end time.');
+    return;
+  }
+});
     </script>
     
     

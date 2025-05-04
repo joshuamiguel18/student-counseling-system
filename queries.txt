@@ -252,3 +252,14 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+ALTER TABLE appointment
+ADD COLUMN start_time TIME,
+ADD COLUMN end_time TIME,
+ADD COLUMN turn_to_approve VARCHAR(50);
+
+
+ALTER TABLE counselor_availability
+ADD COLUMN start_time TIME NOT NULL,
+ADD COLUMN end_time TIME NOT NULL;
