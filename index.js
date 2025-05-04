@@ -82,27 +82,105 @@ app.use((req, res, next) => {
   
 
 
+  async function createNotification(userId, recipientType, message, type = null) {
+    try {
+      await pool.query(`
+        INSERT INTO notifications (user_id, recipient_type, message, type)
+        VALUES ($1, $2, $3, $4)
+      `, [userId, recipientType, message, type]);
+    } catch (err) {
+      console.error('Error creating notification:', err.message);
+    }
+  }
+  
+
 
   
 // Middleware to verify the JWT token
-const authenticateToken = (req, res, next) => {
-    const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
+// const authenticateToken = (req, res, next) => {
+//     const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
 
-    if (!token) {
-        return res.redirect('/login');
-    }
+//     if (!token) {
+//         return res.redirect('/login');
+//     }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.redirect('/login');
-            //return res.status(403).render('login', { error: 'Invalid or expired token' });
-        }
+//     jwt.verify(token, JWT_SECRET, (err, decoded) => {
+//         if (err) {
+//             return res.redirect('/login');
+//             //return res.status(403).render('login', { error: 'Invalid or expired token' });
+//         }
 
-        // Attach user info to the request object
-        req.user = decoded;
-        next();
-    });
+//         // Attach user info to the request object
+//         req.user = decoded;
+//         next();
+//     });
+// };
+
+
+const authenticateToken = async (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (!token) return res.redirect('/login');
+
+  try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = decoded;
+      res.locals.user = decoded;
+
+      // Fetch last 5 notifications for this user
+      const { rows: notifications } = await pool.query(
+        `SELECT * FROM notifications
+        WHERE user_id = $1 AND recipient_type = $2
+        ORDER BY created_at DESC
+        LIMIT 5`,
+        [res.locals.user.user.id, "student"]
+      );
+
+      // Add "time ago" format to each notification
+      const formatTimeAgo = (createdAt) => {
+          const now = new Date();
+          const timeDiff = now - new Date(createdAt); // Difference in milliseconds
+
+          const seconds = Math.floor(timeDiff / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const hours = Math.floor(minutes / 60);
+          const days = Math.floor(hours / 24);
+
+          if (days > 1) {
+              return `${days} days ago`;
+          } else if (days === 1) {
+              return '1 day ago';
+          } else if (hours > 1) {
+              return `${hours} hours ago`;
+          } else if (hours === 1) {
+              return '1 hour ago';
+          } else if (minutes > 1) {
+              return `${minutes} minutes ago`;
+          } else if (minutes === 1) {
+              return '1 minute ago';
+          } else {
+              return 'Just now';
+          }
+      };
+
+      // Add time ago info to each notification
+      notifications.forEach(notification => {
+          notification.timeAgo = formatTimeAgo(notification.created_at);
+      });
+
+      // Make available to all EJS templates
+      res.locals.notifications = notifications;
+      console.log(res.locals.notifications);
+      next(); 
+  } catch (err) {
+      console.error('JWT error or DB error:', err);
+      return res.redirect('/login');
+  }
 };
+
+
+
+
 
 const authenticateTokenAdmin = (req, res, next) => {
     const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
@@ -376,6 +454,21 @@ app.get('/counselor/appointments/completed/:id', async (req, res) => {
 
 
 
+// app.post('/messages/send', authenticateToken, async (req, res) => {
+//     const { appointment_id, message, sender_type } = req.body;
+
+//     try {
+//         await pool.query(
+//             `INSERT INTO messages (appointment_id, message, sender_type) VALUES ($1, $2, $3)`,
+//             [appointment_id, message, sender_type]
+//         );
+//         res.redirect(`/appointments/${appointment_id}/chat`);
+//     } catch (err) {
+//         console.error('Error sending message:', err);
+//         res.status(500).send('Server Error');
+//     }
+// });
+
 app.post('/messages/send', authenticateToken, async (req, res) => {
     const { appointment_id, message, sender_type } = req.body;
 
@@ -384,12 +477,55 @@ app.post('/messages/send', authenticateToken, async (req, res) => {
             `INSERT INTO messages (appointment_id, message, sender_type) VALUES ($1, $2, $3)`,
             [appointment_id, message, sender_type]
         );
-        res.redirect(`/appointments/${appointment_id}/chat`);
+        res.json({ success: true }); // ✅ Return JSON instead of redirect
     } catch (err) {
         console.error('Error sending message:', err);
-        res.status(500).send('Server Error');
+        res.status(500).json({ success: false, error: 'Server Error' }); // Return error in JSON
     }
 });
+
+
+
+
+app.get('/messages', authenticateToken, async (req, res) => {
+  const userid = req.user.user.id;
+
+  try {
+    const messagesResult = await pool.query(`
+      SELECT * FROM appointment
+      WHERE student_id = $1
+        AND is_online_appointment = TRUE
+        AND (status = 'completed' OR status = 'approved')
+      ORDER BY id ASC
+    `, [userid]);
+
+    res.render('messages', {appointments: messagesResult.rows, user: req.user});
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+app.get('/counselor/messages', authenticateTokenCounselor, async (req, res) => {
+  const userid = req.user.user.id;
+
+  try {
+    const messagesResult = await pool.query(`
+      SELECT * FROM appointment
+      WHERE counselor_id = $1
+        AND is_online_appointment = TRUE
+        AND (status = 'completed' OR status = 'approved')
+      ORDER BY id ASC
+    `, [userid]);
+
+    res.render('counselorPages/counselorMessages', {appointments: messagesResult.rows, user: req.user});
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
 
 
 // Route: Get messages for a specific appointment
@@ -418,7 +554,6 @@ app.get('/', authenticateToken, (req, res) => {
 app.get('/student-app', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
-    console.log(req.user)
     // 1. Get all appointments
     const appointmentResult = await pool.query(
       'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC',
@@ -509,70 +644,116 @@ app.get('/source-materials',authenticateToken, (req, res) => {
     }
   });
 
+
+
+
+
+
+
+
   app.get('/psycho-testing-form', authenticateTokenCounselor, async (req, res) => {
     try {
-      const result = await pool.query('SELECT id, class_name FROM class ORDER BY class_name ASC');
+      const counselorId = req.user.user.id;
+  
+      // Get counselor's department_id
+      const counselorResult = await pool.query(
+        'SELECT department_id FROM counselor WHERE id = $1',
+        [counselorId]
+      );
+  
+      const departmentId = counselorResult.rows[0].department_id;
+  
+      // Fetch programs for the counselor's department
+      const programResult = await pool.query(
+        'SELECT * FROM programs WHERE department_id = $1',
+        [departmentId]
+      );
+  
+      // Render the form with the programs
       res.render('psycho-testing-form', {
-        classes: result.rows,
-        user: req.user.user // Contains counselor info
+        programs: programResult.rows,
+        user: req.user.user
       });
     } catch (error) {
-      console.error('Error fetching classes:', error);
+      console.error('Error fetching programs:', error);
       res.status(500).send('Internal Server Error');
     }
   });
   
+  
+  
+   
 
-  app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res) => {
-    const { class_id, title, test_date } = req.body;
-    const counselor_id = req.user.user.id;
+
   
-    if (!class_id || !title || !test_date) {
-      return res.status(400).send('All fields are required');
+
+// Get classes by program ID
+app.get('/getClassesByProgram/:programId', async (req, res) => {
+  const programId = req.params.programId;
+
+  try {
+    // Fetch classes related to the program
+    const classResult = await pool.query(
+      'SELECT * FROM class WHERE program_id = $1',
+      [programId]
+    );
+
+    res.json(classResult.rows); // Return classes as JSON
+  } catch (error) {
+    console.error('Error fetching classes:', error);
+    res.status(500).send('Error fetching classes');
+  }
+});
+
+
+
+
+app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res) => {
+  const { class_id, title, test_date } = req.body;
+  const counselor_id = req.user.user.id;
+
+  if (!class_id || !title || !test_date) {
+    return res.status(400).send('All fields are required');
+  }
+
+  try {
+    const classCheck = await pool.query(
+      `SELECT id FROM class WHERE id = $1`,
+      [class_id]
+    );
+
+    if (classCheck.rows.length === 0) {
+      return res.status(404).send('Selected class not found');
     }
-  
-    try {
-      const students = await pool.query(
-        `SELECT id FROM student WHERE class_id = $1`,
-        [class_id]
-      );
-  
-      if (students.rows.length === 0) {
-        return res.status(404).send('No students found in selected class');
-      }
-  
-      const testNumberBase = Math.random().toString(36).substring(2, 8).toUpperCase();
-  
-      for (const student of students.rows) {
-        const testNumber = `${testNumberBase}-${student.id}`;
-  
-        await pool.query(
-          `INSERT INTO psycho_tests 
-           (test_title, student_id, counselor_id, test_date, test_number, is_online_test, class_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            title,
-            student.id,
-            counselor_id,
-            test_date,
-            testNumber,
-            false, // is_online_test set to false (for class testing)
-            class_id
-          ]
-        );
-      }
-  
-      res.redirect('/psycho-testing-form'); // Or to a success page
-    } catch (error) {
-      console.error('Error saving psychotesting schedule:', error);
-  
-      if (error.code === '23505') { // Unique constraint violation
-        return res.status(409).send('Duplicate test number detected.');
-      }
-  
-      res.status(500).send('Error saving schedule');
+
+    const testNumber = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    await pool.query(
+      `INSERT INTO psycho_tests 
+       (test_title, counselor_id, test_date, test_number, is_online_test, class_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        title,
+        counselor_id,
+        test_date,
+        testNumber,
+        false, // is_online_test set to false (for class testing)
+        class_id
+      ]
+    );
+
+    res.redirect('/psycho-testing-form'); // Or to a success page
+  } catch (error) {
+    console.error('Error saving psychotesting schedule:', error);
+
+    if (error.code === '23505') {
+      return res.status(409).send('Duplicate test number detected.');
     }
-  });
+
+    res.status(500).send('Error saving schedule');
+  }
+});
+
   
   
   
@@ -647,11 +828,11 @@ app.get('/register', async (req, res) => {
 
 app.get('/programs/:departmentId', async (req, res) => {
   const departmentId = req.params.departmentId;
-
+  console.log(departmentId)
   try {
     // Fetch programs that belong to the selected department by ID
     const programs = await pool.query('SELECT * FROM programs WHERE department_id = $1', [departmentId]);
-    
+    console.log(programs.rows)
     res.json(programs.rows);  // Send the programs as a JSON response
   } catch (error) {
     console.error(error);
@@ -1934,6 +2115,46 @@ app.post('/delete/resource/:id', authenticateTokenCounselor, async (req, res) =>
 // });
 
 
+// app.get('/psychotests', authenticateToken, async (req, res) => {
+//   try {
+//     const studentId = req.user.user.id;
+
+//     // Fetch the student's class_id and is_class_mayor flag
+//     const studentResult = await pool.query(
+//       `SELECT class_id, is_class_mayor FROM student WHERE id = $1`,
+//       [studentId]
+//     );
+
+//     if (studentResult.rows.length === 0) {
+//       return res.status(404).send('Student not found');
+//     }
+
+//     const { class_id, is_class_mayor } = studentResult.rows[0];
+
+//     // Fetch psycho tests associated with that class_id
+//     const result = await pool.query(
+//       `SELECT pt.*, c.first_name AS counselor_first_name, c.last_name AS counselor_last_name
+//        FROM psycho_tests pt
+//        JOIN counselor c ON pt.counselor_id = c.id
+//        WHERE pt.class_id = $1
+//        ORDER BY pt.test_date DESC`,
+//       [class_id]
+//     );
+
+//     res.render('psycho-testing', {
+//       psychoTests: result.rows,
+//       user: req.user.user,
+//       isClassMayor: is_class_mayor, // Pass the is_class_mayor flag
+//     });
+    
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Server error');
+//   }
+// });
+
+
+
 app.get('/psychotests', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
@@ -1950,7 +2171,7 @@ app.get('/psychotests', authenticateToken, async (req, res) => {
 
     const { class_id, is_class_mayor } = studentResult.rows[0];
 
-    // Fetch psycho tests associated with that class_id
+    // Fetch all psycho tests associated with the student's class (no student_id filter)
     const result = await pool.query(
       `SELECT pt.*, c.first_name AS counselor_first_name, c.last_name AS counselor_last_name
        FROM psycho_tests pt
@@ -1959,15 +2180,20 @@ app.get('/psychotests', authenticateToken, async (req, res) => {
        ORDER BY pt.test_date DESC`,
       [class_id]
     );
-
+    console.log({
+      psychoTests: result.rows,
+      user: req.user.user,
+      isClassMayor: is_class_mayor,
+    });
+    // Render the page with the psycho tests and student details
     res.render('psycho-testing', {
       psychoTests: result.rows,
       user: req.user.user,
-      isClassMayor: is_class_mayor, // Pass the is_class_mayor flag
+      isClassMayor: is_class_mayor,
     });
-    
+
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching psycho tests:', err);
     res.status(500).send('Server error');
   }
 });
@@ -1977,27 +2203,29 @@ app.get('/psychotests', authenticateToken, async (req, res) => {
 
 
 
-app.get('/classes', authenticateTokenAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        c.id,
-        c.class_name,
-        c.create_date,
-        c.update_date,
-        COUNT(s.id) AS student_count
-      FROM class c
-      LEFT JOIN student s ON s.class_id = c.id
-      GROUP BY c.id
-      ORDER BY c.class_name;
-    `);
 
-    res.render('adminPages/classTable', { classes: result.rows, user: req.user.user });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+
+// app.get('/classes', authenticateTokenAdmin, async (req, res) => {
+//   try {
+//     const result = await pool.query(`
+//       SELECT
+//         c.id,
+//         c.class_name,
+//         c.create_date,
+//         c.update_date,
+//         COUNT(s.id) AS student_count
+//       FROM class c
+//       LEFT JOIN student s ON s.class_id = c.id
+//       GROUP BY c.id
+//       ORDER BY c.class_name;
+//     `);
+
+//     res.render('adminPages/classTable', { classes: result.rows, user: req.user.user });
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send('Server error');
+//   }
+// });
 
 
 // app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
@@ -2092,6 +2320,51 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
 //     res.status(500).send("Server error");
 //   }
 // });
+
+app.get('/classes', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const classResult = await pool.query(`
+      SELECT
+        c.id,
+        c.class_name,
+        c.program_id,
+        c.create_date,
+        c.update_date,
+        COUNT(s.id) AS student_count,
+        p.name AS program_name,
+        d.name AS department_name
+      FROM class c
+      LEFT JOIN student s ON s.class_id = c.id
+      LEFT JOIN programs p ON c.program_id = p.id
+      LEFT JOIN departments d ON p.department_id = d.id
+      GROUP BY c.id, p.name, d.name
+      ORDER BY c.class_name;
+    `);
+
+    const programResult = await pool.query(`
+      SELECT p.id, p.name AS program_name, d.name AS department_name
+      FROM programs p
+      LEFT JOIN departments d ON p.department_id = d.id
+      ORDER BY program_name;
+    `);
+      console.log({
+        classes: classResult.rows,
+        programs: programResult.rows,
+        user: req.user.user
+      })
+    res.render('adminPages/classTable', {
+      classes: classResult.rows,
+      programs: programResult.rows,
+      user: req.user.user
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+
+
 
 app.get('/classes/:id/students', authenticateTokenAdmin, async (req, res) => {
   const classId = req.params.id;
@@ -2198,33 +2471,63 @@ app.post('/students/assign-class', authenticateTokenAdmin, async (req, res) => {
 });
 
 
+// app.get('/counselors', authenticateTokenAdmin, async (req, res) => {
+//   try {
+//     const result = await pool.query(
+//       `SELECT 
+//          id,
+//          first_name,
+//          middle_name,
+//          last_name,
+//          username,
+//          email,
+//          contact_number,
+//          position,
+//          educational_attainment,
+//          is_available,
+//          create_date,
+//          update_date
+//        FROM counselor`
+//     );
+
+//     res.render('adminPages/counselorsTable',{ counselors: result.rows, user: req.user.user });
+//   } catch (err) {
+//     console.error("Error fetching counselors:", err);
+//     res.status(500).json({ error: "Server error fetching counselors" });
+//   }
+// });
+
+// Route for Departments
+
 app.get('/counselors', authenticateTokenAdmin, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT 
-         id,
-         first_name,
-         middle_name,
-         last_name,
-         username,
-         email,
-         contact_number,
-         position,
-         educational_attainment,
-         is_available,
-         create_date,
-         update_date
-       FROM counselor`
-    );
+    const [counselorResult, departmentResult] = await Promise.all([
+      pool.query(`
+        SELECT 
+          c.id, c.first_name, c.middle_name, c.last_name, c.username, c.email,
+          c.contact_number, c.position, c.educational_attainment,
+          c.is_available, c.create_date, c.update_date, c.department_id,
+          d.name AS department_name
+        FROM counselor c
+        LEFT JOIN departments d ON c.department_id = d.id
+      `),
+      pool.query(`SELECT id, name FROM departments`)
+    ]);
 
-    res.render('adminPages/counselorsTable',{ counselors: result.rows, user: req.user.user });
+    res.render('adminPages/counselorsTable', {
+      counselors: counselorResult.rows,
+      departments: departmentResult.rows,
+      user: req.user.user
+    });
   } catch (err) {
-    console.error("Error fetching counselors:", err);
-    res.status(500).json({ error: "Server error fetching counselors" });
+    console.error("Error fetching counselors or departments:", err);
+    res.status(500).json({ error: "Server error fetching data" });
   }
 });
 
-// Route for Departments
+
+
+
 app.get('/departments', authenticateTokenAdmin, async (req, res) => {
   try {
     const result = await pool.query(
@@ -2391,7 +2694,8 @@ app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) =>
     contact_number,
     position,
     educational_attainment,
-    password
+    password,
+    department_id, // <-- New field
   } = req.body;
 
   try {
@@ -2399,9 +2703,20 @@ app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) =>
 
     await pool.query(
       `INSERT INTO counselor 
-        (first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, password, is_available, create_date, update_date) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW(), NOW())`,
-      [first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, hashedPassword]
+        (first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, password, is_available, create_date, update_date, department_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW(), NOW(), $10)`,
+      [
+        first_name,
+        middle_name,
+        last_name,
+        username,
+        email,
+        contact_number,
+        position,
+        educational_attainment,
+        hashedPassword,
+        department_id // <-- Bind this to $10
+      ]
     );
 
     res.redirect('/counselors');
@@ -2410,6 +2725,7 @@ app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) =>
     res.status(500).send("Failed to create counselor");
   }
 });
+
 
 app.post('/admin/counselors/:id/edit', authenticateTokenAdmin, async (req, res) => {
   const { id } = req.params;
@@ -2421,7 +2737,8 @@ app.post('/admin/counselors/:id/edit', authenticateTokenAdmin, async (req, res) 
     email,
     contact_number,
     position,
-    educational_attainment
+    educational_attainment,
+    department_id // <-- New field
   } = req.body;
 
   try {
@@ -2435,9 +2752,21 @@ app.post('/admin/counselors/:id/edit', authenticateTokenAdmin, async (req, res) 
            contact_number = $6,
            position = $7,
            educational_attainment = $8,
+           department_id = $9, -- Add this line
            update_date = NOW()
-       WHERE id = $9`,
-      [first_name, middle_name, last_name, username, email, contact_number, position, educational_attainment, id]
+       WHERE id = $10`,
+      [
+        first_name,
+        middle_name,
+        last_name,
+        username,
+        email,
+        contact_number,
+        position,
+        educational_attainment,
+        department_id, // Bind as $9
+        id              // Bind as $10
+      ]
     );
 
     res.redirect('/counselors');
@@ -2446,6 +2775,7 @@ app.post('/admin/counselors/:id/edit', authenticateTokenAdmin, async (req, res) 
     res.status(500).send("Failed to update counselor");
   }
 });
+
 
 app.post('/admin/counselors/:id/delete', authenticateTokenAdmin, async (req, res) => {
   const counselorId = req.params.id;
@@ -2841,17 +3171,61 @@ app.post('/students/edit/:id', async (req, res) => {
 });
 
 
+app.post('/classes/update', async (req, res) => {
+  const { id, class_name, program_id } = req.body;
+  console.log('Updating class:', id, class_name, program_id);
+
+  try {
+    const result = await pool.query(
+      'UPDATE class SET class_name = $1, program_id = $2, update_date = CURRENT_TIMESTAMP WHERE id = $3',
+      [class_name, program_id, id]
+    );
+
+    console.log('Rows affected:', result.rowCount);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'No class updated. ID may be incorrect.' });
+    }
+  } catch (err) {
+    console.error('DB Error:', err);
+    res.json({ success: false, message: 'Database error.' });
+  }
+});
+
+
+// app.post('/classes/update', async (req, res) => {
+//   const { id, class_name, program_id } = req.body;
+//   console.log(id, class_name, program_id)
+//   try {
+//     await pool.query(
+//       'UPDATE class SET class_name = $1, program_id = $2, update_date = CURRENT_TIMESTAMP WHERE id = $3',
+//       [class_name, program_id, id]
+//     );
+//     res.json({ success: true });
+//   } catch (err) {
+//     console.error(err);
+//     res.json({ success: false });
+//   }
+// });
+
 // Save new class
 app.post('/classes/create', async (req, res) => {
-  const { class_name } = req.body;
+  const { class_name, program_id } = req.body;
+
   try {
-    await pool.query('INSERT INTO class (class_name) VALUES ($1)', [class_name]);
+    await pool.query(
+      'INSERT INTO class (class_name, program_id) VALUES ($1, $2)',
+      [class_name, program_id]
+    );
     res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.json({ success: false });
   }
 });
+
 
 
 
@@ -3158,6 +3532,134 @@ app.get('/counselor/psycho-tests/cancel/:id', authenticateTokenCounselor, async 
 
 
 
+// app.get('/notifications', authenticateToken, async (req, res) => {
+//   const id = req.user.user.id;
+//   const role = "student";
+//   try {
+//     const result = await pool.query(`
+//       SELECT * FROM notifications
+//       WHERE user_id = $1 AND recipient_type = $2
+//       ORDER BY created_at DESC
+//     `, [id, role]);
+
+//     res.render('notifications', {
+//       notifications: result.rows,
+//       user: req.user.user
+//     });
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send('Error retrieving notifications');
+//   }
+// });
+
+function formatTimeAgo(timestamp) {
+  const now = new Date();
+  const created = new Date(timestamp);
+  const seconds = Math.floor((now - created) / 1000);
+
+  const intervals = [
+    { label: 'day', seconds: 86400 },
+    { label: 'hour', seconds: 3600 },
+    { label: 'minute', seconds: 60 }
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(seconds / interval.seconds);
+    if (count >= 1) return `${count} ${interval.label}${count > 1 ? 's' : ''} ago`;
+  }
+
+  return 'just now';
+}
+
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'message': return 'bx-message';
+    case 'appointment': return 'bx-calendar';
+    case 'alert': return 'bx-error';
+    case 'announcement': return 'bx-bullhorn';
+    default: return 'bx-bell';
+  }
+};
+
+app.get('/notifications', authenticateToken, async (req, res) => {
+  const id = req.user.user.id;
+  const role = "student";
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM notifications
+      WHERE user_id = $1 AND recipient_type = $2
+      ORDER BY id DESC
+    `, [id, role]);
+
+    const notifications = result.rows.map(n => ({
+      ...n,
+      timeAgo: formatTimeAgo(n.created_at)
+    }));
+
+    res.render('notifications', {
+      notifications,
+      user: req.user.user,
+      getNotificationIcon
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Error retrieving notifications');
+  }
+});
+
+
+app.get('/notifications/mark-read/:id', authenticateToken, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
+
+  try {
+    await pool.query(
+      `UPDATE notifications SET read_status = TRUE, updated_at = NOW() 
+       WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/notifications');
+  } catch (err) {
+    console.error('Error marking notification as read:', err.message);
+    res.status(500).send('Failed to update notification.');
+  }
+});
+
+app.get('/notifications/mark-unread/:id', authenticateToken, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
+
+  try {
+    await pool.query(
+      `UPDATE notifications SET read_status = FALSE, updated_at = NOW() 
+       WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/notifications');
+  } catch (err) {
+    console.error('Error marking notification as unread:', err.message);
+    res.status(500).send('Failed to update notification.');
+  }
+});
+
+app.get('/notifications/delete/:id', authenticateToken, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
+
+  try {
+    await pool.query(
+      `DELETE FROM notifications WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/notifications');
+  } catch (err) {
+    console.error('Error deleting notification:', err.message);
+    res.status(500).send('Failed to delete notification.');
+  }
+});
+
+
   app.post('/upload-csv', upload.single('csvFile'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -3340,6 +3842,47 @@ app.get('/psycho-tests/reject/:id', authenticateTokenAdmin, async (req, res) => 
   }
 });
 
+app.get('/admin/check-username', async (req, res) => {
+  const { username } = req.query;
+
+  try {
+    const result = await pool.query(
+      'SELECT 1 FROM counselor WHERE username = $1 LIMIT 1', [username]
+    );
+
+    if (result.rows.length > 0) {
+      return res.json({ exists: true });
+    } else {
+      return res.json({ exists: false });
+    }
+  } catch (err) {
+    console.error('Error checking username:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/admin/check-username/edit', async (req, res) => {
+  const { username, counselor_id } = req.query;
+
+  try {
+    // Query to check if the username exists, excluding the counselor being edited
+    const result = await pool.query(
+      'SELECT 1 FROM counselor WHERE username = $1 AND id != $2 LIMIT 1', [username, counselor_id]
+    );
+
+    if (result.rows.length > 0) {
+      return res.json({ exists: true });
+    } else {
+      return res.json({ exists: false });
+    }
+  } catch (err) {
+    console.error('Error checking username:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
 
 app.get('/import', authenticateTokenAdmin, (req,res) => {
   res.render('adminPages/importPage', {user: req.user.user});
@@ -3362,6 +3905,10 @@ app.get('/counselor/logout', (req, res) => {
   res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
   res.redirect('/counselor/login'); // or wherever your counselor login page is
 });
+
+
+
+
 
 // Start server
 const PORT = process.env.PORT || 5000;

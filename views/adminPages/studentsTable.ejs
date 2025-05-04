@@ -25,10 +25,6 @@
             
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-                <form action="/admin/students/import" method="POST" enctype="multipart/form-data">
-                  <input type="file" name="csvFile" accept=".csv" required />
-                  <button type="submit">Upload</button>
-                </form>
                 <table id="studentTable" class="table table-bordered">
                   <thead>
                     <tr>
@@ -123,7 +119,6 @@
             </div>
           </div>
 
-          
           <!-- Bootstrap Modal -->
           <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -138,46 +133,7 @@
             </div>
           </div>
 
-
-
           <!-- Assign Class Modal -->
-          <div class="modal fade" id="assignClassModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <form id="assignClassForm">
-                  <div class="modal-header">
-                    <h5 class="modal-title">Assign Class</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                    <input type="hidden" name="studentId" id="assignStudentId">
-                    <div class="mb-3">
-                      <label class="form-label">Select Class</label>
-                      <select class="form-select" name="classId" required>
-                        <option value="">-- Select Class --</option>
-                        <% classes.forEach(cls => { %>
-                          <option value="<%= cls.id %>"><%= cls.class_name %></option>
-                        <% }) %>
-                      </select>
-                    </div>
-                    <!-- <div class="mb-3 form-check">
-                      <input type="checkbox" class="form-check-input" name="isMayor" id="assignAsMayor">
-                      <label class="form-check-label" for="assignAsMayor">Assign as Class Mayor</label>
-                    </div> -->
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-
-
-
-
-
           <div class="modal fade" id="assignClassModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -222,10 +178,6 @@
               </div>
             </div>
           </div>
-
-
-
-
 
           <!-- Edit Student Modal -->
           <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
@@ -334,7 +286,6 @@
             </div>
           </div>
 
-
           <%- include('../includes/footer.ejs') %>
         </div>
       </div>
@@ -346,22 +297,67 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-   $(document).ready(function () {
-    // Initialize DataTable
-    $('#studentTable').DataTable({
+    function setModalImage(src) {
+      document.getElementById('modalImage').src = src;
+    }
+
+    $(document).ready(function () {
+      // Initialize DataTable
+      $('#studentTable').DataTable({
         pageLength: 5,
         lengthMenu: [5, 10, 25, 50],
         columnDefs: [
-            { orderable: false, targets: [13] } // Make actions column non-sortable
+          { orderable: false, targets: [13] } // Make actions column non-sortable
         ]
-    });
+      });
 
-    // Edit Student Modal Handling
-    // Edit Student Modal Handling
-    $(document).on('click', '.editBtn', function() {
+      // Department change handler
+      $('#editDepartment').on('change', function() {
+        const departmentId = $(this).val();
+        const programDropdown = $('#editProgram');
+        
+        if (!departmentId) {
+          programDropdown.empty().append('<option value="" disabled selected>Select Program</option>');
+          return;
+        }
+
+        // Show loading state
+        programDropdown.empty().append('<option value="">Loading programs...</option>');
+
+        // Fetch programs for selected department
+        $.ajax({
+          url: `/programs/${departmentId}`,
+          type: 'GET',
+          success: function(programs) {
+            if (programs.length > 0) {
+              programDropdown.empty().append('<option value="" disabled selected>Select Program</option>');
+              programs.forEach(program => {
+                programDropdown.append(`<option value="${program.id}">${program.name}</option>`);
+              });
+              
+              // If editing a student, try to preserve their program selection
+              const currentProgramId = $('#editStudentForm').data('current-program');
+              if (currentProgramId) {
+                programDropdown.val(currentProgramId);
+              }
+            } else {
+              programDropdown.empty().append('<option value="" disabled selected>No programs available</option>');
+            }
+          },
+          error: function() {
+            programDropdown.empty().append('<option value="" disabled selected>Error loading programs</option>');
+          }
+        });
+      });
+
+      // Edit Student Modal Handling
+      $(document).on('click', '.editBtn', function() {
         const studentData = $(this).data();
 
-        // Fill the fields with the data
+        // Store current program ID before changing department
+        $('#editStudentForm').data('current-program', studentData.program);
+
+        // Fill the form fields
         $('#editStudentId').val(studentData.id);
         $('#editFirstName').val(studentData.first_name);
         $('#editMiddleName').val(studentData.middle_name || '');
@@ -370,16 +366,16 @@
         $('#editEmail').val(studentData.email || '');
         $('#editIdNum').val(studentData.id_num || '');
         $('#editDepartment').val(studentData.department || '').trigger('change');
-        $('#editProgram').val(studentData.program || '').trigger('change');
         $('#editYearLevel').val(studentData.year_level || '').trigger('change');
         $('#editSex').val(studentData.sex || 'Male');
         $('#editContactNumber').val(studentData.contact_number || '');
         $('#editIsMayor').val(studentData.is_class_mayor ? 'true' : 'false');
-    });
 
+        // Program will be set after the department change completes
+      });
 
-    // Edit Form Submission
-    $('#editStudentForm').on('submit', function(e) {
+      // Edit Form Submission
+      $('#editStudentForm').on('submit', function(e) {
         e.preventDefault();
         
         const submitBtn = $(this).find('[type="submit"]');
@@ -389,40 +385,40 @@
         const studentId = $('#editStudentId').val();
         
         $.ajax({
-            url: `/students/edit/${studentId}`,
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    $('#successMessage').text('Student updated successfully!');
-                    $('#successModal').modal('show');
-                    setTimeout(() => {
-                        $('#editStudentModal').modal('hide');
-                        location.reload(); // Refresh the page to show the updated data
-                    }, 1500);
-                } else {
-                    alert(response.message || 'Failed to update student');
-                }
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
-                alert(errorMsg);
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false).html('Save Changes');
+          url: `/students/edit/${studentId}`,
+          type: 'POST',
+          data: formData,
+          success: function(response) {
+            if (response.success) {
+              $('#successMessage').text('Student updated successfully!');
+              $('#successModal').modal('show');
+              setTimeout(() => {
+                $('#editStudentModal').modal('hide');
+                location.reload();
+              }, 1500);
+            } else {
+              alert(response.message || 'Failed to update student');
             }
+          },
+          error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
+            alert(errorMsg);
+          },
+          complete: function() {
+            submitBtn.prop('disabled', false).html('Save Changes');
+          }
         });
-    });
+      });
 
-    // Assign Class Modal Handling
-    $(document).on('click', '.assignBtn', function() {
+      // Assign Class Modal Handling
+      $(document).on('click', '.assignBtn', function() {
         $('#assignStudentId').val($(this).data('id'));
-        $('#classSelect').val('').trigger('change'); // Reset class dropdown when opening modal
-        $('#assignAsMayor').prop('checked', false);  // Reset checkbox for mayor
-    });
+        $('#classSelect').val('').trigger('change');
+        $('#assignAsMayor').prop('checked', false);
+      });
 
-    // Assign Class Form Submission
-    $('#assignClassForm').on('submit', function(e) {
+      // Assign Class Form Submission
+      $('#assignClassForm').on('submit', function(e) {
         e.preventDefault();
         
         const submitBtn = $(this).find('[type="submit"]');
@@ -431,35 +427,31 @@
         const formData = $(this).serialize();
         
         $.ajax({
-            url: '/students/assign-class',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    $('#successMessage').text('Class assigned successfully!');
-                    $('#successModal').modal('show');
-                    setTimeout(() => {
-                        $('#assignClassModal').modal('hide');
-                        location.reload();
-                    }, 1500);
-                } else {
-                    alert(response.message || 'Failed to assign class');
-                }
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
-                alert(errorMsg);
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false).html('Assign Class');
+          url: '/students/assign-class',
+          type: 'POST',
+          data: formData,
+          success: function(response) {
+            if (response.success) {
+              $('#successMessage').text('Class assigned successfully!');
+              $('#successModal').modal('show');
+              setTimeout(() => {
+                $('#assignClassModal').modal('hide');
+                location.reload();
+              }, 1500);
+            } else {
+              alert(response.message || 'Failed to assign class');
             }
+          },
+          error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'Something went wrong!';
+            alert(errorMsg);
+          },
+          complete: function() {
+            submitBtn.prop('disabled', false).html('Assign Class');
+          }
         });
+      });
     });
-});
-
-
-
-
   </script>
 </body>
 </html>

@@ -38,6 +38,7 @@
                           <th>Contact Number</th>
                           <th>Position</th>
                           <th>Educational Attainment</th>
+                          <th>Department</th>
                           <th>Status</th>
                           <th>Actions</th>
                         </tr>
@@ -54,6 +55,8 @@
                               <td><%= counselor.contact_number || 'N/A' %></td>
                               <td><%= counselor.position || 'N/A' %></td>
                               <td><%= counselor.educational_attainment || 'N/A' %></td>
+                              <td><%= counselor.department_name || 'N/A' %></td>
+
                               <td>
                                 <% if (counselor.is_available) { %>
                                   <span class="badge bg-label-success me-1">Available</span>
@@ -73,9 +76,12 @@
                                         data-email="<%= counselor.email %>"
                                         data-contact_number="<%= counselor.contact_number %>"
                                         data-position="<%= counselor.position %>"
-                                        data-educational_attainment="<%= counselor.educational_attainment %>">
+                                        data-educational_attainment="<%= counselor.educational_attainment %>"
+                                        data-department_id="<%= counselor.department_id %>">
                                   <i class="bx bx-edit-alt"></i>
                                 </button>
+                        
+
                               
                                 <form action="/admin/counselors/<%= counselor.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this counselor?');">
                                   <button type="submit" class="btn btn-sm btn-icon text-danger">
@@ -108,20 +114,37 @@
                       </div>
               
                       <div class="modal-body row g-3">
-                        <% const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'position', 'educational_attainment']; %>
+                        <% const fields = ['first_name', 'middle_name', 'last_name', 'email', 'position', 'educational_attainment']; %>
                         <% fields.forEach(field => { %>
                           <div class="col-md-6">
                             <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
-                            <input type="text" name="<%= field %>" class="form-control" required />
+                            <input type="text" name="<%= field %>" id="<%= field %>" class="form-control" required />
                           </div>
                         <% }) %>
               
+                      
                         <!-- Contact Number field -->
                         <div class="col-md-6">
                           <label class="form-label">Contact number</label>
                           <input type="tel" name="contact_number" pattern="[0-9]*" inputmode="numeric" class="form-control" required />
                         </div>
               
+                        <div class="mb-3">
+                          <label for="department_id" class="form-label">Department</label>
+                          <select name="department_id" id="department_id" class="form-select" required>
+                            <option value="" disabled selected>Select Department</option>
+                            <% departments.forEach(dept => { %>
+                              <option value="<%= dept.id %>"><%= dept.name %></option>
+                            <% }) %>
+                          </select>
+                        </div>
+                <!-- Username field with real-time check -->
+                <div class="col-md-6">
+                  <label class="form-label">Username</label>
+                  <input type="text" name="username" id="username" class="form-control" required />
+                  <small id="usernameStatus" class="form-text"></small> <!-- Display status -->
+                </div>
+      
                         <!-- Password field -->
                         <div class="col-md-6">
                           <label class="form-label">Password</label>
@@ -139,9 +162,10 @@
               </div>
               
               
+              
 
 
-          <!-- Edit Counselor Modal -->
+         <!-- Edit Counselor Modal -->
 <div class="modal fade" id="editCounselorModal" tabindex="-1" aria-labelledby="editCounselorModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -152,7 +176,7 @@
         </div>
 
         <div class="modal-body row g-3">
-          <% const fields2 = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'position', 'educational_attainment']; %>
+          <% const fields2 = ['first_name', 'middle_name', 'last_name', 'email', 'position', 'educational_attainment']; %>
           <% fields2.forEach(field => { %>
             <div class="col-md-6">
               <label class="form-label text-capitalize"><%= field.replace('_', ' ') %></label>
@@ -164,6 +188,23 @@
           <div class="col-md-6">
             <label class="form-label">Contact number</label>
             <input type="tel" name="contact_number" id="edit_contact_number" pattern="[0-9]*" inputmode="numeric" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label for="edit_department_id" class="form-label">Department</label>
+            <select name="department_id" id="edit_department_id" class="form-select" required>
+              <option value="" disabled selected>-- Select Department --</option>
+              <% departments.forEach(dept => { %>
+                <option value="<%= dept.id %>"><%= dept.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <!-- Username field with real-time check -->
+          <div class="col-md-6">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" id="edit_username" class="form-control" required />
+            <small id="edit_usernameStatus" class="form-text"></small> <!-- Display status -->
           </div>
 
           <!-- Password field -->
@@ -181,6 +222,7 @@
     </div>
   </div>
 </div>
+
 
           
 
@@ -203,21 +245,146 @@
     });
   
     document.addEventListener('DOMContentLoaded', () => {
-      const editModal = document.getElementById('editCounselorModal');
-      const editForm = document.getElementById('editCounselorForm');
-  
-      document.querySelectorAll('.editBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment'];
-          fields.forEach(field => {
-            const input = document.getElementById(`edit_${field}`);
-            if (input) input.value = btn.dataset[field] || '';
-          });
-          const counselorId = btn.dataset.id;
-          editForm.action = `/admin/counselors/${counselorId}/edit`;
-        });
+  const editModal = document.getElementById('editCounselorModal');
+  const editForm = document.getElementById('editCounselorForm');
+  const editUsernameInput = document.getElementById('edit_username');
+  const editUsernameStatus = document.getElementById('edit_usernameStatus');
+  const submitButton = document.querySelector('#editCounselorForm button[type="submit"]');
+  let isUsernameValid = true;
+
+  // When the "Edit" button is clicked
+  document.querySelectorAll('.editBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fields = ['first_name', 'middle_name', 'last_name', 'username', 'email', 'contact_number', 'position', 'educational_attainment'];
+      fields.forEach(field => {
+        const input = document.getElementById(`edit_${field}`);
+        if (input) input.value = btn.dataset[field] || '';
       });
+
+      // Set department select option
+      const departmentSelect = document.getElementById('edit_department_id');
+      if (departmentSelect) {
+        departmentSelect.value = btn.dataset.department_id || '';
+      }
+
+      const counselorId = btn.dataset.id;
+      editForm.action = `/admin/counselors/${counselorId}/edit`;
+
+      // Set initial username value and check
+      editUsernameInput.value = btn.dataset.username || '';
+      checkUsernameAvailability(editUsernameInput.value, counselorId);
     });
+  });
+
+  // Check username availability in the edit modal
+  editUsernameInput.addEventListener('input', async () => {
+    const username = editUsernameInput.value.trim();
+    checkUsernameAvailability(username);
+  });
+
+  async function checkUsernameAvailability(username, counselorId = null) {
+    if (username.length === 0) {
+      editUsernameStatus.textContent = '';
+      isUsernameValid = true;
+      toggleSubmitButton();
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/check-username/edit?username=${username}&counselor_id=${counselorId}`);
+      const data = await response.json();
+
+      if (data.exists) {
+        editUsernameStatus.textContent = 'Username is already taken';
+        editUsernameStatus.style.color = 'red';
+        isUsernameValid = false;
+      } else {
+        editUsernameStatus.textContent = 'Username is available';
+        editUsernameStatus.style.color = 'green';
+        isUsernameValid = true;
+      }
+
+      toggleSubmitButton();
+    } catch (err) {
+      console.error('Error checking username:', err);
+    }
+  }
+
+  // Enable/disable submit button based on username validity
+  function toggleSubmitButton() {
+    submitButton.disabled = !isUsernameValid;
+  }
+
+  // Prevent form submission if username is invalid
+  editForm.addEventListener('submit', (event) => {
+    if (!isUsernameValid) {
+      event.preventDefault();
+      alert('Please choose an available username before submitting.');
+    }
+  });
+});
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const usernameInput = document.getElementById('username');
+  const usernameStatus = document.getElementById('usernameStatus');
+  const submitButton = document.querySelector('#createCounselorModal button[type="submit"]');
+  let isUsernameValid = true;
+
+  // Check username availability on input
+  usernameInput.addEventListener('input', async () => {
+    const username = usernameInput.value.trim();
+
+    if (username.length === 0) {
+      usernameStatus.textContent = '';
+      isUsernameValid = true;
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/check-username?username=${username}`);
+      const data = await response.json();
+
+      if (data.exists) {
+        usernameStatus.textContent = 'Username is already taken';
+        usernameStatus.style.color = 'red';
+        isUsernameValid = false;
+      } else {
+        usernameStatus.textContent = 'Username is available';
+        usernameStatus.style.color = 'green';
+        isUsernameValid = true;
+      }
+
+      // Enable/disable the submit button based on username validity
+      toggleSubmitButton();
+    } catch (err) {
+      console.error('Error checking username:', err);
+    }
+  });
+
+  // Prevent form submission if username is invalid
+  document.querySelector('#createCounselorModal form').addEventListener('submit', (event) => {
+    if (!isUsernameValid) {
+      event.preventDefault();
+      alert('Please choose an available username before submitting.');
+    }
+  });
+
+  // Toggle submit button based on username validity
+  function toggleSubmitButton() {
+    if (isUsernameValid) {
+      submitButton.disabled = false;
+    } else {
+      submitButton.disabled = true;
+    }
+  }
+});
+
+
+
+
   </script>
   
   

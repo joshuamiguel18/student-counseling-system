@@ -40,7 +40,7 @@
                 <input type="hidden" name="student_id" value="<%= user.id %>" required>
 
                 <div class="col-12 mb-4">
-                  <label class="form-label" for="title">Title</label>
+                  <label class="form-label" for="title">Purpose</label>
                   <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name" required></textarea>
                 </div>
                 
@@ -182,12 +182,14 @@
         function setupFlatpickr(availableDays) {
           if (flatpickrInstance) flatpickrInstance.destroy();
           document.getElementById('appointment_date').value = '';
-    
+
           flatpickrInstance = flatpickr("#appointment_date", {
             dateFormat: "Y-m-d",
+            minDate: "today", // This prevents selecting dates before today
             disable: [
               function (date) {
-                return !availableDays.includes(date.getDay());
+                // Disable dates that are either not in availableDays OR are in the past
+                return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
               }
             ]
           });

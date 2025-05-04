@@ -23,59 +23,67 @@
                             <i class="bx bx-plus"></i> Create Class
                         </button>
                     </div>
-                  <div class="table-responsive d-none d-sm-block">
-                    <table class="table table-bordered">
+                  <div class="table-responsive">
+                    <table class="table">
                       <thead>
                         <tr>
-                          <th>Class ID</th>
+                          <th>#</th>
                           <th>Class Name</th>
-                          <th>Number of Students</th>
+                          <th>Program</th>
+                          <th>Actions</th> <!-- ✅ Added this -->
                         </tr>
                       </thead>
                       <tbody>
-                        <% if (classes.length > 0) { %>
-                          <% classes.forEach(cls => { %>
-                            <tr>
-                              <td><%= cls.id %></td>
-                              <td><%= cls.class_name %></td>
-                              <td><%= cls.student_count %></td>
-                              <td>
-                                <a href="/classes/<%= cls.id %>/students" class="btn btn-sm btn-primary">
-                                  <i class="bx bx-show"></i> View Students
-                                </a>
-                              </td>
-                            </tr>
-                            
-                          <% }) %>
-                        <% } else { %>
-                          <tr><td colspan="3" class="text-center">No classes found.</td></tr>
-                        <% } %>
+                        <% classes.forEach((cls, index) => { %>
+                          <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= cls.class_name %></td>
+                            <td><%= cls.program_name %></td>
+                            <td>
+                              <a href="#" class="btn btn-sm btn-warning"
+                                 onclick="openEditModal(<%= cls.id %>, '<%- cls.class_name.replace(/'/g, "\\'") %>', <%= cls.program_id %>)">
+                                Edit
+                              </a>
+                            </td>
+                          </tr>
+                        <% }); %>
                       </tbody>
                     </table>
+                    
+                    <!-- ✅ Edit Class Modal -->
+                    <div class="modal fade" id="editClassModal" tabindex="-1" aria-labelledby="editClassModalLabel" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <form id="editClassForm">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Edit Class</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              <input type="hidden" id="editClassId" name="id">
+                              <div class="mb-3">
+                                <label for="editClassName" class="form-label">Class Name</label>
+                                <input type="text" class="form-control" id="editClassName" name="class_name" required>
+                              </div>
+                              <div class="mb-3">
+                                <label for="editProgramId" class="form-label">Program</label>
+                                <select class="form-select" id="editProgramId" name="program_id" required>
+                                  <% programs.forEach(program => { %>
+                                    <option value="<%= program.id %>"><%= program.program_name %></option>
+                                  <% }); %>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
               
-                  <!-- Mobile Cards -->
-                  <div class="d-block d-sm-none">
-                    <% if (classes.length > 0) { %>
-                      <% classes.forEach(cls => { %>
-                        <div class="card mb-3 border shadow-sm">
-                          <div class="card-body">
-                            <h5 class="card-title mb-2">Class: <%= cls.class_name %></h5>
-                            <p><strong>Class ID:</strong> <%= cls.id %></p>
-                            <p><strong>Number of Students:</strong> <%= cls.student_count %></p>
-                            <p>
-                              <a href="/classes/<%= cls.id %>/students" class="btn btn-sm btn-primary">
-                                <i class="bx bx-show"></i> View Students
-                              </a>
-                            </p>
-                            
-                          </div>
-                        </div>
-                      <% }) %>
-                    <% } else { %>
-                      <div class="text-center">No classes found.</div>
-                    <% } %>
-                  </div>
+                  
                 </div>
               </div>
               
@@ -116,6 +124,15 @@
                       <input type="datetime-local" class="form-control" id="appointmentDate" name="appointment_date" required>
                     </div>
                     <div class="mb-3">
+                      <label for="editProgramId" class="form-label">Program</label>
+                      <select class="form-select" id="editProgramId" name="program_id" required>
+                        <% programs.forEach(program => { %>
+                          <option value="<%= program.id %>"><%= program.program_name %> - <%= program.department_name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+
+                    <div class="mb-3">
                       <label for="appointmentStatus" class="form-label">Status</label>
                       <select class="form-select" id="appointmentStatus" name="status" required>
                         <option value="pending">Pending</option>
@@ -149,7 +166,18 @@
                         <label for="newClassName" class="form-label">Class Name</label>
                         <input type="text" class="form-control" id="newClassName" name="class_name" required>
                         </div>
+                        <div class="mb-3">
+                          <label for="newProgramId" class="form-label">Program</label>
+                          <select class="form-select" id="newProgramId" name="program_id" required>
+                            <% programs.forEach(program => { %>
+                              <option value="<%= program.id %>"><%= program.program_name %> - <%= program.department_name %></option>
+                            <% }) %>
+                          </select>
+                        </div>
+
+
                     </div>
+                   
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">Create</button>
                     </div>
@@ -157,6 +185,42 @@
                 </div>
                 </div>
             </div>
+
+
+
+
+
+<!-- Edit Class Modal -->
+<div class="modal fade" id="editClassModal" tabindex="-1" aria-labelledby="editClassModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editClassForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editClassModalLabel">Edit Class</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editClassId" name="id">
+          <div class="mb-3">
+            <label for="editClassName" class="form-label">Class Name</label>
+            <input type="text" class="form-control" id="editClassName" name="class_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="editProgramId" class="form-label">Program</label>
+            <select class="form-select" id="editProgramId" name="program_id" required>
+              <% programs.forEach(program => { %>
+                <option value="<%= program.id %>"><%= program.program_name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 
 
@@ -204,37 +268,45 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-    // Submit Create Class Form
-// Submit Create Class Form
-document.getElementById('createClassForm').addEventListener('submit', function (event) {
-  event.preventDefault();
-
-  const data = {
-    class_name: document.getElementById('newClassName').value
-  };
-
-  fetch('/classes/create', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  .then(res => res.json())
-  .then(data => {
-    // Hide the modal immediately
-    const createModal = bootstrap.Modal.getInstance(document.getElementById('createClassModal'));
-    createModal.hide();
-
-    if (data.success) {
-      new bootstrap.Modal(document.getElementById('successModal')).show();
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      new bootstrap.Modal(document.getElementById('errorModal')).show();
+    function openEditModal(id, className, programId) {
+      document.getElementById('editClassId').value = id;
+      document.getElementById('editClassName').value = className;
+      document.getElementById('editProgramId').value = programId;
+      const editModal = new bootstrap.Modal(document.getElementById('editClassModal'));
+      editModal.show();
     }
-  });
-});
-
+  
+    document.getElementById('editClassForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+  
+      const formData = {
+        id: document.getElementById('editClassId').value,
+        class_name: document.getElementById('editClassName').value,
+        program_id: document.getElementById('editProgramId').value,
+      };
+  
+      fetch('/classes/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editClassModal'));
+            modal.hide();
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            alert('Update failed.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred.');
+        });
+    });
   </script>
 </body>
 </html>

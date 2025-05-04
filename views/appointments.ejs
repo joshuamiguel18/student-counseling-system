@@ -101,13 +101,7 @@
                                     <i class="bi bi-x-circle me-2"></i>Cancel
                                   </a>
                                 </li>
-                                <% if (appointment.is_online_appointment && appointment.status == 'approved') { %>
-                                  <li>
-                                    <a class="dropdown-item" href="/appointments/<%= appointment.id %>/chat">
-                                      <i class="bi bi-chat-dots me-2"></i>Go to Chat
-                                    </a>
-                                  </li>
-                                <% } %>
+                               
                               </ul>
                             </div>
                             <% } else if (appointment.status === 'cancelled' || appointment.status === 'rejected') { %>
@@ -289,13 +283,7 @@
           <i class="bi bi-x-circle me-2"></i>Cancel
         </a>
       </li>
-      ${appointment.is_online_appointment ? `
-        <li>
-          <a class="dropdown-item" href="/appointments/${appointment.id}/chat">
-            <i class="bi bi-chat-dots me-2"></i>Go to Chat
-          </a>
-        </li>
-      ` : ''}
+      
     </ul>
   </div>
 ` : `

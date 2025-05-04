@@ -213,3 +213,42 @@ CREATE TABLE verification_tokens (
     token TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+-- Add the department_id column
+ALTER TABLE counselor ADD COLUMN department_id INTEGER;
+
+-- Add the foreign key constraint
+ALTER TABLE counselor
+  ADD CONSTRAINT fk_counselor_department
+  FOREIGN KEY (department_id)
+  REFERENCES departments(id)
+  ON DELETE SET NULL;
+
+
+
+
+
+  -- Add the program_id column
+ALTER TABLE class ADD COLUMN program_id INTEGER;
+
+-- Add the foreign key constraint
+ALTER TABLE class
+  ADD CONSTRAINT fk_class_program
+  FOREIGN KEY (program_id)
+  REFERENCES programs(id)
+  ON DELETE SET NULL;
+
+
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,                     -- ID from either student or counselor
+    recipient_type VARCHAR(20) NOT NULL,          -- 'student' or 'counselor'
+    message TEXT NOT NULL,
+    type VARCHAR(50),                             -- e.g. 'message', 'appointment', etc.
+    read_status BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

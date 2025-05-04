@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+
+  <head>
+	<%- include('includes/head.ejs') %>
+
+
+
+  </head>
+
+  <body>
+	<!-- Layout wrapper: Start -->
+	<div class="layout-wrapper layout-content-navbar">
+	  <div class="layout-container">
+	
+		<%- include('includes/sidebar.ejs') %>
+	
+		<!-- Layout page: Start -->
+		<div class="layout-page">
+	
+	
+		  <!-- Navbar: Start -->
+		  <%- include('includes/header.ejs') %>
+		  <!-- Navbar: End -->
+	
+	
+		  <!-- Content wrapper: Start -->
+		  <div class="content-wrapper">
+			<!-- Content: Start -->
+			<div class="container-xxl flex-grow-1 container-p-y">
+
+                <div class="container py-4">
+                    <div class="row">
+                      <!-- Mobile Button -->
+                      <div class="d-md-none mb-3 text-end">
+                        <button class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#appointmentsOffcanvas">
+                          Show Appointments
+                        </button>
+                      </div>
+                  
+                      <!-- Left: Appointments List (Offcanvas for mobile, sidebar for desktop) -->
+                      <div class="col-md-4 d-none d-md-block border-end">
+                        <h5 class="mb-3 text-primary">My Online Appointments</h5>
+                        <ul class="list-group">
+                          <% appointments.forEach(appointment => { %>
+                            <li class="list-group-item list-group-item-action d-flex gap-3 align-items-center appointment-item"
+                                data-id="<%= appointment.id %>"
+                                data-counselor="<%= appointment.counselor_name %>">
+                              <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                  <strong><%= appointment.title %></strong>
+                                  <small class="text-muted">
+                                    <%= new Date(appointment.appointment_date).toLocaleDateString() %>
+                                  </small>
+                                </div>
+                                <div class="text-muted small">#<%= appointment.appointment_number %></div>
+                              </div>
+                            </li>
+                          <% }) %>
+                        </ul>
+                      </div>
+                  
+                      <!-- Offcanvas version for mobile -->
+                      <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="appointmentsOffcanvas">
+                        <div class="offcanvas-header">
+                          <h5 class="offcanvas-title">My Online Appointments</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                          <ul class="list-group">
+                            <% appointments.forEach(appointment => { %>
+                              <li class="list-group-item list-group-item-action d-flex gap-3 align-items-center appointment-item"
+                                  data-id="<%= appointment.id %>"
+                                  data-counselor="<%= appointment.counselor_name %>"
+                                  data-bs-dismiss="offcanvas">
+                                <div class="flex-grow-1">
+                                  <div class="d-flex justify-content-between">
+                                    <strong><%= appointment.title %></strong>
+                                    <small class="text-muted">
+                                      <%= new Date(appointment.appointment_date).toLocaleDateString() %>
+                                    </small>
+                                  </div>
+                                  <div class="text-muted small">#<%= appointment.appointment_number %></div>
+                                </div>
+                              </li>
+                            <% }) %>
+                          </ul>
+                        </div>
+                      </div>
+                  
+                      <!-- Right: Chat Panel -->
+                      <div class="col-md-8">
+                        <div class="card shadow-sm">
+                          <div class="card-header bg-primary text-white" id="chat-title">
+                            Chat with Counselor
+                          </div>
+                          <div id="chat-box" class="border-bottom px-3 py-3" style="height: 400px; overflow-y: auto; background: #f9f9f9;">
+                            <div class="text-center text-muted mt-5">Select an appointment to start chatting</div>
+                          </div>
+                          <form id="message-form" class="d-flex p-3 border-top" style="display: none;">
+                            <input type="hidden" name="appointment_id" id="appointment-id">
+                            <input type="hidden" name="sender_type" value="student">
+                            <input type="text" name="message" id="message-input" class="form-control me-2" placeholder="Type your message..." required style="border-radius: 20px;">
+                            <button class="btn btn-primary px-4" type="submit" style="border-radius: 20px;">Send</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  
+                  
+                  
+			  <!-- / Content: End -->
+	
+			  <!-- Footer: Start -->
+			  <!-- Footer: End -->
+
+	
+			  <div class="content-backdrop fade"></div>
+			</div>
+			<!--/ Content wrapper: End -->
+		  </div>
+		  <!-- / Layout page: End -->
+		  <%- include('includes/footer.ejs') %>
+
+		</div>
+	
+		<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+		<div class="drag-target"></div>
+	  </div>
+	  <!-- Layout wrapper: End -->
+	
+
+    <!-- Mood Submitted Modal -->
+<div class="modal fade" id="moodSubmittedModal" tabindex="-1" aria-labelledby="moodSubmittedModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header">
+        <h5 class="modal-title" id="moodSubmittedModalLabel">Mood Submitted</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="fs-4">🎉 Thanks for sharing your mood!</p>
+        <p class="text-muted">Your mood has been recorded successfully.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">Awesome!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+	  <%- include('includes/scripts.ejs') %>
+
+      <script>
+        let messagesLoaded = false;
+      
+        const appointmentIdInput = document.getElementById('appointment-id');
+        const chatBox = document.getElementById('chat-box');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const chatTitle = document.getElementById('chat-title');
+      
+        // ✅ Fetch and display messages
+        function fetchMessages(appointmentId) {
+          if (!appointmentId) return;
+      
+          fetch(`/messages/${appointmentId}`)
+            .then(res => res.json())
+            .then(messages => {
+              chatBox.innerHTML = '';
+      
+              messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('mb-2', 'd-flex');
+                messageDiv.classList.add(msg.sender_type === 'student' ? 'justify-content-end' : 'justify-content-start');
+      
+                messageDiv.innerHTML = `
+                  <div class="p-2 rounded ${msg.sender_type === 'counselor' ? 'bg-primary text-white' : 'bg-light border'}" style="max-width: 70%;">
+                    <div>${msg.message}</div>
+                    <small class="d-block text-end text-muted" style="font-size: 0.75rem;">${new Date(msg.created_at).toLocaleString()}</small>
+                  </div>
+                `;
+                chatBox.appendChild(messageDiv);
+              });
+      
+              // Scroll down only once on first load
+              if (!messagesLoaded) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+                messagesLoaded = true;
+              }
+            })
+            .catch(err => console.error('Error fetching messages:', err));
+        }
+      
+        // ✅ Send a message
+        function sendMessage(appointmentId, message) {
+          fetch('/messages/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message,
+              appointment_id: appointmentId,
+              sender_type: 'student'
+            })
+          })
+            .then(res => res.json())
+            .then(result => {
+              if (result.success) {
+                messageInput.value = ''; // Clear input
+                fetchMessages(appointmentId); // Refresh chat
+                setTimeout(() => {
+                  chatBox.scrollTop = chatBox.scrollHeight; // Scroll after DOM update
+                }, 100);
+              }
+            })
+            .catch(err => console.error('Error sending message:', err));
+        }
+      
+        // ✅ Handle form submission
+        messageForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+      
+          const message = messageInput.value.trim();
+          const appointmentId = appointmentIdInput.value;
+      
+          if (!message || !appointmentId) return;
+      
+          sendMessage(appointmentId, message);
+        });
+      
+        // ✅ Handle click on an appointment item
+        document.querySelectorAll('.appointment-item').forEach(item => {
+          item.addEventListener('click', function () {
+            const appointmentId = this.getAttribute('data-id');
+            const counselorName = this.getAttribute('data-counselor');
+      
+            appointmentIdInput.value = appointmentId;
+            chatTitle.innerText = `Chat with Counselor ${counselorName}`;
+            messageForm.style.display = 'flex';
+            messagesLoaded = false;
+      
+            fetchMessages(appointmentId);
+          });
+        });
+      
+        // Optionally: Set interval to auto-refresh messages (every 5s)
+        setInterval(() => {
+          const currentAppointmentId = appointmentIdInput.value;
+          if (currentAppointmentId) {
+            fetchMessages(currentAppointmentId);
+          }
+        }, 5000);
+      </script>
+      
+      
+      
+
+
+  </body>
+
+</html>

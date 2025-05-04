@@ -15,23 +15,33 @@
         <div class="content-wrapper">
           <div class="container-xxl flex-grow-1 container-p-y">
             <h4>Section Psycho Testing Schedule</h4>
-            <form method="POST" action="/saveClassPsychotesting">
+            <form id="class-psychotest-form" method="POST" action="/saveClassPsychotesting">
               <div class="mb-3">
-                <label for="class_id" class="form-label">Select Class</label>
-                <select name="class_id" id="class_id" class="form-select" required>
-                  <option disabled selected>Select Class</option>
-                  <% classes.forEach(cls => { %>
-                    <option value="<%= cls.id %>"><%= cls.class_name %></option>
+                <label for="program_id" class="form-label">Select Program</label>
+                <select name="program_id" id="program_id" class="form-select" required>
+                  <option disabled selected>Select Program</option>
+                  <% programs.forEach(program => { %>
+                    <option value="<%= program.id %>"><%= program.name %></option>
                   <% }) %>
                 </select>
               </div>
-            
+
+              <div class="mb-3" id="class-select-container" style="display: none;">
+                <label for="class_id" class="form-label">Select Class</label>
+                <select name="class_id" id="class_id" class="form-select" required>
+                  <option disabled selected>Select Class</option>
+                </select>
+              </div>
+
               <div class="mb-3">
                 <label for="title" class="form-label">Purpose</label>
                 <input type="text" name="title" id="title" class="form-control" required />
               </div>
             
+              
               <div class="mb-3">
+
+                
                 <label for="test_date" class="form-label">Test Date</label>
                 <input type="date" name="test_date" id="test_date" class="form-control" required />
               </div>
@@ -51,19 +61,39 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+
+
       flatpickr("#test_date", {
-        dateFormat: "Y-m-d"
+        dateFormat: "Y-m-d",  // Format as yyyy-mm-dd
+        minDate: "today",     // Prevent selection of past dates
       });
 
-      document.getElementById('class-psychotest-form').addEventListener('submit', function (e) {
-        const title = document.getElementById('title').value.trim();
-        const classId = document.getElementById('class_id').value;
-        const testDate = document.getElementById('test_date').value.trim();
+      // Fetch classes when a program is selected
+      document.getElementById('program_id').addEventListener('change', function () {
+        const programId = this.value;
 
-        if (!title || !classId || !testDate) {
-          e.preventDefault();
-          alert('Please fill in all required fields before submitting the form.');
-        }
+        // Show the class selection
+        const classSelectContainer = document.getElementById('class-select-container');
+        classSelectContainer.style.display = 'block';
+
+        // Fetch the classes related to the selected program
+        fetch(`/getClassesByProgram/${programId}`)
+          .then(response => response.json())
+          .then(classes => {
+            const classSelect = document.getElementById('class_id');
+            classSelect.innerHTML = '<option disabled selected>Select Class</option>';
+
+            classes.forEach(cls => {
+              const option = document.createElement('option');
+              option.value = cls.id;
+              option.textContent = cls.class_name;
+              classSelect.appendChild(option);
+            });
+          })
+          .catch(err => {
+            console.error('Error fetching classes:', err);
+            alert('Failed to load classes.');
+          });
       });
     });
   </script>
