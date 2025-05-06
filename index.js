@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const pool = require('./db')
 const app = express();
@@ -11,16 +12,15 @@ const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 const session = require('express-session');
 const cors = require('cors');
-
-
-
-
-const upload = multer({ dest: 'uploads/' });
-
+const stream = require('stream');
 const fs = require('fs');
 const csv = require('csv-parser');
 
-const path = require('path');
+
+// Use memory storage instead of disk
+const storage = multer.memoryStorage(); // Store files in memory (for buffer use)
+const upload = multer({ storage: storage });
+
 //const upload = require('./multerConfigCSV'); // Make sure this is configured correctly
 
 const token = crypto.randomBytes(32).toString("hex");
@@ -3860,59 +3860,132 @@ app.post('/savePsychotesting', async (req, res) => {
 
 
 
+// app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
+//   const filePath = path.join(__dirname, '..', req.file.path);
+//   const students = [];
+
+//   fs.createReadStream(filePath)
+//     .pipe(csv())
+//     .on('data', (row) => {
+//       students.push(row);
+//     })
+//     .on('end', async () => {
+//       try {
+//         for (const student of students) {
+//           await pool.query(`
+//             INSERT INTO student (
+//               username, password, email, first_name, middle_name, last_name,
+//               middle_initial, id_num, department, program, year_level,
+//               sex, contact_number, address, class_id
+//             ) VALUES (
+//               $1, $2, $3, $4, $5, $6,
+//               $7, $8, $9, $10, $11,
+//               $12, $13, $14, $15
+//             )
+//           `, [
+//             student.username,
+//             student.password,
+//             student.email,
+//             student.first_name,
+//             student.middle_name,
+//             student.last_name,
+//             student.middle_initial,
+//             student.id_num,
+//             student.department,
+//             student.program,
+//             student.year_level,
+//             student.sex,
+//             student.contact_number,
+//             student.address,
+//             student.class_id
+//           ]);
+//         }
+
+//         fs.unlinkSync(filePath);
+//         res.send('Students imported successfully!');
+//       } catch (err) {
+//         console.error('Error inserting students:', err);
+//         res.status(500).send('Server Error');
+//       }
+//     });
+// });
+
+
+
 app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
-  const filePath = path.join(__dirname, '..', req.file.path);
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
   const students = [];
 
-  fs.createReadStream(filePath)
-    .pipe(csv())
-    .on('data', (row) => {
-      students.push(row);
-    })
-    .on('end', async () => {
-      try {
-        for (const student of students) {
-          await pool.query(`
-            INSERT INTO student (
-              username, password, email, first_name, middle_name, last_name,
-              middle_initial, id_num, department, program, year_level,
-              sex, contact_number, address, class_id
-            ) VALUES (
-              $1, $2, $3, $4, $5, $6,
-              $7, $8, $9, $10, $11,
-              $12, $13, $14, $15
-            )
-          `, [
-            student.username,
-            student.password,
-            student.email,
-            student.first_name,
-            student.middle_name,
-            student.last_name,
-            student.middle_initial,
-            student.id_num,
-            student.department,
-            student.program,
-            student.year_level,
-            student.sex,
-            student.contact_number,
-            student.address,
-            student.class_id
-          ]);
+  try {
+    const readable = new stream.Readable();
+    readable._read = () => {}; // No-op
+    readable.push(req.file.buffer);
+    readable.push(null); // End of stream
+
+    readable
+      .pipe(csv())
+      .on('data', (row) => {
+        students.push(row);
+      })
+      .on('end', async () => {
+        try {
+          for (const student of students) {
+            await pool.query(
+              `INSERT INTO student (
+                username, password, email, first_name, middle_name, last_name,
+                is_class_mayor, class_id, create_date, update_date, student_id_image,
+                id_num, middle_initial, year_level, sex, contact_number, address,
+                department_id, program_id, is_verified
+              ) VALUES (
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9, $10, $11,
+                $12, $13, $14, $15, $16, $17,
+                $18, $19, $20
+              )`,
+              [
+                student.username,
+                student.password,
+                student.email,
+                student.first_name,
+                student.middle_name || null,
+                student.last_name,
+                student.is_class_mayor?.toLowerCase() === 'true',
+                parseInt(student.class_id) || null,
+                student.create_date || new Date(),
+                student.update_date || new Date(),
+                student.student_id_image,
+                student.id_num,
+                student.middle_initial || null,
+                parseInt(student.year_level) || null,
+                student.sex,
+                student.contact_number,
+                student.address,
+                parseInt(student.department_id) || null,
+                parseInt(student.program_id) || null,
+                student.is_verified?.toLowerCase() === 'true'
+              ]
+            );
+            
+          }
+          res.redirect('/import');
+          //return res.json({ success: true, processed: students.length });
+        } catch (err) {
+          console.error('Error inserting students:', err);
+          return res.status(500).json({ success: false, message: 'Database insert failed' });
         }
-
-        fs.unlinkSync(filePath);
-        res.send('Students imported successfully!');
-      } catch (err) {
-        console.error('Error inserting students:', err);
-        res.status(500).send('Server Error');
-      }
-    });
+      })
+      .on('error', (err) => {
+        console.error('CSV parsing error:', err);
+        return res.status(400).json({ success: false, message: 'Invalid CSV format' });
+      });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
 });
-
-
-
-
 
 
 
