@@ -126,10 +126,28 @@
                                     <% } %>
                                   </ul>
                                 </div>
+                              <% } else if (appointment.status === 'completed' && appointment.already_added_new_session === false) { %>
+                                <div class="text-center">
+                                  <button class="btn btn-sm btn-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#scheduleSessionModal"
+                                    onclick="openScheduleModal(
+                                      <%= appointment.id %>,
+                                      '<%= appointment.title.replace(/'/g, "\\'") %>',
+                                      '<%= appointment.student_first_name %> <%= appointment.student_last_name %>',
+                                      '<%= appointment.appointment_date %>',
+                                      '<%= appointment.appointment_number %>'
+                                    )">
+                                    Add New Session
+                                  </button>
+
+                                </div>
+                                
                               <% } else { %>
                                 <small class="text-muted">No actions</small>
                               <% } %>
                             </td>
+                            
                             
                             
                             
@@ -205,6 +223,7 @@
 
 
 
+
           <!-- Success Modal -->
           <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -236,6 +255,73 @@
           </div>
 
           <div class="content-backdrop fade"></div>
+
+
+
+
+
+
+
+          <!-- Schedule New Session Modal -->
+<div class="modal fade" id="scheduleSessionModal" tabindex="-1" aria-labelledby="scheduleSessionLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="scheduleSessionForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="scheduleSessionLabel">Schedule New Session</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="appointment_id" id="appointmentIdInput">
+          <input type="hidden" name="appointment_number" id="appointment_number">
+          <!-- Appointment Info -->
+          <div class="mb-3">
+            <label class="form-label">Purpose</label>
+            <p id="sessionPurpose" class="form-control-plaintext"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Student</label>
+            <p id="sessionStudent" class="form-control-plaintext"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Previous Date</label>
+            <p id="sessionPrevDate" class="form-control-plaintext"></p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="counselor_id">Appointment Type</label>
+            <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment" required>
+              <option selected disabled>Select Appointment Type</option>
+                <option value="1">Online Appointment</option>
+                <option value="0">Physical Appoinment</option>
+            </select>
+          </div>
+          
+          <!-- Date and Time Inputs -->
+          <div class="mb-3">
+            <label for="sessionDate" class="form-label">Session Date</label>
+            <input type="text" class="form-control" id="sessionDate" name="session_date" required>
+          </div>
+          <div class="mb-3">
+            <label for="startTime" class="form-label">Start Time</label>
+            <input type="time" class="form-control" id="startTime" name="start_time" required>
+          </div>
+          <div class="mb-3">
+            <label for="endTime" class="form-label">End Time</label>
+            <input type="time" class="form-control" id="endTime" name="end_time" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Proceed</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+
         </div>
 
         <%- include('../includes/footer.ejs') %>
@@ -341,5 +427,25 @@
 
 
   </script>
+
+<script>
+  flatpickr("#sessionDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today"
+  });
+
+
+
+  function openScheduleModal(id, title, studentName, prevDate, appointmentNumber) {
+    document.getElementById('appointmentIdInput').value = id;
+    document.getElementById('sessionPurpose').innerText = title;
+    document.getElementById('sessionStudent').innerText = studentName;
+    document.getElementById('sessionPrevDate').innerText = new Date(prevDate).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+    document.getElementById('appointment_number').value = appointmentNumber;
+    document.getElementById('scheduleSessionForm').action = '/counselor/sessions/new';
+  }
+</script>
 </body>
 </html>

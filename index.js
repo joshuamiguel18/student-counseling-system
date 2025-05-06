@@ -11,12 +11,17 @@ const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 const session = require('express-session');
 const cors = require('cors');
+
+
+
+
+const upload = multer({ dest: 'uploads/' });
+
+const fs = require('fs');
 const csv = require('csv-parser');
 
-
 const path = require('path');
-const fs = require('fs');
-const upload = require('./multerConfigCSV'); // Make sure this is configured correctly
+//const upload = require('./multerConfigCSV'); // Make sure this is configured correctly
 
 const token = crypto.randomBytes(32).toString("hex");
 
@@ -869,6 +874,53 @@ app.get('/getClassesByProgram/:programId', async (req, res) => {
 
 
 
+// app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res) => {
+//   const { class_id, title, test_date } = req.body;
+//   const counselor_id = req.user.user.id;
+
+//   if (!class_id || !title || !test_date) {
+//     return res.status(400).send('All fields are required');
+//   }
+
+//   try {
+//     const classCheck = await pool.query(
+//       `SELECT id FROM class WHERE id = $1`,
+//       [class_id]
+//     );
+
+//     if (classCheck.rows.length === 0) {
+//       return res.status(404).send('Selected class not found');
+//     }
+
+//     const testNumber = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+//     await pool.query(
+//       `INSERT INTO psycho_tests 
+//        (test_title, counselor_id, test_date, test_number, is_online_test, class_id)
+//        VALUES ($1, $2, $3, $4, $5, $6)`,
+//       [
+//         title,
+//         counselor_id,
+//         test_date,
+//         testNumber,
+//         false, // is_online_test set to false (for class testing)
+//         class_id
+//       ]
+//     );
+
+//     res.redirect('/psycho-testing-form'); // Or to a success page
+//   } catch (error) {
+//     console.error('Error saving psychotesting schedule:', error);
+
+//     if (error.code === '23505') {
+//       return res.status(409).send('Duplicate test number detected.');
+//     }
+
+//     res.status(500).send('Error saving schedule');
+//   }
+// });
+
+  
 app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res) => {
   const { class_id, title, test_date } = req.body;
   const counselor_id = req.user.user.id;
@@ -891,19 +943,20 @@ app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res)
 
     await pool.query(
       `INSERT INTO psycho_tests 
-       (test_title, counselor_id, test_date, test_number, is_online_test, class_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       (test_title, counselor_id, test_date, test_number, is_online_test, class_id, turn_to_approve)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         title,
         counselor_id,
         test_date,
         testNumber,
         false, // is_online_test set to false (for class testing)
-        class_id
+        class_id,
+        'student' // Set the turn to student
       ]
     );
 
-    res.redirect('/psycho-testing-form'); // Or to a success page
+    res.redirect('/psycho-testing-form');
   } catch (error) {
     console.error('Error saving psychotesting schedule:', error);
 
@@ -915,8 +968,6 @@ app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res)
   }
 });
 
-  
-  
   
   
 
@@ -1734,6 +1785,7 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
         a.end_time,          -- Add end time here
         a.is_online_appointment,
         a.appointment_number,
+        a.already_added_new_session,
         s.first_name AS student_first_name,
         s.last_name AS student_last_name
       FROM appointment a
@@ -1750,6 +1802,76 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
   } catch (err) {
     console.error('Error fetching counselor appointments:', err);
     res.status(500).send('Server error');
+  }
+});
+
+// app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res) => {
+//   const { appointment_id, session_date, start_time, end_time, appointment_number, isOnlineAppointment } = req.body;
+
+//   try {
+//     const original = await pool.query(`SELECT * FROM appointment WHERE id = $1`, [appointment_id]);
+//     const data = original.rows[0];
+
+//     await pool.query(
+//       `INSERT INTO appointment 
+//         (title, student_id, counselor_id, status, is_online_appointment, appointment_number, appointment_date, start_time, end_time)
+//        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+//       [
+//         data.title,
+//         data.student_id,
+//         data.counselor_id,
+//         'approved',
+//         isOnlineAppointment,
+//         appointment_number,
+//         session_date,
+//         start_time,
+//         end_time
+//       ]
+//     );
+
+//     res.redirect('/counselor/appointments');
+//   } catch (err) {
+//     console.error('Error creating follow-up appointment:', err);
+//     res.status(500).send('Failed to schedule follow-up');
+//   }
+// });
+
+
+app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res) => {
+  const { appointment_id, session_date, start_time, end_time, appointment_number, isOnlineAppointment } = req.body;
+
+  try {
+    const original = await pool.query(`SELECT * FROM appointment WHERE id = $1`, [appointment_id]);
+    const data = original.rows[0];
+
+    // Insert the new session
+    await pool.query(
+      `INSERT INTO appointment 
+        (title, student_id, counselor_id, status, is_online_appointment, appointment_number, appointment_date, start_time, end_time)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        data.title,
+        data.student_id,
+        data.counselor_id,
+        'approved',
+        isOnlineAppointment,
+        appointment_number,
+        session_date,
+        start_time,
+        end_time
+      ]
+    );
+
+    // Update the original appointment to set already_added_new_session = true
+    await pool.query(
+      `UPDATE appointment SET already_added_new_session = true WHERE id = $1`,
+      [appointment_id]
+    );
+
+    res.redirect('/counselor/appointments');
+  } catch (err) {
+    console.error('Error creating follow-up appointment:', err);
+    res.status(500).send('Failed to schedule follow-up');
   }
 });
 
@@ -3862,6 +3984,178 @@ app.get("/student/verify", async (req, res) => {
 //   }
 // });
 
+
+app.post('/psycho-tests/reschedule', async (req, res) => {
+  const { test_id, new_date } = req.body;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET test_date = $1,
+           turn_to_approve = 'counselor',
+           updated_at = NOW()
+       WHERE id = $2`,
+      [new_date, test_id]
+    );
+
+    res.redirect('/psychotests'); // Adjust this path to your actual view route
+  } catch (error) {
+    console.error('Error rescheduling test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+function toIntOrNull(value) {
+  const parsed = parseInt(value);
+  return isNaN(parsed) ? null : parsed;
+}
+
+app.post('/admin/students/upload', upload.single('csvFile'), async (req, res) => {
+  const fileRows = [];
+
+  try {
+    fs.createReadStream(req.file.path)
+      .pipe(csv())
+      .on('data', (row) => fileRows.push(row))
+      .on('end', async () => {
+        for (const student of fileRows) {
+          const {
+            username,
+            password,
+            email,
+            first_name,
+            middle_name,
+            last_name,
+            is_class_mayor,
+            class_id,
+            create_date,
+            update_date,
+            student_id_image,
+            id_num,
+            middle_initial,
+            year_level,
+            sex,
+            contact_number,
+            address,
+            department_id,
+            program_id,
+            is_verified
+          } = student;
+
+          await pool.query(
+            `INSERT INTO student (
+              username, password, email, first_name, middle_name, last_name,
+              is_class_mayor, class_id, create_date, update_date, student_id_image,
+              id_num, middle_initial, year_level, sex, contact_number, address,
+              department_id, program_id, is_verified
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              $7, $8, $9, $10, $11,
+              $12, $13, $14, $15, $16, $17,
+              $18, $19, $20
+            )`,
+            [
+              username,
+              password,
+              email,
+              first_name,
+              middle_name,
+              last_name,
+              is_class_mayor?.toLowerCase() === 'true',
+              toIntOrNull(class_id),
+              create_date || new Date(),
+              update_date || new Date(),
+              student_id_image,
+              id_num,
+              middle_initial,
+              toIntOrNull(year_level),
+              sex,
+              contact_number,
+              address,
+              toIntOrNull(department_id),
+              toIntOrNull(program_id),
+              is_verified?.toLowerCase() === 'true'
+            ]
+          );
+          
+        }
+
+        fs.unlinkSync(req.file.path); // Delete uploaded file after processing
+        res.redirect('/import');
+      });
+  } catch (error) {
+    console.error('Error uploading student CSV:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+app.post('/counselor/psycho-tests/:id/reschedule', async (req, res) => {
+  const test_id = req.params.id;
+  const { reschedule_date } = req.body; // or rename this to new_date to be consistent
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET test_date = $1,
+           turn_to_approve = 'student',
+           updated_at = NOW()
+       WHERE id = $2`,
+      [reschedule_date, test_id]
+    );
+
+    res.redirect('/counselor/psycho-tests');
+  } catch (error) {
+    console.error('Error rescheduling test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) => {
+//   try {
+//     const counselorId = req.user.user.id;
+
+//     const query = `
+//       SELECT 
+//           pt.id,
+//           c.class_name AS class_name,
+//           pt.test_title,
+//           pt.status,
+//           pt.test_date,
+//           pt.test_number,
+//           mayor.first_name AS mayor_first_name,
+//           mayor.last_name AS mayor_last_name,
+//           counselor.first_name AS counselor_first_name,
+//           counselor.last_name AS counselor_last_name,
+//           s.first_name AS student_first_name,
+//           s.last_name AS student_last_name
+//       FROM psycho_tests pt
+//       JOIN student s ON pt.student_id = s.id
+//       JOIN counselor ON pt.counselor_id = counselor.id
+//       JOIN class c ON pt.class_id = c.id
+//       LEFT JOIN student AS mayor ON mayor.class_id = c.id AND mayor.is_class_mayor = true
+//       WHERE pt.counselor_id = $1
+//       ORDER BY pt.test_date DESC
+//     `;
+
+//     const { rows } = await pool.query(query, [counselorId]);
+
+//     res.render('counselorPages/psycho-tests-counselor', { 
+//       title: 'Psychological Tests by Class',
+//       psychoTests: rows,
+//       user: req.user.user,
+//     });
+
+//   } catch (err) {
+//     console.error('Error fetching psycho tests:', err);
+//     res.status(500).send('Server Error');
+//   }
+// });
+
+
+
 app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) => {
   try {
     const counselorId = req.user.user.id;
@@ -3874,17 +4168,13 @@ app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) 
           pt.status,
           pt.test_date,
           pt.test_number,
-          mayor.first_name AS mayor_first_name,
-          mayor.last_name AS mayor_last_name,
+          pt.turn_to_approve,
+          pt.is_online_test,
           counselor.first_name AS counselor_first_name,
-          counselor.last_name AS counselor_last_name,
-          s.first_name AS student_first_name,
-          s.last_name AS student_last_name
+          counselor.last_name AS counselor_last_name
       FROM psycho_tests pt
-      JOIN student s ON pt.student_id = s.id
       JOIN counselor ON pt.counselor_id = counselor.id
       JOIN class c ON pt.class_id = c.id
-      LEFT JOIN student AS mayor ON mayor.class_id = c.id AND mayor.is_class_mayor = true
       WHERE pt.counselor_id = $1
       ORDER BY pt.test_date DESC
     `;
@@ -3902,6 +4192,128 @@ app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) 
     res.status(500).send('Server Error');
   }
 });
+
+app.post('/psycho-tests/:id/accept', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET status = 'approved', turn_to_approve = 'student', updated_at = NOW()
+       WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/psychotests');
+  } catch (error) {
+    console.error('Error accepting test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/counselor/psycho-tests/:id/accept', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET status = 'pending', turn_to_approve = 'student', updated_at = NOW()
+       WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/counselor/psycho-tests');
+  } catch (error) {
+    console.error('Error accepting test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+app.get('/psycho-tests/complete/:id', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET status = 'completed', updated_at = NOW()
+       WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/counselor/psycho-tests'); // Redirect back to the psycho tests page
+  } catch (error) {
+    console.error('Error completing test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.post('/psycho-tests/:id/feedback', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+  const { feedback_test_date } = req.body;
+
+  try {
+    // 1. Fetch original test
+    const result = await pool.query(
+      `SELECT * FROM psycho_tests WHERE id = $1`,
+      [testId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Test not found.');
+    }
+
+    const test = result.rows[0];
+
+    // 2. Check if eligible for feedback session
+    if (test.status !== 'completed') {
+      return res.status(400).send('Feedback can only be created for completed tests.');
+    }
+
+    if (test.already_added_new_session) {
+      return res.status(400).send('Feedback session already created for this test.');
+    }
+
+    // 3. Create new test number with a unique suffix
+    const feedbackTestNumber = `${test.test_number}-FB`;
+
+    // 4. Insert feedback test
+    await pool.query(
+      `INSERT INTO psycho_tests 
+        (test_title, student_id, counselor_id, test_date, test_number, is_online_test, status, created_at, updated_at, class_id, turn_to_approve)
+       VALUES 
+        ($1, $2, $3, $4, $5, $6, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $7, $8)`,
+      [
+        test.test_title + ' - Feedback',
+        test.student_id,
+        test.counselor_id,
+        feedback_test_date || new Date(), // fallback if not passed
+        feedbackTestNumber,
+        test.is_online_test,
+        test.class_id,
+        'student' // or whatever logic fits your system
+      ]
+    );
+
+    // 5. Mark original test as already used for feedback
+    await pool.query(
+      `UPDATE psycho_tests SET already_added_new_session = true WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/counselor/psycho-tests');
+  } catch (error) {
+    console.error('Error creating feedback test:', error);
+    res.status(500).send('Server error while creating feedback test.');
+  }
+});
+
+
+
+
 
 
 
@@ -3933,6 +4345,42 @@ app.get('/counselor/psycho-tests/start/:id', authenticateTokenCounselor, async (
     res.status(500).send('Server Error');
   }
 });
+
+app.post('/counselor/psycho-tests/:id/cancel', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET status = 'cancelled', updated_at = NOW()
+       WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/counselor/psycho-tests');
+  } catch (error) {
+    console.error('Error canceling test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+app.post('/psycho-tests/:id/cancel', authenticateTokenCounselor, async (req, res) => {
+  const testId = req.params.id;
+
+  try {
+    await pool.query(
+      `UPDATE psycho_tests
+       SET status = 'cancelled', updated_at = NOW()
+       WHERE id = $1`,
+      [testId]
+    );
+
+    res.redirect('/psychotests');
+  } catch (error) {
+    console.error('Error canceling test:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 app.get('/counselor/psycho-tests/cancel/:id', authenticateTokenCounselor, async (req, res) => {
   try {

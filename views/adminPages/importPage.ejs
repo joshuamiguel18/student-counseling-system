@@ -35,18 +35,11 @@
                            aria-valuemax="100"></div>
                     </div>
                 
-                    <form action="/admin/students/import" method="POST" enctype="multipart/form-data" id="csv-upload-form">
-                      <div class="mb-3">
-                        <label for="csvFile" class="form-label">Upload CSV File</label>
-                        <input type="file" name="csvFile" class="form-control" id="csvFile" accept=".csv" required />
-                        <div class="form-text">Max file size: 5MB</div>
-                      </div>
-                
-                      <button type="submit" class="btn btn-primary" id="submit-btn">
-                        <span class="spinner-border spinner-border-sm" id="spinner" style="display: none;"></span>
-                        <i class="bi bi-upload" id="upload-icon"></i> Import CSV
-                      </button>
+                    <form action="/admin/students/upload" method="POST" enctype="multipart/form-data">
+                      <input type="file" name="csvFile" accept=".csv" required />
+                      <button type="submit" class="btn btn-primary">Upload Students CSV</button>
                     </form>
+                    
                 
                     <!-- Feedback messages -->
                     <div id="feedback" class="mt-3"></div>

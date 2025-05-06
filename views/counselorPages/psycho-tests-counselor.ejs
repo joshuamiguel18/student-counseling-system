@@ -40,7 +40,7 @@
                       </select>
                     </div>
                   </div>
-                  
+
                   <table id="testsTable" class="table table-bordered">
                     <thead>
                       <tr>
@@ -70,26 +70,98 @@
                                 <%= test.status.replace('_', ' ').toUpperCase() %>
                               </span>
                             </td>
-                            <td class="actions">
+                            <td class="actions d-flex flex-column gap-1">
+
+
+
+
+
+
+
+                              <!-- Reschedule Test Modal -->
+<div class="modal fade" id="rescheduleModal-<%= test.id %>" tabindex="-1" aria-labelledby="rescheduleModalLabel-<%= test.id %>" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/counselor/psycho-tests/<%= test.id %>/reschedule">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="rescheduleModalLabel-<%= test.id %>">Reschedule Test</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="reschedule_date_<%= test.id %>" class="form-label">New Test Date</label>
+            <input type="datetime-local" class="form-control" id="reschedule_date_<%= test.id %>" name="reschedule_date" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Reschedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+                              <!-- Feedback Test Modal -->
+                              <div class="modal fade" id="feedbackTestModal-<%= test.id %>" tabindex="-1" aria-labelledby="feedbackTestModalLabel-<%= test.id %>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h5 class="modal-title" id="feedbackTestModalLabel-<%= test.id %>">Schedule Feedback Test</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                      <form method="POST" action="/psycho-tests/<%= test.id %>/feedback">
+                                        <div class="mb-3">
+                                          <label class="form-label">Test Title</label>
+                                          <input type="text" class="form-control" value="<%= test.test_title %>" readonly>
+                                        </div>
+
+                                        <div class="mb-3">
+                                          <label class="form-label">Test Number</label>
+                                          <input type="text" class="form-control" value="<%= test.test_number %>" readonly>
+                                        </div>
+
+                                        <div class="mb-3">
+                                          <label for="feedback_test_date_<%= test.id %>" class="form-label">Feedback Test Date</label>
+                                          <input type="datetime-local" class="form-control" id="feedback_test_date_<%= test.id %>" name="feedback_test_date" required>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-outline-info btn-sm w-100 rounded-pill">Schedule Feedback</button>
+                                      </form>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <% if (test.status === 'pending' && test.turn_to_approve === 'counselor') { %>
+                                <form method="POST" action="/counselor/psycho-tests/<%= test.id %>/accept">
+                                  <button type="submit" class="btn btn-outline-success btn-sm w-100 rounded-pill">Accept</button>
+                                </form>
+                              <% } %>
+
                               <% if (test.status !== 'cancelled' && test.status !== 'completed') { %>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" 
-                                   onclick="setModal('Start Test', '/counselor/psycho-tests/start/<%= test.id %>')">
-                                  <i class="bi bi-play-circle-fill text-primary" title="Start Test"></i>
-                                </a>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" 
-                                   onclick="setModal('Cancel', '/counselor/psycho-tests/cancel/<%= test.id %>')">
-                                  <i class="bi bi-x-circle-fill text-danger" title="Cancel"></i>
-                                </a>
+                                <button class="btn btn-outline-warning btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#rescheduleModal-<%= test.id %>">Reschedule</button>
+
                               <% } %>
-                              <% if (test.is_online_test && test.status === 'in_progress') { %>
-                                <a href="/counselor/psycho-tests/<%= test.id %>/conduct">
-                                  <i class="bi bi-pencil-square text-info" title="Conduct Test"></i>
-                                </a>
+                              <% if (test.status === 'approved') { %>
+                                <button class="btn btn-outline-warning btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Complete', '/psycho-tests/complete/<%= test.id %>')">Complete Test</button>
+
                               <% } %>
+                              <% if (test.status === 'pending' && test.turn_to_approve === 'counselor') { %>
+                                <form method="POST" action="/counselor/psycho-tests/<%= test.id %>/cancel">
+                                  <button type="submit" class="btn btn-outline-danger btn-sm w-100 rounded-pill">Cancel</button>
+                                </form>
+                              <% } %>
+
                               <% if (test.status === 'completed') { %>
-                                <a href="/counselor/psycho-tests/<%= test.id %>/results">
-                                  <i class="bi bi-file-earmark-text-fill text-success" title="View Results"></i>
-                                </a>
+                                <a href="/counselor/psycho-tests/<%= test.id %>/results" class="btn btn-outline-primary btn-sm w-100 rounded-pill">View Results</a>
+                                <button class="btn btn-outline-info btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#feedbackTestModal-<%= test.id %>">Schedule Feedback</button>
                               <% } %>
                             </td>
                           </tr>
@@ -103,7 +175,6 @@
             </div>
           </div>
 
-          <!-- Action Confirmation Modal -->
           <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -120,6 +191,14 @@
             </div>
           </div>
 
+
+
+          
+
+
+
+
+
           <div class="content-backdrop fade"></div>
         </div>
 
@@ -133,7 +212,6 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-    // Sets the modal for actions
     function setModal(actionType, actionLink) {
       document.getElementById('actionModalLabel').textContent = `Confirm ${actionType}`;
       document.getElementById('actionModalBody').textContent = `Are you sure you want to ${actionType.toLowerCase()} this test?`;
@@ -142,33 +220,29 @@
 
     $(document).ready(function () {
       var table = $('#testsTable').DataTable({
-        "order": [[2, 'desc']], // Sort by test date column (index 2)
+        "order": [[2, 'desc']],
         "columnDefs": [
-          { "targets": 2, "type": "date" }, // Test date column (index 2)
+          { "targets": 2, "type": "date" },
         ]
       });
 
       let minDate, maxDate;
 
-      // Custom filtering function for date range
       $.fn.dataTable.ext.search.push(
         function (settings, data, dataIndex) {
           if (!minDate || !maxDate) return true;
-
-          var testDate = new Date(data[2]); // Column index 2 (test date)
+          var testDate = new Date(data[2]);
           return testDate >= minDate && testDate <= maxDate;
         }
       );
 
-      // Filter by Status
       $('#statusFilter').on('change', function () {
-        table.column(4).search(this.value).draw(); // Column index 4 (status)
+        table.column(4).search(this.value).draw();
       });
 
-      // Filter by Type
       $('#typeFilter').on('change', function () {
         if (this.value === 'online') {
-          table.column(3).search('Online').draw(); // Column index 3 (type)
+          table.column(3).search('Online').draw();
         } else if (this.value === 'offline') {
           table.column(3).search('Offline').draw();
         } else {
@@ -176,7 +250,6 @@
         }
       });
 
-      // Filter by Date Range
       $('#dateFilter').on('change', function () {
         var today = new Date();
         today.setHours(0, 0, 0, 0);

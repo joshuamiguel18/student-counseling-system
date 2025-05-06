@@ -69,10 +69,28 @@
                               </a>
                             <% } else if (test.status === 'pending') { %>
                               <div class="d-flex flex-column gap-2">
-                                <a class="btn btn-outline-warning w-100 rounded-pill" href="/psycho-tests/<%= test.id %>/reschedule">
-                                  <i class="bi bi-calendar-event me-1"></i> Reschedule
-                                </a>
+
+                                <button class="btn btn-outline-warning w-100 rounded-pill" onclick="openRescheduleModal(<%= test.id %>)">
+                                  Reschedule
+                                </button>
+                                
+                                <% if (test.turn_to_approve === 'student') { %>
+                                  <form method="POST" action="/psycho-tests/<%= test.id %>/accept">
+                                    <button type="submit" class="btn btn-outline-success w-100 rounded-pill">
+                                      <i class="bi bi-check2-circle me-1"></i> Accept
+                                    </button>
+                                  </form>
+                            
+                                  <form method="POST" action="/psycho-tests/<%= test.id %>/cancel">
+                                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">
+                                      <i class="bi bi-x-circle me-1"></i> Cancel
+                                    </button>
+                                  </form>
+                                <% } %>
+                              
+                                
                               </div>
+                              
                             <% } else { %>
                               <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>
                             <% } %>
@@ -96,30 +114,38 @@
           
         </div>
 
-        <!-- Reschedule Modal -->
-        <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <form method="POST" action="/appointments/reschedule">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="rescheduleModalLabel"><i class="bi bi-calendar2-plus me-1"></i> Reschedule Appointment</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  <input type="hidden" name="appointment_id" id="modalAppointmentId">
-                  <div class="mb-3">
-                    <label for="newDate" class="form-label">New Date & Time</label>
-                    <input type="datetime-local" class="form-control" id="newDate" name="new_date" required>
+
+
+
+            <!-- Reschedule Modal -->
+            <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <form action="/psycho-tests/reschedule" method="POST">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="rescheduleModalLabel">Reschedule Test</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="test_id" id="modalTestId">
+                      <div class="mb-3">
+                        <label for="newTestDate" class="form-label">New Date</label>
+                        <input type="text" class="form-control" id="newTestDate" name="new_date" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Accept</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
                   </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" class="btn btn-primary">Reschedule</button>
-                </div>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
+            </div>
+
+
+
+
+
 
         <div class="content-backdrop fade"></div>
       </div>
@@ -262,6 +288,31 @@
   sortSelect.addEventListener('change', applyFilters);
 
   
+</script>
+<script>
+      flatpickr("#newTestDate", {
+    dateFormat: "Y-m-d H:i",
+    minDate: "today"
+  });
+
+  function openRescheduleModal(testId) {
+    document.getElementById('modalTestId').value = testId;
+    const rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+    rescheduleModal.show();
+  }
+
+  document.querySelectorAll('.openRescheduleModal').forEach(button => {
+    button.addEventListener('click', function () {
+      const testId = this.dataset.testId;
+      const testDate = this.dataset.currentDate;
+
+      document.getElementById('modalTestId').value = testId;
+
+
+
+      picker.setDate(new Date(testDate), true);
+    });
+  });
 </script>
 
 
