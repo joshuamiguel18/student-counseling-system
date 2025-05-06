@@ -32,11 +32,11 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const { uploadStudentIdImage } = require('./multerConfig');
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+// // Ensure the uploads directory exists
+// const uploadDir = path.join(__dirname, 'uploads');
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir);
+// }
 //const upload = multer({ dest: 'uploads/' }); // temporarily save in the 'uploads' folder
 
 
@@ -47,7 +47,7 @@ app.set('view engine', 'ejs')
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 app.set('views', path.join(__dirname, '/views'))
-app.use("/uploads", express.static("uploads")); // Serve uploaded files
+// app.use("/uploads", express.static("uploads")); // Serve uploaded files
 app.use(session({ secret: 'petCounseling', resave: false, saveUninitialized: true }));
 app.use(flash());
 app.use(cors({
