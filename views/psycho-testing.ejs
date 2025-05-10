@@ -70,9 +70,17 @@
                             <% } else if (test.status === 'pending') { %>
                               <div class="d-flex flex-column gap-2">
 
-                                <button class="btn btn-outline-warning w-100 rounded-pill" onclick="openRescheduleModal(<%= test.id %>)">
-                                  Reschedule
-                                </button>
+                                
+                                    <%
+                                      const date = new Date(test.test_date);
+                                      const formattedDate = date.getFullYear() + '-' +
+                                                            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                                                            String(date.getDate()).padStart(2, '0');
+                                    %>
+                                    <button class="btn btn-outline-warning w-100 rounded-pill" onclick="openRescheduleModal(<%= test.id %>, '<%= formattedDate %>')">
+                                      Reschedule
+                                    </button>
+
                                 
                                 <% if (test.turn_to_approve === 'student') { %>
                                   <form method="POST" action="/psycho-tests/<%= test.id %>/accept">
@@ -128,6 +136,12 @@
                     </div>
                     <div class="modal-body">
                       <input type="hidden" name="test_id" id="modalTestId">
+
+                      <div class="mb-3">
+                        <label for="oldTestDate" class="form-label">Current Date</label>
+                        <input type="date" class="form-control" id="oldTestDate" name="current_date" readonly>
+                      </div>
+
                       <div class="mb-3">
                         <label for="newTestDate" class="form-label">New Date</label>
                         <input type="text" class="form-control" id="newTestDate" name="new_date" required>
@@ -295,8 +309,9 @@
     minDate: "today"
   });
 
-  function openRescheduleModal(testId) {
+  function openRescheduleModal(testId, testDate) {
     document.getElementById('modalTestId').value = testId;
+    document.getElementById('oldTestDate').value = testDate;
     const rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     rescheduleModal.show();
   }

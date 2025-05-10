@@ -274,3 +274,12 @@ ADD COLUMN turn_to_approve VARCHAR(50);
 
 ALTER TABLE psycho_tests
 ADD COLUMN already_added_new_session BOOLEAN DEFAULT FALSE;
+
+
+ALTER TABLE appointment
+ADD COLUMN remark VARCHAR(255);
+
+
+ALTER TABLE psycho_tests
+ADD COLUMN remark VARCHAR(255);
+

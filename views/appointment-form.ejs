@@ -30,14 +30,14 @@
 			<!-- Content: Start -->
 			<div class="container-xxl flex-grow-1 container-p-y">
 
-        <form id="appointment-form" method="POST" action="/saveAppointment">
+        <form id="appointment-form" method="POST">
           <div class="card-body">
             <div class="row">
               <div class="col-lg-8 mx-auto">
                 <h1>Appointment Form</h1>
         
 
-                <input type="hidden" name="student_id" value="<%= user.id %>" required>
+                <input type="hidden" id="student_id" name="student_id" value="<%= user.id %>" required>
 
                 <div class="col-12 mb-4">
                   <label class="form-label" for="title">Purpose</label>
@@ -91,25 +91,52 @@
           </div>
         </form>
         
-<!-- Modal -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content border-danger">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="errorModalLabel">Appointment Error</h5>
+
+
+	
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header text-white">
+        <h5 class="modal-title" id="successModalLabel">Appointment Booked</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="errorModalBody">
-        <!-- Error message will be inserted here -->
+      <div class="modal-body text-center">
+        Your appointment has been successfully booked.
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-footer justify-content-center">
+        <a href="/appointment-form" class="btn btn-outline-primary rounded-pill">Make Another</a>
+        <a href="/appointments" class="btn btn-primary rounded-pill">View Appointments</a>
       </div>
     </div>
   </div>
 </div>
 
-	
+
+
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content ">
+      <div class="modal-header text-white">
+        <h5 class="modal-title" id="errorModalLabel">Appointment Error</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="errorModalMessage">
+        <!-- Error message will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 			  <!-- / Content: End -->
 	
 			  <!-- Footer: Start -->
@@ -253,26 +280,67 @@
       });
 
 
-      document.getElementById('appointment-form').addEventListener('submit', function (e) {
+      document.getElementById('appointment-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
   const title = document.getElementById('title').value.trim();
   const isOnline = document.getElementById('isOnlineAppointment').value;
   const counselor = document.getElementById('counselor_id').value;
+  const student = document.getElementById('student_id').value;
   const appointmentDate = document.getElementById('appointment_date').value.trim();
   const startTime = document.getElementById('appointment_start_time').value;
   const endTime = document.getElementById('appointment_end_time').value;
 
   if (!title || !isOnline || !counselor || !appointmentDate || !startTime || !endTime) {
-    e.preventDefault();
-    alert('Please fill in all required fields before submitting the form.');
+    showErrorModal('Please fill in all required fields before submitting the form.');
     return;
   }
 
   if (startTime >= endTime) {
-    e.preventDefault();
-    alert('Start time must be before end time.');
+    showErrorModal('Start time must be before end time.');
     return;
   }
+
+  try {
+    const response = await fetch('/saveAppointment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        student_id: student,
+        title,
+        isOnlineAppointment: isOnline,
+        counselor_id: counselor,
+        appointment_date: appointmentDate,
+        appointment_start_time: startTime,
+        appointment_end_time: endTime
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      // Show server-side error in modal
+      console.log("MESSAGE: ", result.message)
+      showErrorModal(result.message || 'An unexpected error occurred.');
+    } else {
+      // Success - maybe show success message or redirect
+      const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+      successModal.show();
+      // location.reload(); // Or redirect if needed
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    
+    showErrorModal('A network error occurred. Please try again.');
+  }
 });
+
+      function showErrorModal(message) {
+        document.getElementById('errorModalMessage').textContent = message;
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+      }
     </script>
     
     

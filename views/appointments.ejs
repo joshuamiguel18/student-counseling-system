@@ -93,6 +93,12 @@
                             <i class="bi bi-hash me-1 text-muted"></i>
                             <strong>Appointment #:</strong> <%= appointment.appointment_number %>
                           </div>
+                          <div class="mb-3">
+  <i class="bi bi-x-octagon-fill me-1 text-danger"></i>
+  <strong>Remarks:</strong> 
+  <span class="text-danger"><%= appointment.remark %></span>
+</div>
+
 
                         </div>
                         <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
@@ -129,9 +135,13 @@
 
                                 <% if (appointment.status != 'completed') { %>
                                 <li>
-                                  <a class="dropdown-item text-danger" href="/appointments/cancel/<%= appointment.id %>">
+                                  <button 
+                                    class="dropdown-item text-danger" 
+                                    onclick="openCancelModal(<%= appointment.id %>)" 
+                                    type="button"
+                                  >
                                     <i class="bi bi-x-circle me-2"></i>Cancel
-                                  </a>
+                                  </button>
                                 </li>
                                 <% } %>
                               </ul>
@@ -207,6 +217,57 @@
 </div>
 
 
+
+<!-- Cancel Success Modal -->
+<div class="modal fade" id="cancelSuccessModal" tabindex="-1" aria-labelledby="cancelSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-success">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="cancelSuccessModalLabel">Appointment Cancelled</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+        <p class="mt-3 mb-0">Your appointment has been cancelled successfully.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <a href="/appointments" class="btn btn-outline-success rounded-pill">View Appointments</a>
+        <button type="button" class="btn btn-success rounded-pill" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Cancel Appointment Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="cancelAppointmentForm">
+      <div class="modal-content">
+        <div class="modal-header text-white">
+          <h5 class="modal-title" id="cancelModalLabel">Cancel Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="cancelAppointmentId" name="appointment_id">
+          <p>Are you sure you want to cancel this appointment?</p>
+          <div class="mb-3">
+            <label for="cancelRemark" class="form-label">Reason for Cancellation</label>
+            <textarea class="form-control" id="cancelRemark" name="remark" rows="3" required></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
         
 
         <div class="content-backdrop fade"></div>
@@ -219,6 +280,91 @@
 </div>
 
 <%- include('includes/scripts.ejs') %>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Create a variable to store flatpickr instance for cleanup
+    let flatpickrInstance = null;
+
+    // Map days of the week to numbers for disabling in flatpickr
+    const dayMap = {
+      "Sunday": 0,
+      "Monday": 1,
+      "Tuesday": 2,
+      "Wednesday": 3,
+      "Thursday": 4,
+      "Friday": 5,
+      "Saturday": 6
+    };
+
+    // Function to setup flatpickr with the available days
+    function setupFlatpickr(availableDays) {
+      if (flatpickrInstance) flatpickrInstance.destroy(); // Destroy previous instance
+
+      flatpickrInstance = flatpickr("#newDate", {
+        dateFormat: "Y-m-d",
+        minDate: "today", // Disable past dates
+        disable: [
+          function (date) {
+            // Disable dates that are not available or in the past
+            return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
+          }
+        ]
+      });
+    }
+
+    // Event listener for opening the reschedule modal and fetching availability
+    document.getElementById('appointmentList').addEventListener('click', function (e) {
+      if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
+        const appointmentId = e.target.dataset.appointmentId;
+        const currentDate = e.target.dataset.currentDate;
+        const counselorId = e.target.dataset.counselorId;
+
+        // Populate modal fields
+        document.getElementById('modalAppointmentId').value = appointmentId;
+        document.getElementById('newDate').value = getLocalDateInputValue(currentDate);
+        document.getElementById('modalCounselorId').value = counselorId;
+
+        // Fetch the availability of the counselor using the counselorId
+        fetch(`/counselors/${counselorId}/availability`)
+          .then(response => response.json())
+          .then(data => {
+            // Assuming the API returns the available days as an array, e.g., ["Monday", "Wednesday"]
+            const availableDays = data.available_days.map(day => dayMap[day]);
+            setupFlatpickr(availableDays);
+          })
+          .catch(err => console.error('Failed to fetch counselor availability:', err));
+      }
+    });
+
+    // Function to convert ISO string to local date format (YYYY-MM-DD)
+    function getLocalDateInputValue(isoString) {
+      const date = new Date(isoString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Optional: Setup event listener for modal open (to fetch availability)
+    const rescheduleModal = document.getElementById('rescheduleModal');
+    rescheduleModal.addEventListener('shown.bs.modal', function () {
+      const counselorId = document.getElementById('modalCounselorId').value;
+      if (counselorId) {
+        fetch(`/counselors/${counselorId}/availability`)
+          .then(response => response.json())
+          .then(data => {
+            const availableDays = data.available_days.map(day => dayMap[day]);
+            setupFlatpickr(availableDays);
+          })
+          .catch(err => console.error('Error fetching counselor availability:', err));
+      }
+    });
+  });
+</script>
+
+
 
 <script>
   const filterSelect = document.getElementById('statusFilter');
@@ -277,86 +423,111 @@ appointmentList.addEventListener('click', function(e) {
 
     // Send the request to the server
     fetch(`/getAppointments?${params.toString()}`)
-      .then(response => response.json())  // Assuming the server returns JSON data
-      .then(data => {
-        // Clear current list and render new data
-        appointmentList.innerHTML = '';
-        data.appointments.forEach(appointment => {
-          const item = document.createElement('div');
-          item.classList.add('appointment-card-item');
-          item.dataset.status = appointment.status;
-          item.dataset.date = appointment.appointment_date;
-          item.innerHTML = `
-          <div class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
-            <div class="position-absolute top-0 end-0 m-3">
-              <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
-                ${appointment.status === 'approved' ? 'bg-success' :
-                  appointment.status === 'pending' ? 'bg-warning text-dark' :
-                  appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
-                  'bg-secondary'}">
-                ${appointment.status.toUpperCase()}
-              </span>
-            </div>
-            <div class="card-body p-4">
-              <h5 class="card-title mb-2 text-primary">
-                <i class="bi bi-journal-check me-1"></i> ${appointment.title}
-              </h5>
-              <div class="mb-2">
-                <i class="bi bi-person-circle me-1 text-muted"></i>
-                <strong>Counselor:</strong> ${appointment.counselor_first_name} ${appointment.counselor_last_name}
-              </div>
-              <div class="mb-2">
-                <i class="bi bi-calendar-event me-1 text-muted"></i>
-                <strong>Date:</strong> ${new Date(appointment.appointment_date).toLocaleString()}
-              </div>
-              <div class="mb-2">
-                <i class="bi bi-laptop me-1 text-muted"></i>
-                <strong>Type:</strong> ${appointment.is_online_appointment ? 'Online' : 'Face-to-Face'}
-              </div>
-              <div class="mb-3">
-                <i class="bi bi-hash me-1 text-muted"></i>
-                <strong>Appointment #:</strong> ${appointment.appointment_number}
-              </div>
+  .then(response => response.json())
+  .then(data => {
+    appointmentList.innerHTML = '';
+    data.appointments.forEach(appointment => {
+      const item = document.createElement('div');
+      item.classList.add('appointment-card-item');
+      item.dataset.status = appointment.status;
+      item.dataset.date = appointment.appointment_date;
 
-            </div>
-            <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-              ${appointment.status === 'cancelled' || appointment.status === 'rejected' ? `
-  <form action="/appointments/delete/${appointment.id}" method="POST" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
-    <button class="btn btn-outline-danger w-100 rounded-pill">
-      <i class="bi bi-trash-fill me-1"></i> Delete
-    </button>
-  </form>
-` : appointment.status !== 'cancelled' ? `
-  <div class="dropdown">
-    <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
-      <i class="bi bi-gear-fill me-1"></i> Actions
-    </button>
-    <ul class="dropdown-menu w-100 shadow-sm rounded-3">
-      <li>
-        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#rescheduleModal" data-appointment-id="${appointment.id}" data-current-date="${appointment.appointment_date}">
-          <i class="bi bi-calendar2-plus me-2"></i>Reschedule
-        </button>
-      </li>
-      <li>
-        <a class="dropdown-item text-danger" href="/appointments/cancel/${appointment.id}">
-          <i class="bi bi-x-circle me-2"></i>Cancel
-        </a>
-      </li>
-      
-    </ul>
-  </div>
-` : `
-  <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>
-`}
+      // Format time strings in JS (not using EJS)
+      const startTime = new Date(`1970-01-01T${appointment.start_time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+      const endTime = new Date(`1970-01-01T${appointment.end_time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      });
 
-            </div>
+      item.innerHTML = `
+        <div class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
+          <div class="position-absolute top-0 end-0 m-3">
+            <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
+              ${appointment.status === 'approved' ? 'bg-success' :
+                appointment.status === 'pending' ? 'bg-warning text-dark' :
+                appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
+                'bg-secondary'}">
+              ${appointment.status.toUpperCase()}
+            </span>
           </div>
-        `;
+          <div class="card-body p-4">
+            <h5 class="card-title mb-2 text-primary">
+              <i class="bi bi-journal-check me-1"></i> ${appointment.title}
+            </h5>
+            <div class="mb-2">
+              <i class="bi bi-person-circle me-1 text-muted"></i>
+              <strong>Counselor:</strong> ${appointment.counselor_first_name} ${appointment.counselor_last_name}
+            </div>
+            <div class="mb-2">
+              <i class="bi bi-calendar-event me-1 text-muted"></i>
+              <strong>Date:</strong> ${new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                      })}
+            </div>
+            <div class="mb-2">
+              <i class="bi bi-clock me-1 text-muted"></i>
+              <strong>Time:</strong> ${startTime} to ${endTime}
+            </div>
+            <div class="mb-2">
+              <i class="bi bi-laptop me-1 text-muted"></i>
+              <strong>Type:</strong> ${appointment.is_online_appointment ? 'Online' : 'Face-to-Face'}
+            </div>
+            <div class="mb-3">
+              <i class="bi bi-hash me-1 text-muted"></i>
+              <strong>Appointment #:</strong> ${appointment.appointment_number}
+            </div>
+            <div class="mb-3">
+              <i class="bi bi-x-octagon-fill me-1 text-danger"></i>
+              <strong>Remarks:</strong> 
+              <span class="text-danger">${appointment.remark}</span>
+            </div>
 
-          appointmentList.appendChild(item);
-        });
-      })
-      .catch(err => console.error('Error fetching appointments:', err));
+
+          </div>
+          <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+            ${appointment.status === 'cancelled' || appointment.status === 'rejected' ? '' :
+              `<div class="dropdown">
+                <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-gear-fill me-1"></i> Actions
+                </button>
+                <ul class="dropdown-menu w-100 shadow-sm rounded-3">
+                  <li>
+                    <button 
+                      class="dropdown-item" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#rescheduleModal" 
+                      data-appointment-id="${appointment.id}" 
+                      data-current-date="${appointment.appointment_date}"
+                      data-counselor-id="${appointment.counselor_id}"
+                    >
+                      <i class="bi bi-calendar2-plus me-2"></i>Reschedule
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      class="dropdown-item text-danger" 
+                      onclick="openCancelModal(${appointment.id})" 
+                      type="button"
+                    >
+                      <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                  </li>
+                </ul>
+              </div>`}
+          </div>
+        </div>
+      `;
+
+      appointmentList.appendChild(item);
+    });
+  })
+  .catch(err => console.error('Error fetching appointments:', err));
+
   }
 
   // Add event listeners for filter and sort dropdowns
@@ -409,6 +580,60 @@ appointmentList.addEventListener('click', function(e) {
 
   return false;
 }
+
+</script>
+<script>
+  function openCancelModal(appointmentId) {
+    document.getElementById('cancelAppointmentId').value = appointmentId;
+    document.getElementById('cancelRemark').value = "";
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    cancelModal.show();
+  }
+
+  document.getElementById('cancelAppointmentForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const appointmentId = document.getElementById('cancelAppointmentId').value;
+  const remark = document.getElementById('cancelRemark').value.trim();
+
+  if (!remark) {
+    alert("Please provide a reason for cancellation.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/appointments/cancel/${appointmentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ remark })
+    });
+
+    const contentType = response.headers.get("content-type");
+    
+    if (response.ok) {
+      if (contentType && contentType.includes("application/json")) {
+        const result = await response.json();
+        alert(result.message || "Appointment cancelled successfully.");
+      } else {
+        alert("Appointment cancelled successfully.");
+      }
+      location.reload();
+    } else {
+      if (contentType && contentType.includes("application/json")) {
+        const error = await response.json();
+        alert(error.message || "Failed to cancel appointment.");
+      } else {
+        alert("Failed to cancel appointment.");
+      }
+    }
+  } catch (error) {
+    console.error("Cancel error:", error);
+    alert("An error occurred. Please try again.");
+  }
+});
+
 
 </script>
 

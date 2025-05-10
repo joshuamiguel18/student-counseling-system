@@ -241,6 +241,7 @@ app.get('/appointments', authenticateToken, async (req, res) => {
     a.appointment_number,
     a.turn_to_approve,
     a.counselor_id,
+    a.remark,
     s.first_name AS student_first_name,
     s.middle_name AS student_middle_name,
     s.last_name AS student_last_name,
@@ -1113,6 +1114,32 @@ app.get('/forums', authenticateToken, async (req, res) => {
     }
   });
   
+
+  app.get('/counselor/forums', authenticateTokenCounselor, async (req, res) => {
+    try {
+      const forumsResult = await pool.query(`
+        SELECT f.*, 
+               COUNT(fc.id) AS comment_count,
+               s.first_name AS student_first_name,
+               s.last_name AS student_last_name
+        FROM forum f
+        LEFT JOIN forum_comment fc ON f.id = fc.forum_id
+        LEFT JOIN student s ON f.student_id = s.id
+        GROUP BY f.id, s.first_name, s.last_name
+        ORDER BY f.create_date DESC
+      `);
+  
+      const forums = forumsResult.rows;
+      console.log(forums);
+      res.render('counselorPages/forums-counselor', { forums, user: req.user.user });
+    } catch (err) {
+      console.error('Error fetching forums:', err);
+      res.status(500).render('forums', { error: 'Failed to load forums', forums: [], user: req.user.user });
+    }
+  });
+
+
+
   // CREATE A FORUM
   app.post('/forums/create', authenticateToken, async (req, res) => {
     const { title, content } = req.body;
@@ -1166,6 +1193,42 @@ app.get('/forums', authenticateToken, async (req, res) => {
     }
   });
   
+
+
+    app.get('/counselor/forums/:id', authenticateTokenCounselor, async (req, res) => {
+    try {
+      // Query the specific forum based on the provided ID
+      const forumResult = await pool.query(
+        `SELECT f.*, 
+                s.first_name AS student_first_name,
+                s.last_name AS student_last_name
+         FROM forum f
+         JOIN student s ON f.student_id = s.id
+         WHERE f.id = $1`,
+        [req.params.id]
+      );
+      const forum = forumResult.rows[0];
+  
+      // Query comments associated with the forum
+      const commentsResult = await pool.query(
+        `SELECT fc.*, 
+                s.first_name AS student_first_name, 
+                s.last_name AS student_last_name
+         FROM forum_comment fc
+         JOIN student s ON fc.student_id = s.id
+         WHERE fc.forum_id = $1
+         ORDER BY fc.create_date ASC`,
+        [req.params.id]
+      );
+      const comments = commentsResult.rows;
+  
+      res.render('counselorPages/forum-details-counselor', { forum, comments, user: req.user.user });
+    } catch (err) {
+      console.error('Error fetching forum:', err);
+      res.status(500).render('forum-detail', { error: 'Failed to load forum details', forum: {}, comments: [], user: req.user.user });
+    }
+  });
+
 
   app.get('/student/mood-trend', authenticateToken, async (req, res) => {
     const studentId = req.user.user.id;
@@ -1785,7 +1848,10 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
         a.end_time,          -- Add end time here
         a.is_online_appointment,
         a.appointment_number,
+        a.turn_to_approve,
         a.already_added_new_session,
+        a.remark,
+        a.student_id,
         s.first_name AS student_first_name,
         s.last_name AS student_last_name
       FROM appointment a
@@ -1874,6 +1940,29 @@ app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res)
     res.status(500).send('Failed to schedule follow-up');
   }
 });
+
+
+// POST route to end a session
+app.post('/counselor/appointments/end-session/:id', authenticateTokenCounselor, async (req, res) => {
+  const { id } = req.params; // Extract appointment ID from the URL
+  try {
+    // Update the appointment record to indicate that a new session has been added
+    await pool.query(
+      `UPDATE appointment SET already_added_new_session = true WHERE id = $1`,
+      [id] // Use the appointment ID parameter
+    );
+
+    // Optionally, you can send a success response or redirect to a page
+    req.flash('success', 'Session successfully ended.');
+    res.redirect('/counselor/appointments'); // Redirecting to the appointments page
+
+  } catch (error) {
+    console.error('Error ending session:', error);
+    req.flash('error', 'Failed to end session.');
+    res.redirect('/counselor/appointments'); // Redirect back to appointments page in case of error
+  }
+});
+
 
 
 
@@ -2045,15 +2134,22 @@ app.post('/login', async (req, res) => {
 });
 
 
-app.get('/counselor/appointments/cancel/:id', async (req, res) => {
+app.post('/counselor/appointments/cancel/:id', async (req, res) => {
   const appointmentId = req.params.id;
-
+  const { remarks } = req.body
   try {
     // Update the appointment's status to 'Cancelled'
     const result = await pool.query(
-      'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
-      ['cancelled', appointmentId]
-    );
+        `
+        UPDATE appointment 
+        SET 
+          status = 'cancelled', 
+          remark = $1
+        WHERE id = $2 
+        RETURNING *
+        `,
+        [remarks || null, appointmentId]
+      );
 
     // Check if appointment was found and updated
     if (result.rows.length > 0) {
@@ -2072,16 +2168,24 @@ app.get('/counselor/appointments/cancel/:id', async (req, res) => {
   }
 });
 
-app.get('/appointments/cancel/:id', async (req, res) => {
+app.post('/appointments/cancel/:id', async (req, res) => {
     const appointmentId = req.params.id;
-  
+    const { remark } = req.body;
     try {
       // Update the appointment's status to 'Cancelled'
+
       const result = await pool.query(
-        'UPDATE appointment SET status = $1 WHERE id = $2 RETURNING *',
-        ['cancelled', appointmentId]
+        `
+        UPDATE appointment 
+        SET 
+          status = 'cancelled', 
+          remark = $1
+        WHERE id = $2 
+        RETURNING *
+        `,
+        [remark || null, appointmentId]
       );
-  
+
       // Check if appointment was found and updated
       if (result.rows.length > 0) {
         // Redirect to the appointments page with a success message
@@ -3079,7 +3183,8 @@ app.get('/programs', authenticateTokenAdmin, async (req, res) => {
          p.name AS program_name,
          p.description,
          p.department_id,
-         d.name AS department_name
+         d.name AS department_name,
+         p.acronym
        FROM programs p
        JOIN departments d ON p.department_id = d.id`
     );
@@ -3088,7 +3193,11 @@ app.get('/programs', authenticateTokenAdmin, async (req, res) => {
     const departmentResult = await pool.query(
       `SELECT id, name FROM departments`
     );
-
+    console.log({
+      programs: programResult.rows,
+      departments: departmentResult.rows,
+      user: req.user.user
+    })
     res.render('adminPages/programsTable', {
       programs: programResult.rows,
       departments: departmentResult.rows,
@@ -3104,11 +3213,11 @@ app.get('/programs', authenticateTokenAdmin, async (req, res) => {
 
 app.post('/admin/programs/create', authenticateTokenAdmin, async (req, res) => {
   try {
-    const { name, description, department_id } = req.body;
+    const { name, description, department_id, acronym } = req.body;
 
     await pool.query(
-      `INSERT INTO programs (name, description, department_id) VALUES ($1, $2, $3)`,
-      [name, description, department_id]
+      `INSERT INTO programs (name, description, department_id, acronym) VALUES ($1, $2, $3, $4)`,
+      [name, description, department_id, acronym]
     );
 
     res.redirect('/programs');
@@ -3128,6 +3237,68 @@ app.post('/admin/programs/:id/delete', authenticateTokenAdmin, async (req, res) 
     res.status(500).json({ error: 'Server error deleting program' });
   }
 });
+
+
+app.post('/admin/programs/:id/edit', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, department_id, acronym } = req.body;
+
+    await pool.query(
+      `UPDATE programs SET name = $1, description = $2, department_id = $3, acronym = $4 WHERE id = $5`,
+      [name, description, department_id, acronym, id]
+    );
+
+    res.redirect('/programs'); // or wherever you want to redirect after edit
+  } catch (err) {
+    console.error("Error editing program:", err);
+    res.status(500).json({ error: "Server error updating program" });
+  }
+});
+
+
+
+
+app.get('/getStudent/:id', authenticateTokenAdmin, async (req, res) => {
+const { id } = req.params;
+  console.log("GETTING STUDENTS DETAILS: ", id)
+  try {
+    console.log("SUasdCsda")
+    const result = await pool.query(`
+      SELECT 
+        id,
+        username,
+        email,
+        first_name,
+        middle_name,
+        last_name,
+        middle_initial,
+        id_num,
+        sex,
+        contact_number,
+        address,
+        year_level,
+        class_id,
+        is_class_mayor,
+        student_id_image,
+        create_date
+      FROM student
+      WHERE id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      console.log("Result length: ", result.rows.length);
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    console.log("rows:", result.rows[0]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching student details:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 
 app.post('/admin/counselors/create', authenticateTokenAdmin, async (req, res) => {
@@ -3716,6 +3887,13 @@ app.post('/classes/create', async (req, res) => {
 
 app.post('/saveAppointment', authenticateToken, async (req, res) => {
   const { student_id, title, isOnlineAppointment, counselor_id, appointment_date, appointment_start_time, appointment_end_time } = req.body;
+  console.log("Saving appointment:", {
+    student_id,
+    counselor_id,
+    appointment_date,
+    appointment_start_time,
+    appointment_end_time,
+  });
 
   try {
     const appointmentDay = new Date(appointment_date).toLocaleString('en-US', { weekday: 'long' });
@@ -3728,7 +3906,9 @@ app.post('/saveAppointment', authenticateToken, async (req, res) => {
     const availabilityResult = await pool.query(availabilityQuery, [counselor_id, appointmentDay]);
 
     if (availabilityResult.rowCount === 0) {
-      return res.status(400).send("Counselor is not available on this day.");
+      console.log("Counselor is not available on this day.")
+      return res.status(400).json({ message: "Counselor is not available on this day." });
+
     }
 
 
@@ -3751,7 +3931,8 @@ app.post('/saveAppointment', authenticateToken, async (req, res) => {
       appointment_end_time > end_time ||
       appointment_start_time >= appointment_end_time
     ) {
-      return res.status(400).send("Appointment time is outside counselor's availability.");
+      console.log("Appointment time is outside counselor's availability.")
+      return res.status(400).json({ message: "Appointment time is outside counselor's availability." });
     }
 
     // 3. Check for overlapping appointments
@@ -3771,7 +3952,8 @@ app.post('/saveAppointment', authenticateToken, async (req, res) => {
     ]);
 
     if (conflictResult.rowCount > 0) {
-      return res.status(400).send("This time slot is already booked.");
+      console.log("This time slot is already booked.")
+      return res.status(400).send({ message: "This time slot is already booked."});
     }
 
     // 4. Save appointment

@@ -49,6 +49,7 @@
                         <th>Time</th>
                         <th>Type</th>
                         <th>Appointment #</th>
+                        <th>Reason of Cancellation</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
@@ -58,7 +59,18 @@
                         <% appointments.forEach(appointment => { %>
                           <tr>
                             <td><%= appointment.title %></td>
-                            <td><%= appointment.student_first_name %> <%= appointment.student_last_name %></td>
+                            <td>
+                              <%= appointment.student_first_name %> <%= appointment.student_last_name %>
+                              <button 
+                                class="btn btn-sm btn-link text-primary p-0 ms-2" 
+                                title="View Student Info"
+                                onclick="fetchStudentDetails(<%= appointment.student_id %>)" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#studentInfoModal">
+                                <i class="bi bi-eye-fill"></i>
+                              </button>
+                            </td>
+
                             <td>
                               <%= new Date(appointment.appointment_date).toLocaleDateString('en-US', {
                                 year: 'numeric', month: 'long', day: 'numeric'
@@ -72,6 +84,7 @@
                             </td>
                             <td><%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %></td>
                             <td><%= appointment.appointment_number %></td>
+                            <td><%= appointment.remark %></td>
                             <td>
                               <span class="badge 
                                 <%= appointment.status === 'approved' ? 'bg-label-success' : 
@@ -112,10 +125,15 @@
                                     <% } %>
                                     <% if (appointment.status === 'pending' || appointment.status === 'approved') { %>
                                       <li>
-                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/counselor/appointments/cancel/<%= appointment.id %>')">
-                                          Cancel Appointment
-                                        </a>
-                                      </li>
+  <button 
+    class="dropdown-item text-danger" 
+    onclick="openCancelModal(<%= appointment.id %>)" 
+    type="button"
+  >
+    <i class="bi bi-x-circle me-2"></i>Cancel Appointment
+  </button>
+</li>
+
                                     <% } %>
                                     <% if (appointment.status === 'approved') { %>
                                       <li>
@@ -140,7 +158,13 @@
                                     )">
                                     Add New Session
                                   </button>
-
+                                  <!-- End Session Button -->
+                                  <button class="btn btn-sm btn-danger"
+    onclick="openEndSessionModal(<%= appointment.id %>)" 
+    type="button"
+  >
+    <i class="bi bi-x-circle me-2"></i>End Session
+  </button>
                                 </div>
                                 
                               <% } else { %>
@@ -239,6 +263,24 @@
             </div>
           </div>
 
+
+
+          <div class="modal fade" id="studentInfoModal" tabindex="-1" aria-labelledby="studentInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title" id="studentInfoModalLabel">Student Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="studentDetailsContent">
+        <!-- Student info will be inserted here -->
+        <p class="text-muted">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
           <!-- Error Modal -->
           <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -319,6 +361,52 @@
   </div>
 </div>
 
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <form id="cancelForm" method="POST">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="cancelModalLabel">Cancel Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to cancel this appointment?</p>
+          <div class="mb-3">
+            <label for="cancelRemarks" class="form-label">Remarks</label>
+            <textarea class="form-control" id="cancelRemarks" name="remarks" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for confirming end session -->
+<div class="modal fade" id="endSessionModal" tabindex="-1" aria-labelledby="endSessionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header text-white">
+        <h5 class="modal-title" id="endSessionModalLabel">Confirm End Session</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to end this session? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <form id="endSessionForm" method="POST" action="">
+          <!-- Hidden input to hold appointment ID -->
+          <input type="hidden" id="appointmentId" name="appointmentId">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Yes, End Session</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -332,8 +420,21 @@
   </div>
 
   <%- include('../includes/scripts.ejs') %>
-
+<script>
+  function openCancelModal(appointmentId) {
+    const form = document.getElementById('cancelForm');
+    form.action = `/counselor/appointments/cancel/${appointmentId}`;
+    const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+  }
+</script>
   <script>
+
+
+    
+
+
+
 
       flatpickr("#newDate", {
         dateFormat: "Y-m-d",  // Format as yyyy-mm-dd
@@ -436,6 +537,39 @@
 
 
 
+function fetchStudentDetails(studentId) {
+  const content = document.getElementById('studentDetailsContent');
+  content.innerHTML = '<p class="text-muted">Loading...</p>';
+
+  fetch(`/getStudent/${studentId}`)
+    .then(res => res.json())
+    .then(data => {
+      content.innerHTML = `
+        <div class="row">
+         
+          <div class="col-md-8">
+            <p><strong>Name:</strong> ${data.first_name} ${data.middle_initial ? data.middle_initial + '.' : ''} ${data.last_name}</p>
+            <p><strong>Username:</strong> ${data.username}</p>
+            <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+            <p><strong>Sex:</strong> ${data.sex || 'N/A'}</p>
+            <p><strong>Contact Number:</strong> ${data.contact_number || 'N/A'}</p>
+            <p><strong>Address:</strong> ${data.address || 'N/A'}</p>
+            <p><strong>Year Level:</strong> ${data.year_level || 'N/A'}</p>
+            <p><strong>Is Class Mayor:</strong> ${data.is_class_mayor ? 'Yes' : 'No'}</p>
+            <p><strong>Joined:</strong> ${new Date(data.create_date).toLocaleDateString()}</p>
+          </div>
+        </div>
+      `;
+    })
+    .catch(err => {
+      content.innerHTML = '<p class="text-danger">Failed to fetch student info.</p>';
+      console.error(err);
+    });
+}
+
+
+
+
   function openScheduleModal(id, title, studentName, prevDate, appointmentNumber) {
     document.getElementById('appointmentIdInput').value = id;
     document.getElementById('sessionPurpose').innerText = title;
@@ -447,5 +581,25 @@
     document.getElementById('scheduleSessionForm').action = '/counselor/sessions/new';
   }
 </script>
+<script>
+  function openEndSessionModal(appointmentId) {
+    const form = document.getElementById('endSessionForm');
+    const input = document.getElementById('appointmentId');
+
+    // Set appointment ID in hidden input
+    input.value = appointmentId;
+
+    // Set form action dynamically
+    form.action = `/counselor/appointments/end-session/${appointmentId}`;
+
+    // Manually show modal
+    const modal = new bootstrap.Modal(document.getElementById('endSessionModal'));
+    modal.show();
+  }
+</script>
+
+
+
+
 </body>
 </html>
