@@ -4825,6 +4825,39 @@ app.get('/counselor/notifications', authenticateTokenCounselor, async (req, res)
 
 
 
+app.get('/counselor/notifications/mark-read/:id', authenticateTokenCounselor, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
+
+  try {
+    await pool.query(
+      `UPDATE notifications SET read_status = TRUE, updated_at = NOW() 
+       WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/counselor/notifications');
+  } catch (err) {
+    console.error('Error marking notification as read:', err.message);
+    res.status(500).send('Failed to update notification.');
+  }
+});
+app.get('/counselor/notifications/mark-unread/:id', authenticateTokenCounselor, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
+
+  try {
+    await pool.query(
+      `UPDATE notifications SET read_status = FALSE, updated_at = NOW() 
+       WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/counselor/notifications');
+  } catch (err) {
+    console.error('Error marking notification as unread:', err.message);
+    res.status(500).send('Failed to update notification.');
+  }
+});
+
 
 app.get('/notifications/mark-read/:id', authenticateToken, async (req, res) => {
   const notificationId = req.params.id;
@@ -4875,7 +4908,21 @@ app.get('/notifications/delete/:id', authenticateToken, async (req, res) => {
     res.status(500).send('Failed to delete notification.');
   }
 });
+app.get('/counselor/notifications/delete/:id', authenticateTokenCounselor, async (req, res) => {
+  const notificationId = req.params.id;
+  const userId = req.user.user.id;
 
+  try {
+    await pool.query(
+      `DELETE FROM notifications WHERE id = $1 AND user_id = $2`,
+      [notificationId, userId]
+    );
+    res.redirect('/counselor/notifications');
+  } catch (err) {
+    console.error('Error deleting notification:', err.message);
+    res.status(500).send('Failed to delete notification.');
+  }
+});
 
   app.post('/upload-csv', upload.single('csvFile'), async (req, res) => {
     if (!req.file) {

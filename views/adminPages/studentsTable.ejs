@@ -424,7 +424,11 @@
         const submitBtn = $(this).find('[type="submit"]');
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Assigning...');
         
-        const formData = $(this).serialize();
+        const formData = {
+  studentId: $('#assignStudentId').val(),
+  classId: $('#classSelect').val(),
+  isMayor: $('#assignAsMayor').is(':checked') ? 1 : 0
+};
         
         $.ajax({
           url: '/students/assign-class',
