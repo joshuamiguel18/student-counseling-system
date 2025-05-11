@@ -184,6 +184,66 @@ const authenticateToken = async (req, res, next) => {
 };
 
 
+const authenticateTokenCounselor = async (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (!token) {
+    return res.redirect('/counselor/login');
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    res.locals.user = decoded;
+
+    // Fetch last 5 notifications for this counselor
+    const { rows: notifications } = await pool.query(
+      `SELECT * FROM notifications
+      WHERE user_id = $1 AND recipient_type = $2
+      ORDER BY created_at DESC
+      LIMIT 5`,
+      [res.locals.user.user.id, "counselor"]
+    );
+
+    // Format "time ago"
+    const formatTimeAgo = (createdAt) => {
+      const now = new Date();
+      const timeDiff = now - new Date(createdAt);
+
+      const seconds = Math.floor(timeDiff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 1) {
+        return `${days} days ago`;
+      } else if (days === 1) {
+        return '1 day ago';
+      } else if (hours > 1) {
+        return `${hours} hours ago`;
+      } else if (hours === 1) {
+        return '1 hour ago';
+      } else if (minutes > 1) {
+        return `${minutes} minutes ago`;
+      } else if (minutes === 1) {
+        return '1 minute ago';
+      } else {
+        return 'Just now';
+      }
+    };
+
+    notifications.forEach(notification => {
+      notification.timeAgo = formatTimeAgo(notification.created_at);
+    });
+
+    res.locals.notifications = notifications;
+    next();
+  } catch (err) {
+    console.error('JWT or DB error (counselor):', err);
+    return res.redirect('/counselor/login');
+  }
+};
+
 
 
 
@@ -206,24 +266,6 @@ const authenticateTokenAdmin = (req, res, next) => {
     });
 };
 
-const authenticateTokenCounselor = (req, res, next) => {
-  const token = req.cookies.jwt; // Assumes you are using cookies to store the JWT
-
-  if (!token) {
-      return res.redirect('/counselor/login');
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-      if (err) {
-          return res.redirect('/counselor/login');
-          //return res.status(403).render('login', { error: 'Invalid or expired token' });
-      }
-
-      // Attach user info to the request object
-      req.user = decoded;
-      next();
-  });
-};
 
 // My appointments
 app.get('/appointments', authenticateToken, async (req, res) => {
@@ -3898,6 +3940,22 @@ app.post('/saveAppointment', authenticateToken, async (req, res) => {
   try {
     const appointmentDay = new Date(appointment_date).toLocaleString('en-US', { weekday: 'long' });
 
+    
+
+    const resultStudent = await pool.query(
+        `SELECT CONCAT_WS(' ', first_name, middle_name, last_name) AS full_name
+        FROM student
+        WHERE id = $1`,
+        [student_id]
+      );
+
+    const fullName = resultStudent.rows[0]?.full_name;
+
+
+    createNotification(counselor_id, "counselor", fullName + " has boooked an appointment on " 
+      + appointment_date + " from " + appointment_start_time + " to " + appointment_end_time, type = "appointment")
+
+
     // 1. Get counselor availability for that day
     const availabilityQuery = `
       SELECT start_time, end_time FROM counselor_availability
@@ -4425,6 +4483,7 @@ app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) 
           pt.test_number,
           pt.turn_to_approve,
           pt.is_online_test,
+          pt.remark,
           counselor.first_name AS counselor_first_name,
           counselor.last_name AS counselor_last_name
       FROM psycho_tests pt
@@ -4472,7 +4531,7 @@ app.post('/counselor/psycho-tests/:id/accept', authenticateTokenCounselor, async
   try {
     await pool.query(
       `UPDATE psycho_tests
-       SET status = 'pending', turn_to_approve = 'student', updated_at = NOW()
+       SET status = 'approved', turn_to_approve = 'student', updated_at = NOW()
        WHERE id = $1`,
       [testId]
     );
@@ -4603,13 +4662,13 @@ app.get('/counselor/psycho-tests/start/:id', authenticateTokenCounselor, async (
 
 app.post('/counselor/psycho-tests/:id/cancel', authenticateTokenCounselor, async (req, res) => {
   const testId = req.params.id;
-
+  const { remark } = req.body;
   try {
     await pool.query(
       `UPDATE psycho_tests
-       SET status = 'cancelled', updated_at = NOW()
-       WHERE id = $1`,
-      [testId]
+       SET status = 'cancelled', remark = $1 ,updated_at = NOW()
+       WHERE id = $2`,
+      [remark, testId]
     );
 
     res.redirect('/counselor/psycho-tests');
@@ -4620,13 +4679,13 @@ app.post('/counselor/psycho-tests/:id/cancel', authenticateTokenCounselor, async
 });
 app.post('/psycho-tests/:id/cancel', authenticateTokenCounselor, async (req, res) => {
   const testId = req.params.id;
-
+  const { remark } = req.body;
   try {
     await pool.query(
       `UPDATE psycho_tests
-       SET status = 'cancelled', updated_at = NOW()
-       WHERE id = $1`,
-      [testId]
+       SET status = 'cancelled', remark = $1, updated_at = NOW()
+       WHERE id = $2`,
+      [remark, testId]
     );
 
     res.redirect('/psychotests');
@@ -4735,6 +4794,36 @@ app.get('/notifications', authenticateToken, async (req, res) => {
     res.status(500).send('Error retrieving notifications');
   }
 });
+
+
+app.get('/counselor/notifications', authenticateTokenCounselor, async (req, res) => {
+  const id = req.user.user.id;
+  const role = "counselor";
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM notifications
+      WHERE user_id = $1 AND recipient_type = $2
+      ORDER BY id DESC
+    `, [id, role]);
+
+    const notifications = result.rows.map(n => ({
+      ...n,
+      timeAgo: formatTimeAgo(n.created_at)
+    }));
+
+    res.render('counselorPages/notifications-counselor', {
+      notifications,
+      user: req.user.user,
+      getNotificationIcon
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Error retrieving notifications');
+  }
+});
+
+
 
 
 app.get('/notifications/mark-read/:id', authenticateToken, async (req, res) => {
@@ -5035,8 +5124,70 @@ app.get('/counselor/logout', (req, res) => {
 });
 
 
+app.get('/admin-summary', async (req, res) => {
+  try {
+    const today = moment().startOf('day').toDate();
+    const thisWeek = moment().startOf('isoWeek').toDate();
+    const thisMonth = moment().startOf('month').toDate();
 
+    // Summary
+    const summaryQuery = `
+      SELECT
+        COUNT(*) FILTER (WHERE appointment_date >= $1) AS today,
+        COUNT(*) FILTER (WHERE appointment_date >= $2) AS thisWeek,
+        COUNT(*) FILTER (WHERE appointment_date >= $3) AS thisMonth
+      FROM appointment
+      WHERE status != 'cancelled'
+    `;
+    const { rows: [summary] } = await pool.query(summaryQuery, [today, thisWeek, thisMonth]);
 
+    // Per Counselor
+    const counselorQuery = `
+      SELECT
+        c.id,
+        CONCAT(c.first_name, ' ', c.last_name) AS name,
+        COUNT(a.*) AS total
+      FROM counselor c
+      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.status != 'cancelled'
+      GROUP BY c.id
+      ORDER BY name
+    `;
+    const { rows: counselorStats } = await pool.query(counselorQuery);
+
+    // Chart data: daily counts for current week
+    const dailyCounts = [];
+    const dayLabels = [];
+    for (let i = 0; i < 7; i++) {
+      const day = moment().startOf('isoWeek').add(i, 'days');
+      const start = day.startOf('day').toDate();
+      const end = day.endOf('day').toDate();
+      const result = await pool.query(`
+        SELECT COUNT(*) FROM appointment
+        WHERE appointment_date BETWEEN $1 AND $2 AND status != 'cancelled'
+      `, [start, end]);
+      dayLabels.push(day.format('ddd'));
+      dailyCounts.push(parseInt(result.rows[0].count));
+    }
+
+    // Pie chart: counselor counts
+    const counselorNames = counselorStats.map(c => c.name);
+    const counselorCounts = counselorStats.map(c => parseInt(c.total));
+
+    res.render('adminPages/admin-reports', {
+      summary,
+      counselorStats,
+      chartData: {
+        days: dayLabels,
+        dailyCounts,
+        counselorNames,
+        counselorCounts
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to load reports');
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;

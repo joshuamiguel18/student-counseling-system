@@ -23,6 +23,75 @@
     <ul class="navbar-nav flex-row align-items-center ms-auto" style="position: sticky; top: 0; left: 0;;">
 
 
+
+      <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
+  <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+    <span class="position-relative">
+      <i class="bx bx-bell bx-md"></i>
+      <% if (notifications.length > 0) { %>
+        <span class="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle p-1">
+          <span class="visually-hidden">New alerts</span>
+        </span>
+      <% } %>
+    </span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end p-0 shadow-sm" style="min-width: 350px;">
+    <li class="dropdown-menu-header border-bottom px-3 py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Notifications</h6>
+      <div class="d-flex align-items-center">
+        <span class="badge bg-primary me-2"><%= notifications.length %> New</span>
+        <a href="/notifications/mark-all-read" class="text-muted" title="Mark all as read">
+          <i class="bx bx-envelope-open bx-sm"></i>
+        </a>
+      </div>
+    </li>
+
+    <li class="dropdown-notifications-list" style="max-height: 300px; overflow-y: auto;">
+      <% notifications.forEach(notification => { %>
+        <li class="list-group-item list-group-item-action dropdown-notifications-item <%= notification.read_status ? 'read' : 'unread' %> px-3 py-2">
+          <div class="d-flex align-items-start">
+            <div class="me-3">
+              <i class="bx bx-sm <%= notification.read_status ? 'text-muted' : 'text-primary' %>"></i>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-1 small"><%= notification.message %></p>
+              <small class="text-muted"><%= notification.timeAgo %></small>
+            </div>
+
+            <!-- Dropdown Actions -->
+            <div class="dropdown ms-2">
+              <button class="btn btn-sm btn-icon dropdown-toggle hide-arrow" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bx bx-dots-vertical-rounded"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <% if (!notification.read_status) { %>
+                  <li><a class="dropdown-item" href="/notifications/mark-read/<%= notification.id %>">Mark as Read</a></li>
+                <% } else { %>
+                  <li><a class="dropdown-item" href="/notifications/mark-unread/<%= notification.id %>">Mark as Unread</a></li>
+                <% } %>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li>
+                  <a class="dropdown-item text-danger" href="/notifications/delete/<%= notification.id %>" onclick="return confirm('Delete this notification?')">Delete</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </li>
+      <% }); %>
+    </li>
+
+    <li class="border-top">
+      <div class="p-3 text-center">
+        <a class="btn btn-sm btn-outline-primary w-100" href="/counselor/notifications">
+          View all notifications
+        </a>
+      </div>
+    </li>
+  </ul>
+</li>
+
       <!-- User -->
       <li class="nav-item navbar-dropdown dropdown-user dropdown">
         <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('../includes/head.ejs') %>
+  <!-- DataTables CSS -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .card-icon {
+      font-size: 2rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('../includes/sidebar-admin.ejs') %>
+
+      <div class="layout-page">
+        <%- include('../includes/header-admin.ejs') %>
+
+        <div class="content-wrapper">
+
+           <div class="container py-5">
+    <h2 class="mb-4 fw-bold text-center">📊 Admin Appointment Reports</h2>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card border-start border-4 border-primary shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-subtitle mb-1 text-muted">Today</h6>
+                <h3><%= summary.today %></h3>
+              </div>
+              <i class="bi bi-calendar-day card-icon text-primary"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-start border-4 border-success shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-subtitle mb-1 text-muted">This Week</h6>
+                <h3><%= summary.thisWeek %></h3>
+              </div>
+              <i class="bi bi-calendar-week card-icon text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-start border-4 border-warning shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-subtitle mb-1 text-muted">This Month</h6>
+                <h3><%= summary.thisMonth %></h3>
+              </div>
+              <i class="bi bi-calendar-month card-icon text-warning"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header fw-bold">Appointments This Week</div>
+          <div class="card-body">
+            <canvas id="weeklyChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header fw-bold">Appointments per Counselor</div>
+          <div class="card-body">
+            <canvas id="counselorChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+      <div class="card-header fw-bold">Detailed Counselor Stats</div>
+      <div class="card-body table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Counselor Name</th>
+              <th>Total Appointments</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% counselorStats.forEach(c => { %>
+              <tr>
+                <td><%= c.name %></td>
+                <td><%= c.total %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+        </div>
+      </div>
+      <div class="layout-overlay layout-menu-toggle"></div>
+      <div class="drag-target"></div>
+    </div>
+
+  </div>
+    <script>
+    const weeklyChartCtx = document.getElementById("weeklyChart");
+    const counselorChartCtx = document.getElementById("counselorChart");
+
+    const weeklyChart = new Chart(weeklyChartCtx, {
+      type: "bar",
+      data: {
+        labels: <%- JSON.stringify(chartData.days) %>,
+        datasets: [{
+          label: "Appointments",
+          data: <%- JSON.stringify(chartData.dailyCounts) %>,
+          backgroundColor: "#0d6efd",
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    const counselorChart = new Chart(counselorChartCtx, {
+      type: "pie",
+      data: {
+        labels: <%- JSON.stringify(chartData.counselorNames) %>,
+        datasets: [{
+          label: "Appointments",
+          data: <%- JSON.stringify(chartData.counselorCounts) %>,
+          backgroundColor: [
+            "#0d6efd", "#198754", "#ffc107", "#dc3545", "#6610f2", "#20c997"
+          ]
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  </script> 
+  <%- include('../includes/scripts.ejs') %>
+
+</body>
+</html>

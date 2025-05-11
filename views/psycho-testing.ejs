@@ -59,6 +59,11 @@
                             <i class="bi bi-hash me-1 text-muted"></i>
                             <strong>Test #:</strong> <%= test.test_number %>
                           </div>
+                         <div class="mb-3">
+                            <i class="bi bi-x-octagon-fill me-1 text-danger"></i>
+                            <strong>Remarks:</strong> 
+                            <span class="text-danger"><%= test.remark %></span>
+                          </div>
                         </div>
           
                         <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
@@ -83,19 +88,30 @@
 
                                 
                                 <% if (test.turn_to_approve === 'student') { %>
-                                  <form method="POST" action="/psycho-tests/<%= test.id %>/accept">
-                                    <button type="submit" class="btn btn-outline-success w-100 rounded-pill">
-                                      <i class="bi bi-check2-circle me-1"></i> Accept
-                                    </button>
-                                  </form>
-                            
-                                  <form method="POST" action="/psycho-tests/<%= test.id %>/cancel">
-                                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">
-                                      <i class="bi bi-x-circle me-1"></i> Cancel
-                                    </button>
-                                  </form>
+  
+                                  <% if (test.status === 'pending') { %>
+                                    <!-- Accept Button -->
+                                     <button type="button" class="btn btn-outline-success w-100 rounded-pill mb-2"
+      data-bs-toggle="modal"
+      data-bs-target="#acceptModal"
+      data-test-id="<%= test.id %>">
+      <i class="bi bi-check2-circle me-1"></i> Accept
+    </button>
+                                  <% } %>
+
+                                
+
                                 <% } %>
-                              
+
+                                <% if (test.status === 'pending' || test.status === 'approved') { %>
+                                    <!-- Cancel Button -->
+                                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill"
+      data-bs-toggle="modal"
+      data-bs-target="#cancelModal"
+      data-test-id="<%= test.id %>">
+      <i class="bi bi-x-circle me-1"></i> Cancel
+    </button>
+                                  <% } %>
                                 
                               </div>
                               
@@ -158,6 +174,50 @@
 
 
 
+            <div class="modal fade" id="acceptModal" tabindex="-1" aria-labelledby="acceptModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="acceptForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="acceptModalLabel">Confirm Acceptance</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to accept this test?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+          <button type="submit" class="btn btn-success">Yes, Accept</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="cancelForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to cancel this test?</p>
+          <div class="mb-3">
+            <label for="cancelRemarks" class="form-label">Remarks (optional)</label>
+            <textarea class="form-control" id="cancelRemarks" name="remark" placeholder="Reason for cancellation..." rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+          <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 
 
 
@@ -327,6 +387,24 @@
 
       picker.setDate(new Date(testDate), true);
     });
+  });
+</script>
+<script>
+  const acceptModal = document.getElementById('acceptModal');
+  const cancelModal = document.getElementById('cancelModal');
+
+  acceptModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const testId = button.getAttribute('data-test-id');
+    const form = document.getElementById('acceptForm');
+    form.action = `/psycho-tests/${testId}/accept`;
+  });
+
+  cancelModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const testId = button.getAttribute('data-test-id');
+    const form = document.getElementById('cancelForm');
+    form.action = `/psycho-tests/${testId}/cancel`;
   });
 </script>
 

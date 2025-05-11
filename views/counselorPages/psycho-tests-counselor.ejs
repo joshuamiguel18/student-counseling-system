@@ -49,6 +49,7 @@
                         <th>Test Date</th>
                         <th>Test #</th>
                         <th>Status</th>
+                        <th>Remarks</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -63,13 +64,15 @@
                             <td>
                               <span class="badge 
                                 <%= test.status === 'completed' ? 'bg-label-success' : 
-                                    test.status === 'in_progress' ? 'bg-label-primary' :
+                                    test.status === 'approved' ? 'bg-label-primary' :
                                     test.status === 'pending' ? 'bg-label-warning' : 
                                     test.status === 'cancelled' ? 'bg-label-danger' : 
                                     'bg-label-default' %>">
                                 <%= test.status.replace('_', ' ').toUpperCase() %>
                               </span>
                             </td>
+                            <td><%= test.remark %></td>
+
                             <td class="actions d-flex flex-column gap-1">
 
 
@@ -91,7 +94,8 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="reschedule_date_<%= test.id %>" class="form-label">New Test Date</label>
-            <input type="datetime-local" class="form-control" id="reschedule_date_<%= test.id %>" name="reschedule_date" required>
+            <input type="text" class="form-control flatpickr" id="reschedule_date_<%= test.id %>" name="reschedule_date" required>
+
           </div>
         </div>
         <div class="modal-footer">
@@ -107,7 +111,7 @@
 
 
 
-                              <!-- Feedback Test Modal -->
+                              <!-- Feedback Tests Modal -->
                               <div class="modal fade" id="feedbackTestModal-<%= test.id %>" tabindex="-1" aria-labelledby="feedbackTestModalLabel-<%= test.id %>" aria-hidden="true">
                                 <div class="modal-dialog">
                                   <div class="modal-content">
@@ -145,7 +149,7 @@
                                 </form>
                               <% } %>
 
-                              <% if (test.status !== 'cancelled' && test.status !== 'completed') { %>
+                              <% if (test.status === 'pending') { %>
                                 <button class="btn btn-outline-warning btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#rescheduleModal-<%= test.id %>">Reschedule</button>
 
                               <% } %>
@@ -153,14 +157,41 @@
                                 <button class="btn btn-outline-warning btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Complete', '/psycho-tests/complete/<%= test.id %>')">Complete Test</button>
 
                               <% } %>
-                              <% if (test.status === 'pending' && test.turn_to_approve === 'counselor') { %>
-                                <form method="POST" action="/counselor/psycho-tests/<%= test.id %>/cancel">
-                                  <button type="submit" class="btn btn-outline-danger btn-sm w-100 rounded-pill">Cancel</button>
-                                </form>
+                              <% if (test.status !== 'completed' && test.status !== 'cancelled') { %>
+                                <button type="button" class="btn btn-outline-danger btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#cancelModal-<%= test.id %>">
+                                  Cancel
+                                </button>
                               <% } %>
 
-                              <% if (test.status === 'completed') { %>
-                                <a href="/counselor/psycho-tests/<%= test.id %>/results" class="btn btn-outline-primary btn-sm w-100 rounded-pill">View Results</a>
+
+                                <div class="modal fade" id="cancelModal-<%= test.id %>" tabindex="-1" aria-labelledby="cancelModalLabel-<%= test.id %>" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/counselor/psycho-tests/<%= test.id %>/cancel">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelModalLabel-<%= test.id %>">Confirm Cancellation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to cancel this test?</p>
+          <div class="mb-3">
+            <label for="remark-<%= test.id %>" class="form-label">Remarks (optional)</label>
+            <textarea class="form-control" id="remark-<%= test.id %>" name="remark" rows="3" placeholder="Enter reason for cancellation..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+          <button type="submit" class="btn btn-danger">Yes, Cancel Test</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+                              <% if (test.status === 'completed' && test.already_had_feedback !== true) { %>
+                                <!-- <a href="/counselor/psycho-tests/<%= test.id %>/results" class="btn btn-outline-primary btn-sm w-100 rounded-pill">View Results</a> -->
                                 <button class="btn btn-outline-info btn-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#feedbackTestModal-<%= test.id %>">Schedule Feedback</button>
                               <% } %>
                             </td>
@@ -280,5 +311,20 @@
       });
     });
   </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    flatpickr(".flatpickr", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      minDate: "today",
+      disable: [
+        function (date) {
+          // Disable weekends
+          return (date.getDay() === 0 || date.getDay() === 6);
+        }
+      ],
+    });
+  });
+</script>
 </body>
 </html>
