@@ -1,146 +1,234 @@
 <!DOCTYPE html>
-
 <html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
-
-  <head>
-	<%- include('includes/head.ejs') %>
-
-
-
-  </head>
-
-  <body>
-	<!-- Layout wrapper: Start -->
-	<div class="layout-wrapper layout-content-navbar">
-	  <div class="layout-container">
-	
-		<%- include('includes/sidebar.ejs') %>
-	
-		<!-- Layout page: Start -->
-		<div class="layout-page">
-	
-	
-		  <!-- Navbar: Start -->
-		  <%- include('includes/header.ejs') %>
-		  <!-- Navbar: End -->
-	
-	
-		  <!-- Content wrapper: Start -->
-		  <div class="content-wrapper">
-			<!-- Content: Start -->
-			<div class="container-xxl flex-grow-1 container-p-y">
-            
-            
-                <!-- Header -->
-                <div class="row">
-                  <div class="col-12">
-                    <div class="card mb-6">
-                      <div class="user-profile-header-banner">
-                        <!-- <img src="/images/ChatGPT Image Apr 12, 2025, 09_17_11 PM.png" alt="Banner image" class="rounded-top" style> -->
-                      </div>
-                      <!-- <div class="user-profile-header d-flex flex-column flex-lg-row text-sm-start text-center mb-8">
-                        <div class="flex-shrink-0 mt-1 mx-sm-0 mx-auto">
-                          
-                            <img src="/images/user.png" alt="user image" class="d-block h-auto ms-0 ms-sm-6 rounded-3 user-profile-img" style="height: 50px; width: 50px;">
-                            
-                        </div>
-                         <div class="flex-grow-1 mt-3 mt-lg-5">
-                          <div class="d-flex align-items-md-end align-items-sm-start align-items-center justify-content-md-between justify-content-start mx-5 flex-md-row flex-column gap-4">
-                            <div class="user-profile-info">
-                              <h4 class="mb-2 mt-lg-7">Student</h4>
-                              <ul class="list-inline mb-0 d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-4 mt-4">
-                                <li class="list-inline-item">
-                                  <i class="bx bx-palette me-2 align-top"></i><span class="fw-medium">UX Designer</span>
-                                </li>
-                                <li class="list-inline-item">
-                                  <i class="bx bx-map me-2 align-top"></i><span class="fw-medium">Vatican City</span>
-                                </li>
-                                <li class="list-inline-item">
-                                  <i class="bx bx-calendar me-2 align-top"></i><span class="fw-medium"> Joined April 2021</span>
-                                </li>
-                              </ul>
-                            </div>
-                            <a href="javascript:void(0)" class="btn btn-primary mb-1">
-                              <i class="bx bx-user-check bx-sm me-2"></i>Connected
-                            </a>
-                          </div>
-                        </div> 
-                      </div> -->
-                    </div>
-                  </div>
-                </div>
-                <!--/ Header -->
-                
-             
-                
-                <!-- User Profile Content -->
-                <div class="row">
-                  <div class="col-xl-4 col-lg-5 col-md-5">
-                    <!-- About User -->
-                    <div class="card mb-6">
-                      <div class="card-body">
-                        <small class="card-text text-uppercase text-muted small">About</small>
-                        <ul class="list-unstyled my-3 py-1">
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-user"></i><span class="fw-medium mx-2">Full Name:</span> <span>John Doe</span></li>
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-check"></i><span class="fw-medium mx-2">Status:</span> <span>Active</span></li>
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-crown"></i><span class="fw-medium mx-2">Role:</span> <span>Developer</span></li>
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-flag"></i><span class="fw-medium mx-2">Country:</span> <span>USA</span></li>
-                          <li class="d-flex align-items-center mb-2"><i class="bx bx-detail"></i><span class="fw-medium mx-2">Languages:</span> <span>English</span></li>
-                        </ul>
-                        <small class="card-text text-uppercase text-muted small">Contacts</small>
-                        <ul class="list-unstyled my-3 py-1">
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-phone"></i><span class="fw-medium mx-2">Contact:</span> <span>(123) 456-7890</span></li>
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-chat"></i><span class="fw-medium mx-2">Skype:</span> <span>john.doe</span></li>
-                          <li class="d-flex align-items-center mb-4"><i class="bx bx-envelope"></i><span class="fw-medium mx-2">Email:</span> <span>john.doe@example.com</span></li>
-                        </ul>
-                        <small class="card-text text-uppercase text-muted small">Teams</small>
-                        <ul class="list-unstyled mb-0 mt-3 pt-1">
-                          <li class="d-flex flex-wrap mb-4"><span class="fw-medium me-2">Backend Developer</span><span>(126 Members)</span></li>
-                          <li class="d-flex flex-wrap">
-                            <span class="fw-medium me-2">React Developer</span><span>(98 Members)</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <!--/ About User -->
-                    <!-- Profile Overview -->
-                    
-                    <!--/ Profile Overview -->
-                  </div>
-                  <div class="col-xl-8 col-lg-7 col-md-7">
-                  
-                    <!-- Projects table -->
-
-                    <!--/ Projects table -->
-                  </div>
-                </div>
-                <!--/ User Profile Content -->
-                
-                
-                          </div>
-			<!--/ Content wrapper: End -->
-		  </div>
-		  <!-- / Layout page: End -->
-		  <%- include('includes/footer.ejs') %>
-
-		</div>
-	
-		<!-- Overlay -->
-		<div class="layout-overlay layout-menu-toggle"></div>
-		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
-		<div class="drag-target"></div>
-	  </div>
-	  <!-- Layout wrapper: End -->
-	
-
-
-
-
-	  <%- include('includes/scripts.ejs') %>
-
+<head>
+  <%- include('includes/head.ejs') %>
+  <style>
+    :root {
+      --profile-card-radius: 12px;
+      --section-spacing: 1.5rem;
+      --element-spacing: 1rem;
+    }
     
+    .profile-card {
+      background: white;
+      border-radius: var(--profile-card-radius);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+    
+    .profile-img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title {
+      position: relative;
+      padding-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .section-title:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, #7367F0 0%, #A66FFE 100%);
+      border-radius: 3px;
+    }
+    
+    .info-badge {
+      background: rgba(115, 103, 240, 0.1);
+      color: #7367F0;
+      font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+    }
+    
+    .list-group-item {
+      border: none;
+      padding: 0.75rem 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .list-group-item i {
+      width: 24px;
+      text-align: center;
+      margin-right: 0.75rem;
+      color: #7367F0;
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent);
+      margin: var(--section-spacing) 0;
+    }
+    
+    @media (max-width: 768px) {
+      .profile-img {
+        width: 120px;
+        height: 120px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Layout wrapper: Start -->
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('includes/sidebar.ejs') %>
+      
+      <!-- Layout page: Start -->
+      <div class="layout-page">
+        <%- include('includes/header.ejs') %>
+        
+        <!-- Content wrapper: Start -->
+        <div class="content-wrapper">
+          <div class="container-xxl flex-grow-1 container-p-y">
+            <!-- Profile Header -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="profile-header-banner" style="
+                  height: 180px;
+                  background: linear-gradient(135deg, #7367F0 0%, #A66FFE 100%);
+                  border-radius: 12px;
+                  position: relative;
+                "></div>
+              </div>
+            </div>
+            
+            <!-- Profile Content -->
+            
+              <div class="profile-card p-4 p-lg-5">
+                <div class="row align-items-center">
+                  <div class="col-md-2 text-center mb-4 mb-md-0">
+                    <div class="position-relative d-inline-block">
+                      <% if (user.student_id_image) { %>
+                        <img src="/images/user.png" alt="Profile Image" class="profile-img">
+                      <% } else { %>
+                        <img src="/images/user.png" alt="Default Avatar" class="profile-img">
+                      <% } %>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-10">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                      <div>
+                        <h2 class="fw-bold mb-1"><%= user.first_name %> <%= user.middle_initial ? user.middle_initial + '.' : '' %> <%= user.last_name %></h2>
+                        <p class="text-muted mb-2"><i class="bx bx-envelope"></i> <%= user.email %></p>
+                        <div class="d-flex flex-wrap gap-2">
+                          <span class="badge bg-label-primary">@<%= user.username %></span>
+                          <% if (user.is_class_mayor) { %>
+                            <span class="badge bg-label-success">Class Mayor</span>
+                          <% } %>
+                      <span class="badge bg-label-primary">ID#: <%= user.id_num %></span>
 
 
-  </body>
+                        </div>
+                      </div>
 
+
+                      <div class="mt-3 mt-md-0">
+                        <button class="btn btn-outline-primary">
+                          <i class="bx bx-edit me-1"></i> Edit Profile
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-4 mb-md-0">
+                    <h5 class="section-title mb-4"><i class="bx bx-book me-2"></i>Academic Information</h5>
+                    <ul class="list-group">
+                      <li class="list-group-item">
+                        <i class="bx bx-buildings"></i>
+                        <div>
+                          <strong>Department:</strong> 
+                          <span class="text-muted"><%= user.department_name || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-bookmark"></i>
+                        <div>
+                          <strong>Program:</strong> 
+                          <span class="text-muted"><%= user.program_name || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-group"></i>
+                        <div>
+                          <strong>Class:</strong> 
+                          <span class="text-muted"><%= user.class_name || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-calendar"></i>
+                        <div>
+                          <strong>Year Level:</strong> 
+                          <span class="text-muted"><%= user.year_level || 'N/A' %></span>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <h5 class="section-title mb-4"><i class="bx bx-user me-2"></i>Personal Information</h5>
+                    <ul class="list-group">
+                      <li class="list-group-item">
+                        <i class="bx bx-user-circle"></i>
+                        <div>
+                          <strong>Gender:</strong> 
+                          <span class="text-muted"><%= user.sex || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-phone"></i>
+                        <div>
+                          <strong>Contact:</strong> 
+                          <span class="text-muted"><%= user.contact_number || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-map"></i>
+                        <div>
+                          <strong>Address:</strong> 
+                          <span class="text-muted"><%= user.address || 'N/A' %></span>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <i class="bx bx-time"></i>
+                        <div>
+                          <strong>Member Since:</strong> 
+                          <span class="text-muted"><%= new Date(user.create_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+        <!--/ Content wrapper: End -->
+        
+        <%- include('includes/footer.ejs') %>
+      </div>
+      <!-- / Layout page: End -->
+    </div>
+  </div>
+  <!-- Layout wrapper: End -->
+
+  <%- include('includes/scripts.ejs') %>
+</body>
 </html>

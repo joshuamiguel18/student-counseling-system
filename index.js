@@ -696,6 +696,26 @@ app.post('/messages/send', authenticateToken, async (req, res) => {
 
 
 
+// app.get('/messages', authenticateToken, async (req, res) => {
+//   const userid = req.user.user.id;
+
+//   try {
+//     const messagesResult = await pool.query(`
+//       SELECT * FROM appointment
+//       WHERE student_id = $1
+//         AND is_online_appointment = TRUE
+//         AND (status = 'completed' OR status = 'approved')
+//       ORDER BY id ASC
+//     `, [userid]);
+
+//     res.render('messages', {appointments: messagesResult.rows, user: req.user});
+//   } catch (error) {
+//     console.error("Error fetching messages:", error);
+//     res.status(500).send("Server Error");
+//   }
+// });
+
+
 app.get('/messages', authenticateToken, async (req, res) => {
   const userid = req.user.user.id;
 
@@ -704,16 +724,42 @@ app.get('/messages', authenticateToken, async (req, res) => {
       SELECT * FROM appointment
       WHERE student_id = $1
         AND is_online_appointment = TRUE
-        AND (status = 'completed' OR status = 'approved')
+        AND status = 'approved'
       ORDER BY id ASC
     `, [userid]);
 
-    res.render('messages', {appointments: messagesResult.rows, user: req.user});
+    res.render('messages', { appointments: messagesResult.rows, user: req.user });
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).send("Server Error");
   }
 });
+
+
+
+
+// app.get('/counselor/messages', authenticateTokenCounselor, async (req, res) => {
+//   const userid = req.user.user.id;
+
+//   try {
+//     const messagesResult = await pool.query(`
+//       SELECT * FROM appointment
+//       WHERE counselor_id = $1
+//         AND is_online_appointment = TRUE
+//         AND (status = 'completed' OR status = 'approved')
+//       ORDER BY id ASC
+//     `, [userid]);
+
+//     res.render('counselorPages/counselorMessages', {appointments: messagesResult.rows, user: req.user});
+//   } catch (error) {
+//     console.error("Error fetching messages:", error);
+//     res.status(500).send("Server Error");
+//   }
+// });
+
+
+
+// Route: Get messages for a specific appointment
 
 
 app.get('/counselor/messages', authenticateTokenCounselor, async (req, res) => {
@@ -724,11 +770,14 @@ app.get('/counselor/messages', authenticateTokenCounselor, async (req, res) => {
       SELECT * FROM appointment
       WHERE counselor_id = $1
         AND is_online_appointment = TRUE
-        AND (status = 'completed' OR status = 'approved')
+        AND status = 'approved'
       ORDER BY id ASC
     `, [userid]);
 
-    res.render('counselorPages/counselorMessages', {appointments: messagesResult.rows, user: req.user});
+    res.render('counselorPages/counselorMessages', {
+      appointments: messagesResult.rows,
+      user: req.user
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).send("Server Error");
@@ -737,7 +786,8 @@ app.get('/counselor/messages', authenticateTokenCounselor, async (req, res) => {
 
 
 
-// Route: Get messages for a specific appointment
+
+
 app.get('/messages/:appointmentId', async (req, res) => {
     const appointmentId = req.params.appointmentId;
 
@@ -877,7 +927,7 @@ app.get('/source-materials',authenticateToken, (req, res) => {
         'SELECT * FROM programs WHERE department_id = $1',
         [departmentId]
       );
-  
+      console.log(programResult.rows);
       // Render the form with the programs
       res.render('psycho-testing-form', {
         programs: programResult.rows,
@@ -899,7 +949,7 @@ app.get('/source-materials',authenticateToken, (req, res) => {
 // Get classes by program ID
 app.get('/getClassesByProgram/:programId', async (req, res) => {
   const programId = req.params.programId;
-
+  console.log("programId:" + programId);
   try {
     // Fetch classes related to the program
     const classResult = await pool.query(
@@ -1127,10 +1177,35 @@ app.get('/programs/:departmentId', async (req, res) => {
 
 
 
-app.get('/profile/:id',authenticateToken, (req, res) => {
-  
-  res.render('profile',{user: req.user.user}); // Ensure username is always defined
+app.get('/profile/:id', authenticateToken, async (req, res) => {
+  const studentId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+          s.*, 
+          c.class_name, 
+          d.name AS department_name, 
+          p.name AS program_name
+        FROM student s
+        LEFT JOIN class c ON s.class_id = c.id
+        LEFT JOIN departments d ON s.department_id = d.id
+        LEFT JOIN programs p ON s.program_id = p.id
+        WHERE s.id = $1;
+        `, [studentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Student not found");
+    }
+
+    res.render('profile', { user: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
 });
+
 
 
 app.get('/forums', authenticateToken, async (req, res) => {
