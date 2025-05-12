@@ -12,7 +12,7 @@
   <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
     <span class="position-relative">
       <i class="bx bx-bell bx-md"></i>
-      <% if (notifications.length > 0) { %>
+      <% if (notifications2.length > 0) { %>
         <span class="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle p-1">
           <span class="visually-hidden">New alerts</span>
         </span>
@@ -23,15 +23,15 @@
     <li class="dropdown-menu-header border-bottom px-3 py-2 d-flex justify-content-between align-items-center">
       <h6 class="mb-0">Notifications</h6>
       <div class="d-flex align-items-center">
-        <span class="badge bg-primary me-2"><%= notifications.length %> New</span>
-        <a href="/notifications/mark-all-read" class="text-muted" title="Mark all as read">
+        <span class="badge bg-primary me-2"><%= notifications2.length %> New</span>
+        <!-- <a href="/notifications/mark-all-read" class="text-muted" title="Mark all as read">
           <i class="bx bx-envelope-open bx-sm"></i>
-        </a>
+        </a> -->
       </div>
     </li>
 
     <li class="dropdown-notifications-list" style="max-height: 300px; overflow-y: auto;">
-      <% notifications.forEach(notification => { %>
+      <% notifications2.forEach(notification => { %>
         <li class="list-group-item list-group-item-action dropdown-notifications-item <%= notification.read_status ? 'read' : 'unread' %> px-3 py-2">
           <div class="d-flex align-items-start">
             <div class="me-3">

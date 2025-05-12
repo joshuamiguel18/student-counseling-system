@@ -241,7 +241,7 @@ const authenticateToken = async (req, res, next) => {
       notification.timeAgo = formatTimeAgo(notification.created_at);
     });
 
-    res.locals.notifications = notifications;
+    res.locals.notifications2 = notifications;
     next();
   } catch (err) {
     console.error('JWT error or DB error:', err);
@@ -304,7 +304,7 @@ const authenticateTokenCounselor = async (req, res, next) => {
       notification.timeAgo = formatTimeAgo(notification.created_at);
     });
 
-    res.locals.notifications = notifications;
+    res.locals.notifications2 = notifications;
     next();
   } catch (err) {
     console.error('JWT or DB error (counselor):', err);
@@ -562,23 +562,65 @@ app.get('/student/appointments/reschedule/:id', async (req, res) => {
 });
 
 
+// app.get('/student/appointments/approve/:id', async (req, res) => {
+//   const appointmentId = req.params.id;
+
+//   try {
+//     // Update the appointment status to 'approved'
+//     await pool.query(
+//       'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+//       ['approved', appointmentId] // Correct order of values
+//     );
+
+//     // Redirect back to the appointments page
+//     res.redirect('/appointments'); // Adjust the route as needed
+//   } catch (err) {
+//     console.error('Error approving appointment:', err);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+
 app.get('/student/appointments/approve/:id', async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
-    // Update the appointment status to 'approved'
+    // 1. Approve the appointment
     await pool.query(
       'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
-      ['approved', appointmentId] // Correct order of values
+      ['approved', appointmentId]
     );
 
-    // Redirect back to the appointments page
-    res.redirect('/appointments'); // Adjust the route as needed
+    // 2. Get appointment details
+    const result = await pool.query(
+      `
+      SELECT 
+        a.title, a.counselor_id,
+        TO_CHAR(a.appointment_date, 'FMMonth DD, YYYY') AS formatted_date
+      FROM appointment a
+      WHERE a.id = $1
+      `,
+      [appointmentId]
+    );
+
+    if (result.rows.length > 0) {
+      const { title, counselor_id, formatted_date } = result.rows[0];
+
+      // 3. Send notification to counselor only
+      const message = `Appointment "${title}" from ${formatted_date} has been approved.`;
+      await createNotification(counselor_id, 'counselor', message, 'appointment');
+    }
+
+    // 4. Redirect
+    res.redirect('/appointments');
   } catch (err) {
     console.error('Error approving appointment:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 
 // app.post('/appointments/check-availability', async (req, res) => {
@@ -682,8 +724,8 @@ app.post('/student/appointments/reschedule', async (req, res) => {
     `;
 
     await pool.query(updateQuery, [date, start_time, end_time, "counselor",appointment_id]);
-    createNotification(8, 'counselor', 'Your appointment has been rescheduled to ' + date 
-      +" at " + start_time + " - " + end_time, 'reschedule')
+    // createNotification(8, 'counselor', 'Your appointment has been rescheduled to ' + date 
+    //   +" at " + start_time + " - " + end_time, 'reschedule')
     // No conflicts, and within counselor's availability
     res.json({ available: true, message: 'Appointment rescheduled successfully and set for approval.' });
   } catch (err) {
@@ -694,40 +736,115 @@ app.post('/student/appointments/reschedule', async (req, res) => {
 
 
 
+// app.get('/counselor/appointments/approve/:id', async (req, res) => {
+//   const appointmentId = req.params.id;
+
+//   try {
+//     // Update the appointment status to 'approved'
+//     await pool.query(
+//       'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+//       ['approved', appointmentId]
+//     );
+
+//     // Redirect back to the appointments page
+//     res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+//   } catch (err) {
+//     console.error('Error approving appointment:', err);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+
 app.get('/counselor/appointments/approve/:id', async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
-    // Update the appointment status to 'approved'
+    // Update appointment status to 'approved'
     await pool.query(
       'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
       ['approved', appointmentId]
     );
 
-    // Redirect back to the appointments page
-    res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+    // Fetch appointment and student info for notification
+    const result = await pool.query(
+      `SELECT title, student_id, TO_CHAR(NOW(), 'FMMonth DD, YYYY') AS formatted_date
+       FROM appointment WHERE id = $1`,
+      [appointmentId]
+    );
+
+    const { title, student_id, formatted_date } = result.rows[0];
+
+    // Notification message
+    const message = `Your appointment "${title}" has been approved on ${formatted_date}.`;
+
+    // Create notification for the student
+    await createNotification(student_id, 'student', message, 'appointment');
+
+    // Redirect back
+    res.redirect('/counselor/appointments');
   } catch (err) {
     console.error('Error approving appointment:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
+// app.get('/counselor/appointments/completed/:id', async (req, res) => {
+//   const appointmentId = req.params.id;
+
+//   try {
+//     // Update the appointment status to 'approved'
+//     await pool.query(
+//       'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+//       ['completed', appointmentId]
+//     );
+
+//     // Redirect back to the appointments page
+//     res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+//   } catch (err) {
+//     console.error('Error approving appointment:', err);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+
 app.get('/counselor/appointments/completed/:id', async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
-    // Update the appointment status to 'approved'
-    await pool.query(
-      'UPDATE appointment SET status = $1, update_date = NOW() WHERE id = $2',
+    // Update the appointment status to 'completed'
+    const result = await pool.query(
+      `
+      UPDATE appointment 
+      SET status = $1, update_date = NOW() 
+      WHERE id = $2 
+      RETURNING title, student_id, TO_CHAR(appointment_date, 'FMMonth DD, YYYY') AS formatted_date
+      `,
       ['completed', appointmentId]
     );
 
-    // Redirect back to the appointments page
-    res.redirect('/counselor/appointments'); // Change to match your route for listing appointments
+    if (result.rows.length > 0) {
+      const { title, student_id, formatted_date } = result.rows[0];
+      const message = `Your appointment "${title}" that was scheduled on ${formatted_date} has been completed.`;
+
+      // Notify the student
+      await createNotification(student_id, 'student', message, 'appointment');
+
+      // Redirect to the appointments page
+      res.redirect('/counselor/appointments');
+    } else {
+      res.status(404).send('Appointment not found');
+    }
   } catch (err) {
-    console.error('Error approving appointment:', err);
+    console.error('Error completing appointment:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
+
 
 
 
@@ -1250,33 +1367,98 @@ app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res)
 
 
 
+// app.post('/appointments/reschedule', async (req, res) => {
+//   const { appointment_id, new_date, remarks } = req.body;
+//   console.log("reschedule")
+//   try {
+//     // Optional: Validate inputs here
+
+//     const updateQuery = `
+//       UPDATE appointment
+//       SET appointment_date = $1,
+//           remark = $2,
+//           update_date = NOW()
+//       WHERE id = $3
+//     `;
+
+//     await pool.query(updateQuery, [new_date, remarks, appointment_id]);
+
+//     // Redirect or send JSON depending on your app flow
+//     res.redirect('/appointments'); // or res.json({ success: true });
+//   } catch (err) {
+//     console.error('Error rescheduling appointment:', err);
+//     res.status(500).send('Something went wrong');
+//   }
+// });
+
+
+
 app.post('/appointments/reschedule', async (req, res) => {
   const { appointment_id, new_date, remarks } = req.body;
-  console.log("reschedule")
   try {
-    // Optional: Validate inputs here
-
     const updateQuery = `
       UPDATE appointment
       SET appointment_date = $1,
           remark = $2,
           update_date = NOW()
       WHERE id = $3
+      RETURNING title, counselor_id, TO_CHAR($1::timestamp, 'FMMonth DD, YYYY') AS formatted_date
     `;
 
-    await pool.query(updateQuery, [new_date, remarks, appointment_id]);
+    const result = await pool.query(updateQuery, [new_date, remarks, appointment_id]);
 
-    // Redirect or send JSON depending on your app flow
-    res.redirect('/appointments'); // or res.json({ success: true });
+    if (result.rows.length > 0) {
+      const { title, counselor_id, formatted_date } = result.rows[0];
+      const message = `Appointment "${title}" has been rescheduled to ${formatted_date}.`;
+      await createNotification(counselor_id, 'counselor', message, 'appointment');
+    }
+
+    res.redirect('/appointments');
   } catch (err) {
     console.error('Error rescheduling appointment:', err);
     res.status(500).send('Something went wrong');
   }
 });
 
+
+
+
+
+// app.post('/counselor/appointments/reschedule', async (req, res) => {
+//   const { appointment_id, new_date, start_time, end_time, remarks } = req.body;
+//   console.log(appointment_id, new_date, start_time, end_time)
+//   if (!appointment_id || !new_date || !start_time || !end_time) {
+//     return res.status(400).send('Missing required fields');
+//   }
+
+//   try {
+//     const updateQuery = `
+//       UPDATE appointment
+//       SET 
+//         appointment_date = $1,
+//         start_time = $2,
+//         end_time = $3,
+//         update_date = NOW(),
+//         remark = $4,
+//         turn_to_approve = 'student'
+//       WHERE id = $5
+//     `;
+
+//     await pool.query(updateQuery, [new_date, start_time, end_time, remarks, appointment_id]);
+
+//     // You can either redirect or respond with JSON
+//     res.redirect('/counselor/appointments'); // or res.json({ success: true });
+//   } catch (err) {
+//     console.error('Error rescheduling appointment:', err);
+//     res.status(500).send('Something went wrong');
+//   }
+// });
+
+
 app.post('/counselor/appointments/reschedule', async (req, res) => {
   const { appointment_id, new_date, start_time, end_time, remarks } = req.body;
-  console.log(appointment_id, new_date, start_time, end_time)
+  console.log(appointment_id, new_date, start_time, end_time);
+
   if (!appointment_id || !new_date || !start_time || !end_time) {
     return res.status(400).send('Missing required fields');
   }
@@ -1292,17 +1474,24 @@ app.post('/counselor/appointments/reschedule', async (req, res) => {
         remark = $4,
         turn_to_approve = 'student'
       WHERE id = $5
+      RETURNING title, student_id, TO_CHAR($1::timestamp, 'FMMonth DD, YYYY') AS formatted_date
     `;
 
-    await pool.query(updateQuery, [new_date, start_time, end_time, remarks, appointment_id]);
+    const result = await pool.query(updateQuery, [new_date, start_time, end_time, remarks, appointment_id]);
 
-    // You can either redirect or respond with JSON
-    res.redirect('/counselor/appointments'); // or res.json({ success: true });
+    if (result.rows.length > 0) {
+      const { title, student_id, formatted_date } = result.rows[0];
+      const message = `Your appointment "${title}" has been rescheduled to ${formatted_date}.`;
+      await createNotification(student_id, 'student', message, 'appointment');
+    }
+
+    res.redirect('/counselor/appointments');
   } catch (err) {
     console.error('Error rescheduling appointment:', err);
     res.status(500).send('Something went wrong');
   }
 });
+
 
 
 
@@ -2190,6 +2379,45 @@ app.get('/counselor/appointments', authenticateTokenCounselor, async (req, res) 
 // });
 
 
+// app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res) => {
+//   const { appointment_id, session_date, start_time, end_time, appointment_number, isOnlineAppointment } = req.body;
+
+//   try {
+//     const original = await pool.query(`SELECT * FROM appointment WHERE id = $1`, [appointment_id]);
+//     const data = original.rows[0];
+
+//     // Insert the new session
+//     await pool.query(
+//       `INSERT INTO appointment 
+//         (title, student_id, counselor_id, status, is_online_appointment, appointment_number, appointment_date, start_time, end_time)
+//        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+//       [
+//         data.title,
+//         data.student_id,
+//         data.counselor_id,
+//         'approved',
+//         isOnlineAppointment,
+//         appointment_number,
+//         session_date,
+//         start_time,
+//         end_time
+//       ]
+//     );
+
+//     // Update the original appointment to set already_added_new_session = true
+//     await pool.query(
+//       `UPDATE appointment SET already_added_new_session = true WHERE id = $1`,
+//       [appointment_id]
+//     );
+
+//     res.redirect('/counselor/appointments');
+//   } catch (err) {
+//     console.error('Error creating follow-up appointment:', err);
+//     res.status(500).send('Failed to schedule follow-up');
+//   }
+// });
+
+
 app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res) => {
   const { appointment_id, session_date, start_time, end_time, appointment_number, isOnlineAppointment } = req.body;
 
@@ -2221,6 +2449,19 @@ app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res)
       [appointment_id]
     );
 
+    // Get formatted session date for the notification
+    const formatted_date = await pool.query(
+      `SELECT TO_CHAR($1::timestamp, 'FMMonth DD, YYYY') AS formatted_date`,
+      [session_date]
+    );
+
+    const sessionDate = formatted_date.rows[0].formatted_date;
+
+    // Notify the student about the new session
+    const message = `A follow-up session for your appointment "${data.title}" has been scheduled for ${sessionDate}.`;
+
+    await createNotification(data.student_id, 'student', message, 'appointment');
+
     res.redirect('/counselor/appointments');
   } catch (err) {
     console.error('Error creating follow-up appointment:', err);
@@ -2229,26 +2470,68 @@ app.post('/counselor/sessions/new', authenticateTokenCounselor, async (req, res)
 });
 
 
+
+
+
 // POST route to end a session
+// app.post('/counselor/appointments/end-session/:id', authenticateTokenCounselor, async (req, res) => {
+//   const { id } = req.params; // Extract appointment ID from the URL
+//   try {
+//     // Update the appointment record to indicate that a new session has been added
+//     await pool.query(
+//       `UPDATE appointment SET already_added_new_session = true WHERE id = $1`,
+//       [id] // Use the appointment ID parameter
+//     );
+
+//     // Optionally, you can send a success response or redirect to a page
+//     req.flash('success', 'Session successfully ended.');
+//     res.redirect('/counselor/appointments'); // Redirecting to the appointments page
+
+//   } catch (error) {
+//     console.error('Error ending session:', error);
+//     req.flash('error', 'Failed to end session.');
+//     res.redirect('/counselor/appointments'); // Redirect back to appointments page in case of error
+//   }
+// });
+
+
+
 app.post('/counselor/appointments/end-session/:id', authenticateTokenCounselor, async (req, res) => {
-  const { id } = req.params; // Extract appointment ID from the URL
+  const { id } = req.params;
+
   try {
-    // Update the appointment record to indicate that a new session has been added
+    // Update appointment to indicate session has ended
     await pool.query(
       `UPDATE appointment SET already_added_new_session = true WHERE id = $1`,
-      [id] // Use the appointment ID parameter
+      [id]
     );
 
-    // Optionally, you can send a success response or redirect to a page
-    req.flash('success', 'Session successfully ended.');
-    res.redirect('/counselor/appointments'); // Redirecting to the appointments page
+    // Fetch appointment info for the notification
+    const result = await pool.query(
+      `SELECT title, student_id, TO_CHAR(NOW(), 'FMMonth DD, YYYY') AS formatted_date
+       FROM appointment WHERE id = $1`,
+      [id]
+    );
 
+    const { title, student_id, formatted_date } = result.rows[0];
+
+    // Create notification message
+    const message = `Your session for "${title}" has been marked as ended on ${formatted_date}.`;
+
+    // Insert notification into the database
+    await createNotification(student_id, 'student', message, 'appointment');
+
+    req.flash('success', 'Session successfully ended.');
+    res.redirect('/counselor/appointments');
   } catch (error) {
     console.error('Error ending session:', error);
     req.flash('error', 'Failed to end session.');
-    res.redirect('/counselor/appointments'); // Redirect back to appointments page in case of error
+    res.redirect('/counselor/appointments');
   }
 });
+
+
+
 
 
 
@@ -2421,30 +2704,70 @@ app.post('/login', async (req, res) => {
 });
 
 
+// app.post('/counselor/appointments/cancel/:id', async (req, res) => {
+//   const appointmentId = req.params.id;
+//   const { remarks } = req.body
+//   try {
+//     // Update the appointment's status to 'Cancelled'
+//     const result = await pool.query(
+//         `
+//         UPDATE appointment 
+//         SET 
+//           status = 'cancelled', 
+//           remark = $1
+//         WHERE id = $2 
+//         RETURNING *
+//         `,
+//         [remarks || null, appointmentId]
+//       );
+
+//     // Check if appointment was found and updated
+//     if (result.rows.length > 0) {
+//       // Redirect to the appointments page with a success message
+//       req.flash('success', 'Appointment has been successfully cancelled.');
+//       res.redirect('/counselor/appointments');
+//     } else {
+//       // If no appointment found
+//       req.flash('error', 'Appointment not found.');
+//       res.redirect('/counselor/appointments');
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     req.flash('error', 'Something went wrong while cancelling the appointment.');
+//     res.redirect('/counselor/appointments');
+//   }
+// });
+
+
+
+
 app.post('/counselor/appointments/cancel/:id', async (req, res) => {
   const appointmentId = req.params.id;
-  const { remarks } = req.body
-  try {
-    // Update the appointment's status to 'Cancelled'
-    const result = await pool.query(
-        `
-        UPDATE appointment 
-        SET 
-          status = 'cancelled', 
-          remark = $1
-        WHERE id = $2 
-        RETURNING *
-        `,
-        [remarks || null, appointmentId]
-      );
+  const { remarks } = req.body;
 
-    // Check if appointment was found and updated
+  try {
+    const result = await pool.query(
+      `
+      UPDATE appointment 
+      SET 
+        status = 'cancelled', 
+        remark = $1,
+        update_date = NOW()
+      WHERE id = $2 
+      RETURNING id, title, student_id, TO_CHAR(appointment_date, 'FMMonth DD, YYYY') AS formatted_date
+      `,
+      [remarks || null, appointmentId]
+    );
+
     if (result.rows.length > 0) {
-      // Redirect to the appointments page with a success message
+      const { title, student_id, formatted_date } = result.rows[0];
+      const message = `Your appointment "${title}" scheduled on ${formatted_date} has been cancelled.`;
+
+      await createNotification(student_id, 'student', message, 'appointment');
+
       req.flash('success', 'Appointment has been successfully cancelled.');
       res.redirect('/counselor/appointments');
     } else {
-      // If no appointment found
       req.flash('error', 'Appointment not found.');
       res.redirect('/counselor/appointments');
     }
@@ -2455,40 +2778,107 @@ app.post('/counselor/appointments/cancel/:id', async (req, res) => {
   }
 });
 
-app.post('/appointments/cancel/:id', async (req, res) => {
-    const appointmentId = req.params.id;
-    const { remark } = req.body;
-    try {
-      // Update the appointment's status to 'Cancelled'
 
-      const result = await pool.query(
-        `
-        UPDATE appointment 
-        SET 
-          status = 'cancelled', 
-          remark = $1
-        WHERE id = $2 
-        RETURNING *
-        `,
-        [remark || null, appointmentId]
-      );
 
-      // Check if appointment was found and updated
-      if (result.rows.length > 0) {
-        // Redirect to the appointments page with a success message
-        req.flash('success', 'Appointment has been successfully cancelled.');
-        res.redirect('/appointments');
-      } else {
-        // If no appointment found
-        req.flash('error', 'Appointment not found.');
-        res.redirect('/appointments');
-      }
-    } catch (err) {
-      console.error(err);
-      req.flash('error', 'Something went wrong while cancelling the appointment.');
-      res.redirect('/appointments');
+
+
+
+
+
+
+
+// app.post('/appointments/cancel/:id', async (req, res) => {
+//     const appointmentId = req.params.id;
+//     const { remark } = req.body;
+//     try {
+//       // Update the appointment's status to 'Cancelled'
+
+//       const result = await pool.query(
+//         `
+//         UPDATE appointment 
+//         SET 
+//           status = 'cancelled', 
+//           remark = $1
+//         WHERE id = $2 
+//         RETURNING *
+//         `,
+//         [remark || null, appointmentId]
+//       );
+
+//       // Check if appointment was found and updated
+//       if (result.rows.length > 0) {
+//         // Redirect to the appointments page with a success message
+//         req.flash('success', 'Appointment has been successfully cancelled.');
+//         res.redirect('/appointments');
+//       } else {
+//         // If no appointment found
+//         req.flash('error', 'Appointment not found.');
+//         res.redirect('/appointments');
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       req.flash('error', 'Something went wrong while cancelling the appointment.');
+//       res.redirect('/appointments');
+//     }
+//   });
+
+
+
+  app.post('/appointments/cancel/:id', async (req, res) => {
+  const appointmentId = req.params.id;
+  const { remark } = req.body;
+
+  try {
+    // 1. Cancel the appointment and return its details
+    const result = await pool.query(
+      `
+      UPDATE appointment 
+      SET 
+        status = 'cancelled', 
+        remark = $1
+      WHERE id = $2 
+      RETURNING *
+      `,
+      [remark || null, appointmentId]
+    );
+
+    // 2. If appointment not found
+    if (result.rows.length === 0) {
+      req.flash('error', 'Appointment not found.');
+      return res.redirect('/appointments');
     }
-  });
+
+    const appointment = result.rows[0];
+
+    // 3. Get extra details (title, student, counselor, formatted date)
+    const detailsQuery = `
+      SELECT 
+        a.title, a.student_id, a.counselor_id,
+        TO_CHAR(a.appointment_date, 'YYYY-MM-DD HH24:MI') AS formatted_date
+      FROM appointment a
+      WHERE a.id = $1
+    `;
+    const { rows } = await pool.query(detailsQuery, [appointmentId]);
+
+    if (rows.length > 0) {
+      const { title, student_id, counselor_id, formatted_date } = rows[0];
+
+      const counselorMsg = `The appointment "${title}" scheduled on ${formatted_date} has been cancelled.`;
+
+      await createNotification(counselor_id, 'counselor', counselorMsg, 'appointment');
+    }
+
+    req.flash('success', 'Appointment has been successfully cancelled.');
+    res.redirect('/appointments');
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Something went wrong while cancelling the appointment.');
+    res.redirect('/appointments');
+  }
+});
+
+
+
 
   app.get('/admin/appointments/cancel/:id', async (req, res) => {
     const appointmentId = req.params.id;

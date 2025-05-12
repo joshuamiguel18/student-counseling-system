@@ -160,15 +160,14 @@
                                     appointment.already_added_new_session===false) { %>
                                     <div class="text-center">
                                       <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#scheduleSessionModal" onclick="openScheduleModal(
-                                      <%= appointment.id %>,
-                                      '<%= appointment.title.replace(/'/g, " \\'") %>',
-                                        '<%= appointment.student_first_name %>
-                                          <%= appointment.student_last_name %>',
-                                            '<%= appointment.appointment_date %>',
+                                          data-bs-target="#scheduleSessionModal" onclick="openScheduleModal(
+                                              <%= appointment.id %>,
+                                              '<%= appointment.title.replace(/'/g, "\\'") %>',
+                                              '<%= appointment.student_first_name %> <%= appointment.student_last_name %>',
+                                              '<%= appointment.appointment_date %>',
                                               '<%= appointment.appointment_number %>'
-                                                )">
-                                                Add New Session
+                                          )">
+                                          Add New Session
                                       </button>
                                       <!-- End Session Button -->
                                       <button class="btn btn-sm btn-danger"
@@ -637,6 +636,7 @@
 
 
       function openScheduleModal(id, title, studentName, prevDate, appointmentNumber) {
+        console.log("TESTING SCHEDULE NEW SESSION")
         document.getElementById('appointmentIdInput').value = id;
         document.getElementById('sessionPurpose').innerText = title;
         document.getElementById('sessionStudent').innerText = studentName;
