@@ -39,7 +39,7 @@
                       <th>Year Level</th>
                       <th>Sex</th>
                       <th>Contact</th>
-                      <th>STUDENT ID IMAGE</th>
+                      <!-- <th>STUDENT ID IMAGE</th> -->
                       <th>Class</th>
                       <th>Mayor</th>
                       <th>Actions</th>
@@ -60,7 +60,7 @@
                           <td><%= student.year_level || 'N/A' %></td>
                           <td><%= student.sex || 'N/A' %></td>
                           <td><%= student.contact_number || 'N/A' %></td>
-                          <td>
+                          <!-- <td>
                             <% if (student.student_id_image_url) { %>
                               <img src="<%= student.student_id_image_url %>" alt="Student ID"
                                    class="img-thumbnail" style="max-width: 50px; cursor: pointer;"
@@ -69,7 +69,7 @@
                             <% } else { %>
                               NO ID IMAGE
                             <% } %>
-                          </td>
+                          </td> -->
                           <td><%= student.class.class_name || 'N/A' %></td>
                           
                           <td>

@@ -45,7 +45,6 @@
                         <th>Counselor</th>
                         <th>Status</th>
                         <th>Appointment Date</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -70,24 +69,7 @@
                             <td><%= new Date(appointment.appointment_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
 
 
-                            <td class="actions">
-                              <% if (appointment.status === 'pending') { %>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/admin/appointments/approve/<%= appointment.id %>')">
-                                  <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
-                                </a>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/admin/appointments/reject/<%= appointment.id %>')">
-                                  <i class="bi bi-x-circle-fill text-danger" title="Reject"></i>
-                                </a>
-                              <% } %>
-                              <% if (appointment.status === 'approved') { %>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Cancel', '/admin/appointments/cancel/<%= appointment.id %>')">
-                                  <i class="bi bi-x-circle-fill text-warning" title="Cancel"></i>
-                                </a>
-                              <% } %>
-                              <!-- <a href="#" data-bs-toggle="modal" data-bs-target="#editAppointmentModal" onclick="populateEditForm('<%= appointment.id %>', '<%= appointment.title %>', '<%= appointment.appointment_date %>', '<%= appointment.status %>')">
-                                <i class="bi bi-pencil-fill text-primary" title="Edit"></i>
-                              </a> -->
-                            </td>
+
                           </tr>
                           </tr>
                         <% }) %>

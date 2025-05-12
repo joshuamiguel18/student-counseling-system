@@ -20,56 +20,51 @@
 
                 
                 <!-- Desktop Table -->
-                <table id="table" class="table table-bordered">
-                  <thead>
-                    <tr>
-                      <th>Purpose</th>
-                      <th>Class</th>
-                      <th>Mayor</th>
-                      <th>Counselor</th>
-                      <th>Test Number</th>
-                      <th>Status</th>
-                      <th>Test Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (tests.length > 0) { %>
-                      <% tests.forEach(test => { %>
-                        <tr>
-                          <td><%= test.test_title %></td>
-                          <td><%= test.class_name %></td>
-                          <td><%= test.mayor_first_name %> <%= test.mayor_last_name %></td>
-                          <td><%= test.counselor_first_name %> <%= test.counselor_last_name %></td>
-                          <td><%= test.test_number %></td>
-                          <td>
-                            <span class="badge 
-                              <%= test.status === 'approved' ? 'bg-label-success' : 
-                                  test.status === 'pending' ? 'bg-label-warning' : 
-                                  test.status === 'rejected' ? 'bg-label-danger' : 
-                                  'bg-label-default' %>">
-                              <%= test.status %>
-                            </span>
-                          </td>
-                          <td><%= new Date(test.test_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
-                          <td class="actions">
-                            <% if (test.status === 'pending') { %>
-                              <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Approve', '/psycho-tests/approve/<%= test.id %>')">
-                                <i class="bi bi-check-circle-fill text-success" title="Approve"></i>
-                              </a>
-                              <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal" onclick="setModal('Reject', '/psycho-tests/reject/<%= test.id %>')">
-                                <i class="bi bi-x-circle-fill text-danger" title="Reject"></i>
-                              </a>
-                            <% } %>
-                            
-                          </td>
-                        </tr>
-                      <% }) %>
-                    <% } else { %>
-                      <tr><td colspan="9" class="text-center">No psychological tests found.</td></tr>
-                    <% } %>
-                  </tbody>
-                </table>
+<table id="psychoTestTable" class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Test #</th>
+      <th>Title</th>
+      <th>Test Date</th>
+      <th>Type</th>
+      <th>Status</th>
+      <th>Remarks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (tests.length > 0) { %>
+      <% tests.forEach(test => { %>
+        <tr>
+          <td><%= test.test_number %></td>
+          <td><%= test.test_title %></td>
+          <td><%= test.formatted_test_date %></td>
+          <td><%= test.test_type %></td>
+          <td>
+            <span class="badge 
+              <%= test.status === 'approved' ? 'bg-label-success' : 
+                  test.status === 'pending' ? 'bg-label-warning' : 
+                  test.status === 'cancelled' ? 'bg-label-danger' : 
+                  'bg-label-primary' %>">
+              <%= test.status.toUpperCase() %>
+            </span>
+          </td>
+          <td><%= test.remark || 'N/A' %></td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr>
+        <td colspan="6" class="text-center">
+          No psycho tests found. 
+          <% if (user.role === 'admin') { %>
+            <a href="/admin/psycho-testing/create" class="btn btn-sm btn-primary ms-2">
+              Create New Test
+            </a>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
                 
 
               </div>

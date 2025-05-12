@@ -45,4 +45,29 @@ const sendVerificationEmail = async (email, token) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = sendVerificationEmail;
+
+const sendAccountCredentialsEmail = async (email, username, password) => {
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: "Your EagleMind Student Account Credentials",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f4f8fb;">
+        <h2 style="color: #2c3e50;">Welcome to EagleMind 🦅</h2>
+        <p style="font-size: 16px;">Here are your student account login details:</p>
+        <ul style="font-size: 16px;">
+          <li><strong>Username:</strong> ${username}</li>
+          <li><strong>Password:</strong> ${password}</li>
+        </ul>
+        <p>Please log in and change your password after your first login for security purposes.</p>
+        <hr style="border: none; border-top: 1px solid #ddd;">
+        <p style="color: #95a5a6; font-size: 12px;">If you didn't sign up, please ignore this message.</p>
+      </div>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+
+module.exports = { sendVerificationEmail, sendAccountCredentialsEmail };

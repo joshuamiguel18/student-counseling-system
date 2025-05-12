@@ -5,7 +5,8 @@ const pool = require('./db')
 const app = express();
 const multer = require("multer");
 const crypto = require("crypto");
-const sendVerificationEmail = require("./emailService");
+const { sendVerificationEmail, sendAccountCredentialsEmail } = require("./emailService");
+
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
@@ -880,12 +881,85 @@ app.get('/', authenticateToken, (req, res) => {
 
 
 
+// app.get('/student-app', authenticateToken, async (req, res) => {
+//   try {
+//     const studentId = req.user.user.id;
+//     // 1. Get all appointments
+//     const appointmentResult = await pool.query(
+//       'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC',
+//       [studentId]
+//     );
+
+//     // 2. Get today's mood
+//     const moodResult = await pool.query(`
+//       SELECT emotion, create_date 
+//       FROM mood 
+//       WHERE student_id = $1 
+//         AND DATE(create_date) = CURRENT_DATE
+//       ORDER BY create_date DESC 
+//       LIMIT 1;
+//     `, [studentId]);
+
+//     const todayMood = moodResult.rows.length > 0 ? moodResult.rows[0] : null;
+
+//     // 3. Check if student is class mayor
+//     const mayorResult = await pool.query(
+//       'SELECT is_class_mayor FROM student WHERE id = $1',
+//       [studentId]
+//     );
+
+//     const isClassMayor = mayorResult.rows[0]?.is_class_mayor || false;
+
+//     // 4. Count appointment statuses
+//     const countResult = await pool.query(`
+//       SELECT 
+//         COUNT(*) AS total,
+//         COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+//         COUNT(*) FILTER (WHERE status = 'completed') AS completed
+//       FROM appointment
+//       WHERE student_id = $1
+//     `, [studentId]);
+
+//     const counts = countResult.rows[0];
+
+//     // 5. Render view
+//     res.render('student-app', {
+//       user: req.user.user,
+//       appointments: appointmentResult.rows,
+//       todayMood,
+//       isClassMayor,
+//       appointmentStats: {
+//         total: parseInt(counts.total),
+//         pending: parseInt(counts.pending),
+//         completed: parseInt(counts.completed)
+//       }
+//     });
+
+//   } catch (err) {
+//     console.error('Error loading student app:', err);
+//     res.status(500).render('student-app', {
+//       error: 'Error fetching data',
+//       user: req.user.user,
+//       appointments: [],
+//       todayMood: null,
+//       isClassMayor: false,
+//       appointmentStats: {
+//         total: 0,
+//         pending: 0,
+//         completed: 0
+//       }
+//     });
+//   }
+// });
+
+
 app.get('/student-app', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
-    // 1. Get all appointments
+
+    // 1. Get all appointments for the student
     const appointmentResult = await pool.query(
-      'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC',
+      'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC LIMIT 4',
       [studentId]
     );
 
@@ -921,7 +995,18 @@ app.get('/student-app', authenticateToken, async (req, res) => {
 
     const counts = countResult.rows[0];
 
-    // 5. Render view
+    // 5. Get the two latest readings/resources
+    const readingsResult = await pool.query(`
+      SELECT r.id, r.title, r.description, c.name AS category, r.read_time AS duration
+      FROM resources r
+      LEFT JOIN categories c ON r.category_id = c.id
+      ORDER BY r.created_at DESC
+      LIMIT 2;
+    `);
+
+    const recommendedReadings = readingsResult.rows;
+
+    // 6. Render the view
     res.render('student-app', {
       user: req.user.user,
       appointments: appointmentResult.rows,
@@ -931,7 +1016,8 @@ app.get('/student-app', authenticateToken, async (req, res) => {
         total: parseInt(counts.total),
         pending: parseInt(counts.pending),
         completed: parseInt(counts.completed)
-      }
+      },
+      recommendedReadings
     });
 
   } catch (err) {
@@ -946,10 +1032,15 @@ app.get('/student-app', authenticateToken, async (req, res) => {
         total: 0,
         pending: 0,
         completed: 0
-      }
+      },
+      recommendedReadings: []
     });
   }
 });
+
+
+
+
 
 app.get('/source-materials',authenticateToken, (req, res) => {
   res.render('source-materials', { user: req.user.user }); 
@@ -1710,31 +1801,38 @@ app.get('/admin/appointments',authenticateTokenAdmin, async (req, res) => {
 
 app.get('/admin/psycho-testing', authenticateTokenAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-          psycho_tests.id,
-          class.class_name AS class_name,
-          psycho_tests.test_title,
-          psycho_tests.status,
-          psycho_tests.test_date,
-          psycho_tests.test_number,
-          mayor.first_name AS mayor_first_name,
-          mayor.last_name AS mayor_last_name,
-          counselor.first_name AS counselor_first_name,
-          counselor.last_name AS counselor_last_name
-      FROM psycho_tests
-      JOIN student AS test_taker ON psycho_tests.student_id = test_taker.id
-      JOIN counselor ON psycho_tests.counselor_id = counselor.id
-      JOIN class ON psycho_tests.class_id = class.id
-      LEFT JOIN student AS mayor ON mayor.class_id = class.id AND mayor.is_class_mayor = true
-      ORDER BY psycho_tests.test_date DESC
-    `);
+    console.log('Fetching psycho tests...'); // Debug log
+    
+    // Simple query to get all tests without joins
+    const result = await pool.query('SELECT * FROM psycho_tests ORDER BY test_date DESC');
+    
+    console.log('Raw test data:', result.rows); // Debug log
+    
+    const tests = result.rows.map(test => ({
+      ...test,
+      test_type: test.is_online_test ? 'Online' : 'In-Person',
+      formatted_test_date: new Date(test.test_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    }));
 
-    const tests = result.rows;
-
-    res.render('adminPages/psycho-testing-admin', { tests, user: req.user.user });
+    console.log('Processed tests:', tests); // Debug log
+    
+    res.render('adminPages/psycho-testing-admin', { 
+      tests, 
+      user: req.user.user,
+      statusOptions: ['pending', 'approved', 'completed', 'cancelled'],
+      approvalTurnOptions: ['counselor', 'admin']
+    });
+    
   } catch (err) {
-    console.error('Error fetching psycho tests:', err);
+    console.error('Full error details:', {
+      message: err.message,
+      stack: err.stack,
+      query: err.query 
+    });
     res.status(500).send('Server Error');
   }
 });
@@ -4299,6 +4397,82 @@ app.post('/savePsychotesting', async (req, res) => {
 
 
 
+// app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).json({ success: false, message: 'No file uploaded' });
+//   }
+
+//   const students = [];
+
+//   try {
+//     const readable = new stream.Readable();
+//     readable._read = () => {}; // No-op
+//     readable.push(req.file.buffer);
+//     readable.push(null); // End of stream
+
+//     readable
+//       .pipe(csv())
+//       .on('data', (row) => {
+//         students.push(row);
+//       })
+//       .on('end', async () => {
+//         try {
+//           for (const student of students) {
+//             await pool.query(
+//               `INSERT INTO student (
+//                 username, password, email, first_name, middle_name, last_name,
+//                 is_class_mayor, class_id, create_date, update_date, student_id_image,
+//                 id_num, middle_initial, year_level, sex, contact_number, address,
+//                 department_id, program_id, is_verified
+//               ) VALUES (
+//                 $1, $2, $3, $4, $5, $6,
+//                 $7, $8, $9, $10, $11,
+//                 $12, $13, $14, $15, $16, $17,
+//                 $18, $19, $20
+//               )`,
+//               [
+//                 student.username,
+//                 student.password,
+//                 student.email,
+//                 student.first_name,
+//                 student.middle_name || null,
+//                 student.last_name,
+//                 student.is_class_mayor?.toLowerCase() === 'true',
+//                 parseInt(student.class_id) || null,
+//                 student.create_date || new Date(),
+//                 student.update_date || new Date(),
+//                 student.student_id_image,
+//                 student.id_num,
+//                 student.middle_initial || null,
+//                 parseInt(student.year_level) || null,
+//                 student.sex,
+//                 student.contact_number,
+//                 student.address,
+//                 parseInt(student.department_id) || null,
+//                 parseInt(student.program_id) || null,
+//                 student.is_verified?.toLowerCase() === 'true'
+//               ]
+//             );
+            
+//           }
+//           res.redirect('/import');
+//           //return res.json({ success: true, processed: students.length });
+//         } catch (err) {
+//           console.error('Error inserting students:', err);
+//           return res.status(500).json({ success: false, message: 'Database insert failed' });
+//         }
+//       })
+//       .on('error', (err) => {
+//         console.error('CSV parsing error:', err);
+//         return res.status(400).json({ success: false, message: 'Invalid CSV format' });
+//       });
+//   } catch (err) {
+//     console.error('Unexpected error:', err);
+//     return res.status(500).json({ success: false, message: 'Server error' });
+//   }
+// });
+
+
 app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -4320,6 +4494,10 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
       .on('end', async () => {
         try {
           for (const student of students) {
+            // Hash password
+            const hashedPassword = await bcrypt.hash(student.password, 10);
+
+            // Insert student
             await pool.query(
               `INSERT INTO student (
                 username, password, email, first_name, middle_name, last_name,
@@ -4334,7 +4512,7 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
               )`,
               [
                 student.username,
-                student.password,
+                hashedPassword,
                 student.email,
                 student.first_name,
                 student.middle_name || null,
@@ -4352,13 +4530,15 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
                 student.address,
                 parseInt(student.department_id) || null,
                 parseInt(student.program_id) || null,
-                student.is_verified?.toLowerCase() === 'true'
+                true
               ]
             );
-            
+
+            // Send account credentials email (raw password)
+            await sendAccountCredentialsEmail(student.email, student.username, student.password);
           }
+
           res.redirect('/import');
-          //return res.json({ success: true, processed: students.length });
         } catch (err) {
           console.error('Error inserting students:', err);
           return res.status(500).json({ success: false, message: 'Database insert failed' });
@@ -4373,7 +4553,6 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 });
-
 
 
 
@@ -5368,7 +5547,7 @@ app.get('/admin-summary', async (req, res) => {
     // Pie chart: counselor counts
     const counselorNames = counselorStats.map(c => c.name);
     const counselorCounts = counselorStats.map(c => parseInt(c.total));
-
+    
     res.render('adminPages/admin-reports', {
       summary,
       counselorStats,

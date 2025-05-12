@@ -1,274 +1,373 @@
 <!DOCTYPE html>
 
-<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django"
+  data-template="vertical-menu-free">
 
-  <head>
-	<%- include('includes/head.ejs') %>
+<head>
+  <%- include('includes/head.ejs') %>
+    <style>
+      .book-now-container {
+        border: 2px solid #6c63ff;
+        width: 180px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
 
+      .book-now-icon {
+        width: 30px;
+        height: 30px;
+        background-color: #bcb9ff;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
 
+      .book-now-btn:hover .book-now-container {
+        background-color: #f0f0ff;
+        transform: translateY(-2px);
+      }
 
-  </head>
+      .book-now-btn:hover .book-now-icon {
+        background-color: #6c63ff;
+        transform: scale(1.1);
+      }
 
-  <body>
-	<!-- Layout wrapper: Start -->
-	<div class="layout-wrapper layout-content-navbar">
-	  <div class="layout-container">
-	
-		<%- include('includes/sidebar.ejs') %>
-	
-		<!-- Layout page: Start -->
-		<div class="layout-page">
-	
-	
-		  <!-- Navbar: Start -->
-		  <%- include('includes/header.ejs') %>
-		  <!-- Navbar: End -->
-	
-	
-		  <!-- Content wrapper: Start -->
-		  <div class="content-wrapper">
-			<!-- Content: Start -->
-			<div class="container-xxl flex-grow-1 container-p-y">
-
-				
-        
-                <div class="card bg-transparent shadow-none my-6 border-0">
-                    <div class="card-body row p-0 pb-6 g-6">
-
-
-                     
-                      
-                 
-                      
+      .book-now-btn:hover i {
+        color: #fff;
+      }
+    </style>
 
 
-                      <div class="col-12 col-lg-8">
-                        <% if (isClassMayor) { %>
-                            <h5 class="mb-2">Welcome back Mayor,  <%= user.first_name %>  <%= user.last_name %>👋🏻</h5>
-                          <% } else { %>
-                            <h5 class="mb-2">Welcome back,  <%= user.first_name %>  <%= user.last_name %>👋🏻</h5>
-                      
-                          <% } %>
-                          <% if (user.class_id) { %>
-                          <p class="mb-2">Your are in class <span class="font-bold"><%= user.class_name %></span> </p>
-                        <% } else { %>
-                          <h5 class="mb-2">You don't have a class yet.</h5>
-                          
-                          <% } %>
-                        <div class="col-12">
-                            <p>Your mental health journey is important, and we're here to support you. Let's take the next step together and schedule your student counseling appointment for a healthier, happier you!</p>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between flex-wrap gap-4 me-12">
-                          <div class="d-flex align-items-center gap-4 me-6 me-sm-0">
-                            <div class="avatar avatar-lg">
-                              <div class="avatar-initial bg-label-primary rounded">
-                                <div>
-                                    <i class='bx bx-calendar'></i>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="content-right">
-                              <p class="mb-0 fw-medium">Appointments</p>
-                              <h4 class="text-primary mb-0"><%= appointmentStats.total %></h4>
-                            </div>
-                          </div>
-                          <div class="d-flex align-items-center gap-4">
-                            <div class="avatar avatar-lg">
-                              <div class="avatar-initial bg-label-info rounded">
-                                <div>
-                                  <i class='bx bx-calendar'></i>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="content-right">
-                              <p class="mb-0 fw-medium">Completed Appointments</p>
-                              <h4 class="text-info mb-0"><%= appointmentStats.completed %></h4>
-                            </div>
-                          </div>
-                          <div class="d-flex align-items-center gap-4">
-                            <div class="avatar avatar-lg">
-                              <div class="avatar-initial bg-label-warning rounded">
-                                <div>
-                                  <i class='bx bx-calendar'></i>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="content-right">
-                              <p class="mb-0 fw-medium">Pending Appointments </p>
-                              <h4 class="text-warning mb-0"><%= appointmentStats.pending %></h4>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+</head>
 
-                    </div>
-                  </div>
-              
-                  <div class="row mb-6 g-6 ">
-                    <div class="col-12 col-xl-4 col-md-6">
-                      <div class="card h-100">
+<body>
+  <!-- Layout wrapper: Start -->
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+
+      <%- include('includes/sidebar.ejs') %>
+
+        <!-- Layout page: Start -->
+        <div class="layout-page">
+
+
+          <!-- Navbar: Start -->
+          <%- include('includes/header.ejs') %>
+            <!-- Navbar: End -->
+
+
+            <!-- Content wrapper: Start -->
+            <div class="content-wrapper">
+              <!-- Content: Start -->
+              <div class="container-xxl flex-grow-1 container-p-y">
+
+                <div class="order-lg-2 order-1 align-self-end overflow-hidden">
+                  <div class="card  bg-primary">
+                    <div class="d-flex align-items-start row  text-white">
+                      <div class="col-sm-7">
                         <div class="card-body">
-                          <div class="bg-label-primary rounded-3 text-center mb-4 overflow-hidden">
-                            <img class="img-fluid" src="/images/ChatGPT Image Apr 12, 2025, 09_17_11 PM.png" alt="Card girl image" style="width: 100%; height: 150px; object-fit: cover;">
-                          </div>
-                          <h5 class="mb-2">Your Feelings</h5>
-                          <p>Tap the button to choose your mood today!</p>
-                    
-                          <% if (!todayMood) { %>
-                            <!-- If no mood has been selected, show the button -->
-                            <div class="col-12 text-center">
-                              <button type="button" class="btn btn-outline-success w-100 d-grid" data-bs-toggle="modal" data-bs-target="#moodModal">
-                                Mood for today
-                              </button>
-                            </div>
-                          <% } else { %>
-                            <!-- If mood is already selected, show the selected mood -->
-                            <div class="col-12 text-center">
-                              <div class="alert alert-info" role="alert">
-                                You already selected a mood today: 
-                                <span class="fs-3">
-                                  <%= todayMood.emotion === 'happy' ? '😊' :
-                                      todayMood.emotion === 'sad' ? '😢' :
-                                      todayMood.emotion === 'angry' ? '😠' :
-                                      todayMood.emotion === 'excited' ? '🤩' :
-                                      todayMood.emotion === 'relaxed' ? '😌' : '😶' %>
-                                </span> 
-                                (<%= todayMood.emotion %>)
-                              </div>
-                            </div>
-                          <% } %>
+
+                          <% if (isClassMayor) { %>
+                            <h5 class="mb-2  text-white">Welcome back Mayor, <%= user.first_name %>
+                                <%= user.last_name %>👋🏻</h5>
+                            <% } else { %>
+                              <h5 class="mb-2  text-white">Welcome back, <%= user.first_name %>
+                                  <%= user.last_name %>👋🏻</h5>
+
+                              <% } %>
+
+                                <% if (user.class_id) { %>
+                                  <h5 class="mb-2">You are in class <span class="font-bold">
+                                      <%= user.class_name %>
+                                    </span> </h5>
+                                  <% } else { %>
+                                    <h5 class="mb-2">You don't have a class yet.</h5>
+
+                                    <% } %>
+
+                                      <h5 class="mb-2  text-white">
+                                        Your Mental Health Journey Matters.
+                                      </h5>
+                                      <p class="mb-6">Schedule your student counseling appointment now for a healthier,
+                                        happier you!
+                                      </p>
+                                      <a href="/appointment-form" class="text-decoration-none book-now-btn">
+                                        <div
+                                          class="d-flex align-items-center justify-content-between px-5 py-2 rounded-pill bg-white shadow book-now-container">
+                                          <span class="text-dark fw-medium mb-0">Book Now</span>
+                                          <div
+                                            class="d-flex align-items-center justify-content-center rounded-circle book-now-icon">
+                                            <i class="bx bx-chevron-right text-white mb-0"></i>
+                                          </div>
+                                        </div>
+                                      </a>
+
                         </div>
                       </div>
-                    </div>
-                    
-                        <div class="col-md mb-md-0 mb-5">
+                      <div class="col-sm-5 text-center text-sm-left">
+  <div class="card-body pb-0 px-0 px-md-6">
+    <img
+      src="/images/stars.png"
+      style="height: 250px;"
+      alt="stars"
+      class="d-none d-sm-block">
+  </div>
+</div>
 
-
-
-
-
-
-                            <div class="form-check custom-option custom-option-icon checked" style="width: 250px;">
-                            
-                                <a href="/appointment-form">
-                                    <label class="form-check-label custom-option-content" for="customRadioIcon1" >
-                                        <span class="custom-option-body">
-                                        <i class="bx bx-calendar-edit"></i>
-                                        <span class="custom-option-title">Book Appointment</span>
-                                        </span>
-                                        <i class='bx bx-message-square-add' ></i>
-                                    </label>
-                                </a>
-                            </div>
-                            
-
-                        </div>
-                        <% if (isClassMayor) { %>
-                          <div class="col-md mb-md-0 mb-5">
-
-
-
-
-
-
-                            
-
-                          </div>
-                        <% } %>
-                  </div>
-
-                  <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="moodModalLabel">Choose Your Mood</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                          <div class="d-flex justify-content-center flex-wrap gap-3">
-                            <!-- Example Mood Emojis with tooltips -->
-                            <a href="/mood/happy/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Happy">😊</a>
-                            <a href="/mood/sad/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Sad">😢</a>
-                            <a href="/mood/angry/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Angry">😠</a>
-                            <a href="/mood/excited/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Excited">🤩</a>
-                            <a href="/mood/relaxed/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relaxed">😌</a>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
-	
-			  <!-- / Content: End -->
-	
-			  <!-- Footer: Start -->
-			  <!-- Footer: End -->
+                </div>
 
-	
-			  <div class="content-backdrop fade"></div>
-			</div>
-			<!--/ Content wrapper: End -->
-		  </div>
-		  <!-- / Layout page: End -->
-		  <%- include('includes/footer.ejs') %>
+                <div class="card bg-transparent shadow-none my-6 border-0">
+                  <div class="card-body row p-8 pb-6 g-6 px-0">
 
-		</div>
-	
-		<!-- Overlay -->
-		<div class="layout-overlay layout-menu-toggle"></div>
-		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
-		<div class="drag-target"></div>
-	  </div>
-	  <!-- Layout wrapper: End -->
-	
 
-    <!-- Mood Submitted Modal -->
-<div class="modal fade" id="moodSubmittedModal" tabindex="-1" aria-labelledby="moodSubmittedModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content text-center">
-      <div class="modal-header">
-        <h5 class="modal-title" id="moodSubmittedModalLabel">Mood Submitted</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+
+<div class="row g-4">
+
+  <!-- Total Appointments -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="d-flex align-items-center border p-3 rounded shadow-sm bg-white h-100">
+      <div class="avatar avatar-lg me-3">
+        <div class="avatar-initial rounded bg-label-primary border border-3 border-primary">
+          <i class='bx bx-calendar fs-4 text-primary'></i>
+        </div>
       </div>
-      <div class="modal-body">
-        <p class="fs-4">🎉 Thanks for sharing your mood!</p>
-        <p class="text-muted">Your mood has been recorded successfully.</p>
+      <div>
+        <p class="mb-0 fw-medium text-muted">Total Appointments</p>
+        <h4 class="text-primary mb-0"><%= appointmentStats.total %></h4>
       </div>
-      <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-success" data-bs-dismiss="modal">Awesome!</button>
+    </div>
+  </div>
+
+  <!-- Completed Appointments -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="d-flex align-items-center border p-3 rounded shadow-sm bg-white h-100">
+      <div class="avatar avatar-lg me-3">
+        <div class="avatar-initial rounded bg-info bg-opacity-25">
+          <i class='bx bx-calendar-check fs-4 text-info'></i>
+        </div>
+      </div>
+      <div>
+        <p class="mb-0 fw-medium text-muted">Completed Appointments</p>
+        <h4 class="text-info mb-0"><%= appointmentStats.completed %></h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Appointments -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="d-flex align-items-center border p-3 rounded shadow-sm bg-white h-100">
+      <div class="avatar avatar-lg me-3">
+        <div class="avatar-initial rounded bg-warning bg-opacity-25">
+          <i class='bx bx-time-five fs-4 text-warning'></i>
+        </div>
+      </div>
+      <div>
+        <p class="mb-0 fw-medium text-muted">Pending Appointments</p>
+        <h4 class="text-warning mb-0"><%= appointmentStats.pending %></h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Available Psycho Tests -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="d-flex align-items-center border p-3 rounded shadow-sm bg-white h-100">
+      <div class="avatar avatar-lg me-3">
+        <div class="avatar-initial rounded bg-danger bg-opacity-25">
+          <i class='bx bx-brain fs-4 text-danger'></i>
+        </div>
+      </div>
+      <div>
+        <p class="mb-0 fw-medium text-muted">Available Psycho Tests</p>
+        <h4 class="text-danger mb-0"><%= appointmentStats.psychoTests || 0 %></h4>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+                  </div>
+                </div>
+
+<div class="row">
+  <!-- Left Column - Your Feelings -->
+<div class="col-md-4">
+  <div class="card h-100">
+    <div class="card-body text-center">
+      <!-- Mood Image -->
+      <div class="bg-label-primary rounded-3 mb-3 overflow-hidden">
+        <img class="img-fluid" 
+             src="/images/ChatGPT Image Apr 12, 2025, 09_17_11 PM.png" 
+             alt="Mood Image" 
+             style="width: 100%; height: 150px; object-fit: cover;">
+      </div>
+      
+      <h5 class="mb-2">Your Feelings</h5>
+      <p class="text-muted mb-3">Tap the button to choose your mood today!</p>
+      
+      <% if (!todayMood) { %>
+        <button type="button" 
+                class="btn btn-primary w-100" 
+                data-bs-toggle="modal" 
+                data-bs-target="#moodModal">
+          Select your mood today
+        </button>
+      <% } else { %>
+        <div class="alert alert-info mt-2" role="alert">
+          You already selected a mood today:
+          <span class="fs-3">
+            <%= todayMood.emotion === 'happy' ? '😊' : 
+                 todayMood.emotion === 'sad' ? '😢' : 
+                 todayMood.emotion === 'angry' ? '😠' : 
+                 todayMood.emotion === 'excited' ? '🤩' : 
+                 todayMood.emotion === 'relaxed' ? '😌' : '😶' %>
+          </span>
+          <div class="mt-2 small">(<%= todayMood.emotion %>)</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+  <!-- Right Column - My Appointments -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">My Appointments</h5>
+    <a href="/appointments" class="btn btn-link text-decoration-none">See All</a>
+  </div>
+        
+        <div class="appointments-container">
+          <% appointments.forEach((appt) => { %>
+            <div class="appointment-card mb-3 p-3 border rounded">
+              <div class="d-flex align-items-start">
+                <div class="appointment-icon me-3">
+                  <i class='bx bx-calendar-check fs-4 text-primary'></i>
+                </div>
+                <div class="appointment-details flex-grow-1">
+                  <h6 class="mb-1 text-primary"><%= appt.concern %></h6>
+                  <p class="mb-1 small"><strong>Counselor:</strong> <%= appt.counselor %></p>
+                  <p class="mb-0 small"><strong>Date:</strong> <%= new Date(appt.appointment_date).toLocaleDateString('en-US', { 
+                    month: 'numeric', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %></p>
+                </div>
+                <span class="badge bg-<%= appt.status === 'completed' ? 'success' : appt.status === 'pending' ? 'warning' : 'primary' %>">
+                  <%= appt.status %>
+                </span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 
+                <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalLabel"
+                  aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="moodModalLabel">Choose Your Mood</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body text-center">
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                          <!-- Example Mood Emojis with tooltips -->
+                          <a href="/mood/happy/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Happy">😊</a>
+                          <a href="/mood/sad/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Sad">😢</a>
+                          <a href="/mood/angry/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Angry">😠</a>
+                          <a href="/mood/excited/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Excited">🤩</a>
+                          <a href="/mood/relaxed/<%= user.id %>" class="fs-1" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Relaxed">😌</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-	  <%- include('includes/scripts.ejs') %>
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
+                <!-- / Content: End -->
+
+                <!-- Footer: Start -->
+                <!-- Footer: End -->
+
+
+                <div class="content-backdrop fade"></div>
+              </div>
+              <!--/ Content wrapper: End -->
+            </div>
+            <!-- / Layout page: End -->
+            <%- include('includes/footer.ejs') %>
+
+        </div>
+
+        <!-- Overlay -->
+        <div class="layout-overlay layout-menu-toggle"></div>
+        <!-- Drag Target Area To SlideIn Menu On Small Screens -->
+        <div class="drag-target"></div>
+    </div>
+    <!-- Layout wrapper: End -->
+
+
+    <!-- Mood Submitted Modal -->
+    <div class="modal fade" id="moodSubmittedModal" tabindex="-1" aria-labelledby="moodSubmittedModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+          <div class="modal-header">
+            <h5 class="modal-title" id="moodSubmittedModalLabel">Mood Submitted</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="fs-4">🎉 Thanks for sharing your mood!</p>
+            <p class="text-muted">Your mood has been recorded successfully.</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Awesome!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <%- include('includes/scripts.ejs') %>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+          tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+          });
         });
-      });
-      document.addEventListener('DOMContentLoaded', function () {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('submittedMood') === 'true') {
-      const modal = new bootstrap.Modal(document.getElementById('moodSubmittedModal'));
-      modal.show();
+        document.addEventListener('DOMContentLoaded', function () {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('submittedMood') === 'true') {
+            const modal = new bootstrap.Modal(document.getElementById('moodSubmittedModal'));
+            modal.show();
 
-      // Optional: remove query param from URL without reloading
-      const url = new URL(window.location);
-      url.searchParams.delete('submittedMood');
-      window.history.replaceState({}, document.title, url.toString());
-    }
-  });
-
-
-    </script>
-    
+            // Optional: remove query param from URL without reloading
+            const url = new URL(window.location);
+            url.searchParams.delete('submittedMood');
+            window.history.replaceState({}, document.title, url.toString());
+          }
+        });
 
 
-  </body>
+      </script>
+
+
+
+</body>
 
 </html>
