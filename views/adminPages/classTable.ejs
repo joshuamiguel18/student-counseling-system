@@ -23,11 +23,10 @@
                             <i class="bx bx-plus"></i> Create Class
                         </button>
                     </div>
-                  <div class="table-responsive">
-                    <table class="table">
+                  <div class="table-responsive ">
+                     <table id="table" class="table table-bordered">
                       <thead>
                         <tr>
-                          <th>#</th>
                           <th>Class Name</th>
                           <th>Program</th>
                           <th>Actions</th> <!-- ✅ Added this -->
@@ -36,7 +35,6 @@
                       <tbody>
                         <% classes.forEach((cls, index) => { %>
                           <tr>
-                            <td><%= index + 1 %></td>
                             <td><%= cls.class_name %></td>
                             <td><%= cls.program_name %></td>
                             <td>
@@ -50,37 +48,52 @@
                       </tbody>
                     </table>
                     
-                    <!-- ✅ Edit Class Modal -->
-                    <div class="modal fade" id="editClassModal" tabindex="-1" aria-labelledby="editClassModalLabel" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <form id="editClassForm">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title">Edit Class</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                              <input type="hidden" id="editClassId" name="id">
-                              <div class="mb-3">
-                                <label for="editClassName" class="form-label">Class Name</label>
-                                <input type="text" class="form-control" id="editClassName" name="class_name" required>
-                              </div>
-                              <div class="mb-3">
-                                <label for="editProgramId" class="form-label">Program</label>
-                                <select class="form-select" id="editProgramId" name="program_id" required>
-                                  <% programs.forEach(program => { %>
-                                    <option value="<%= program.id %>"><%= program.program_name %></option>
-                                  <% }); %>
-                                </select>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="submit" class="btn btn-primary">Save changes</button>
-                            </div>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
+<!-- Edit Class Modal -->
+<div class="modal fade" id="editClassModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editClassForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Class</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editClassId" name="id">
+          
+          <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select class="form-select" id="editDepartmentSelect" required>
+              <option value="" disabled>Select Department</option>
+              <% departments.forEach(department => { %>
+                <option value="<%= department.id %>"><%= department.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Program</label>
+            <select class="form-select" id="editProgramSelect" name="program_id" required>
+              <option value="" disabled>Select Program</option>
+              <% programs.forEach(program => { %>
+                <option value="<%= program.id %>" data-department="<%= program.department_id %>">
+                  <%= program.program_name %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Class Name</label>
+            <input type="text" class="form-control" id="editClassName" name="class_name" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
                   </div>
               
                   
@@ -152,39 +165,50 @@
           <div class="content-backdrop fade"></div>
 
 
-          <!-- Create Class Modal -->
-            <div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                <div class="modal-content">
-                    <form id="createClassForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createClassModalLabel">Create New Class</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                        <label for="newClassName" class="form-label">Class Name</label>
-                        <input type="text" class="form-control" id="newClassName" name="class_name" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="newProgramId" class="form-label">Program</label>
-                          <select class="form-select" id="newProgramId" name="program_id" required>
-                            <% programs.forEach(program => { %>
-                              <option value="<%= program.id %>"><%= program.program_name %> - <%= program.department_name %></option>
-                            <% }) %>
-                          </select>
-                        </div>
-
-
-                    </div>
-                   
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </div>
-                    </form>
-                </div>
-                </div>
-            </div>
+<!-- Create Class Modal -->
+<div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="createClassForm" method="POST" action="/classes/create">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createClassModalLabel">Create New Class</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="departmentSelect" class="form-label">Department</label>
+            <select class="form-select" id="departmentSelect" required>
+              <option value="" selected disabled>Select Department</option>
+              <% departments.forEach(department => { %>
+                <option value="<%= department.id %>"><%= department.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="programSelect" class="form-label">Program</label>
+            <select class="form-select" id="programSelect" name="program_id" required disabled>
+              <option value="" selected disabled>Select Program</option>
+              <% programs.forEach(program => { %>
+                <option value="<%= program.id %>" data-department="<%= program.department_id %>" class="program-option" style="display:none;">
+                  <%= program.program_name %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newClassName" class="form-label">Class Name</label>
+            <input type="text" class="form-control" id="newClassName" name="class_name" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 
 
@@ -268,13 +292,23 @@
   <%- include('../includes/scripts.ejs') %>
 
   <script>
-    function openEditModal(id, className, programId) {
-      document.getElementById('editClassId').value = id;
-      document.getElementById('editClassName').value = className;
-      document.getElementById('editProgramId').value = programId;
-      const editModal = new bootstrap.Modal(document.getElementById('editClassModal'));
-      editModal.show();
-    }
+    function openEditModal(id, className, programId, departmentId) {
+  document.getElementById('editClassId').value = id;
+  document.getElementById('editClassName').value = className;
+  
+  // Set department and program
+  const deptSelect = document.getElementById('editDepartmentSelect');
+  deptSelect.value = departmentId;
+  deptSelect.dispatchEvent(new Event('change'));
+  
+  // Need a small delay to ensure options are visible
+  setTimeout(() => {
+    document.getElementById('editProgramSelect').value = programId;
+  }, 100);
+  
+  const editModal = new bootstrap.Modal(document.getElementById('editClassModal'));
+  editModal.show();
+}
   
     document.getElementById('editClassForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -308,5 +342,56 @@
         });
     });
   </script>
+  <script>
+  // Department-Program Cascading Dropdown
+  document.addEventListener('DOMContentLoaded', function() {
+    const departmentSelect = document.getElementById('departmentSelect');
+    const programSelect = document.getElementById('programSelect');
+    const programOptions = document.querySelectorAll('.program-option');
+    
+    departmentSelect.addEventListener('change', function() {
+      const selectedDepartmentId = this.value;
+      
+      // Reset program select
+      programSelect.value = '';
+      programSelect.disabled = !selectedDepartmentId;
+      
+      // Show/hide programs based on department
+      programOptions.forEach(option => {
+        if (option.dataset.department === selectedDepartmentId) {
+          option.style.display = '';
+        } else {
+          option.style.display = 'none';
+        }
+      });
+    });
+    
+    // Edit Modal - if you want the same functionality there
+    const editDepartmentSelect = document.getElementById('editDepartmentSelect');
+    const editProgramSelect = document.getElementById('editProgramSelect');
+    
+    if (editDepartmentSelect) {
+      editDepartmentSelect.addEventListener('change', function() {
+        const selectedDepartmentId = this.value;
+        const programOptions = editProgramSelect.querySelectorAll('option');
+        
+        editProgramSelect.value = '';
+        editProgramSelect.disabled = !selectedDepartmentId;
+        
+        programOptions.forEach(option => {
+          if (option.dataset.department === selectedDepartmentId || option.value === '') {
+            option.style.display = '';
+          } else {
+            option.style.display = 'none';
+          }
+        });
+      });
+    }
+  });
+  
+</script>
+
+
+
 </body>
 </html>

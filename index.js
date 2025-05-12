@@ -3548,6 +3548,49 @@ app.get('/psychotests', authenticateToken, async (req, res) => {
 //   }
 // });
 
+// app.get('/classes', authenticateTokenAdmin, async (req, res) => {
+//   try {
+//     const classResult = await pool.query(`
+//       SELECT
+//         c.id,
+//         c.class_name,
+//         c.program_id,
+//         c.create_date,
+//         c.update_date,
+//         COUNT(s.id) AS student_count,
+//         p.name AS program_name,
+//         d.name AS department_name
+//       FROM class c
+//       LEFT JOIN student s ON s.class_id = c.id
+//       LEFT JOIN programs p ON c.program_id = p.id
+//       LEFT JOIN departments d ON p.department_id = d.id
+//       GROUP BY c.id, p.name, d.name
+//       ORDER BY c.class_name;
+//     `);
+
+//     const programResult = await pool.query(`
+//       SELECT p.id, p.name AS program_name, d.name AS department_name
+//       FROM programs p
+//       LEFT JOIN departments d ON p.department_id = d.id
+//       ORDER BY program_name;
+//     `);
+//       console.log({
+//         classes: classResult.rows,
+//         programs: programResult.rows,
+//         user: req.user.user
+//       })
+//     res.render('adminPages/classTable', {
+//       classes: classResult.rows,
+//       programs: programResult.rows,
+//       user: req.user.user
+//     });
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send('Server error');
+//   }
+// });
+
+
 app.get('/classes', authenticateTokenAdmin, async (req, res) => {
   try {
     const classResult = await pool.query(`
@@ -3559,28 +3602,30 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
         c.update_date,
         COUNT(s.id) AS student_count,
         p.name AS program_name,
-        d.name AS department_name
+        d.name AS department_name,
+        d.id AS department_id
       FROM class c
       LEFT JOIN student s ON s.class_id = c.id
       LEFT JOIN programs p ON c.program_id = p.id
       LEFT JOIN departments d ON p.department_id = d.id
-      GROUP BY c.id, p.name, d.name
-      ORDER BY c.class_name;
+      GROUP BY c.id, p.name, d.name, d.id
+      ORDER BY c.id;
+    `);
+
+    const departmentResult = await pool.query(`
+      SELECT id, name FROM departments ORDER BY name;
     `);
 
     const programResult = await pool.query(`
-      SELECT p.id, p.name AS program_name, d.name AS department_name
+      SELECT p.id, p.name AS program_name, p.department_id, d.name AS department_name
       FROM programs p
       LEFT JOIN departments d ON p.department_id = d.id
       ORDER BY program_name;
     `);
-      console.log({
-        classes: classResult.rows,
-        programs: programResult.rows,
-        user: req.user.user
-      })
+
     res.render('adminPages/classTable', {
       classes: classResult.rows,
+      departments: departmentResult.rows,
       programs: programResult.rows,
       user: req.user.user
     });
@@ -3589,7 +3634,6 @@ app.get('/classes', authenticateTokenAdmin, async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
 
 
 
@@ -4513,7 +4557,7 @@ app.post('/classes/create', async (req, res) => {
       'INSERT INTO class (class_name, program_id) VALUES ($1, $2)',
       [class_name, program_id]
     );
-    res.json({ success: true });
+    res.redirect('/classes')
   } catch (err) {
     console.error(err);
     res.json({ success: false });
