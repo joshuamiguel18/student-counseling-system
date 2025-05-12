@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<head>
+  <%- include('includes/head.ejs') %>
+</head>
+
+<body>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('includes/sidebar.ejs') %>
+
+      <div class="layout-page">
+        <%- include('includes/header.ejs') %>
+
+        <div class="content-wrapper">
+          
+
+<div class="container py-5">
+              <h2 class="mb-4 fw-bold">Guidance Staff Directory</h2>
+
+              <!-- Head of Guidance -->
+              <div class="text-center mb-5">
+                <div class="card p-4 shadow-sm d-inline-block">
+                  <img src="/uploads/default-avatar.png" class="profile-img mb-3">
+                  <h5 class="mb-1">Dr. Maria Santos</h5>
+                  <p class="text-muted mb-0">Head of Guidance</p>
+                  <small class="text-muted"><i class="bx bx-envelope"></i> maria.santos@guidance.edu</small>
+                </div>
+              </div>
+
+              <!-- Counselors -->
+              <h5 class="section-title">Guidance Counselors</h5>
+              <div class="row mb-5">
+                <% const counselors = [
+                  { name: "Mr. John Dela Cruz", email: "john.delacruz@guidance.edu" },
+                  { name: "Ms. Ana Reyes", email: "ana.reyes@guidance.edu" },
+                  { name: "Mr. Mark Tan", email: "mark.tan@guidance.edu" }
+                ]; %>
+                <% counselors.forEach(c => { %>
+                  <div class="col-md-4 mb-4">
+                    <div class="card p-3 shadow-sm h-100 text-center">
+                      <img src="/uploads/default-avatar.png" class="profile-img mb-2">
+                      <h6><%= c.name %></h6>
+                      <p class="text-muted small mb-1">Guidance Counselor</p>
+                      <small class="text-muted"><i class="bx bx-envelope"></i> <%= c.email %></small>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+
+              <!-- Staff -->
+              <h5 class="section-title">Support Staff</h5>
+              <div class="row">
+                <% const staff = [
+                  { name: "Ms. Jane Villanueva", email: "jane.v@guidance.edu", role: "Office Assistant" },
+                  { name: "Mr. Carlo Lim", email: "carlo.lim@guidance.edu", role: "Administrative Aide" }
+                ]; %>
+                <% staff.forEach(s => { %>
+                  <div class="col-md-3 mb-4">
+                    <div class="card p-3 shadow-sm h-100 text-center">
+                      <img src="/uploads/default-avatar.png" class="profile-img mb-2">
+                      <h6><%= s.name %></h6>
+                      <p class="text-muted small mb-1"><%= s.role %></p>
+                      <small class="text-muted"><i class="bx bx-envelope"></i> <%= s.email %></small>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+
+
+     
+
+          <div class="content-backdrop fade"></div>
+
+
+
+
+
+
+
+
+        </div>
+
+        <%- include('includes/footer.ejs') %>
+      </div>
+    </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+    <div class="drag-target"></div>
+  </div>
+
+  <%- include('includes/scripts.ejs') %>
+
+
+</body>
+</html>

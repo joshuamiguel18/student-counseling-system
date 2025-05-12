@@ -810,6 +810,9 @@ app.get('/', authenticateToken, (req, res) => {
 });
 
 
+
+
+
 app.get('/student-app', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
@@ -4060,8 +4063,8 @@ app.post('/saveAppointment', authenticateToken, async (req, res) => {
 
     // 2. Ensure appointment time is within availability
     if (
-      appointment_start_time < start_time ||
-      appointment_end_time > end_time ||
+      appointment_start_time <= start_time ||
+      appointment_end_time >= end_time ||
       appointment_start_time >= appointment_end_time
     ) {
       console.log("Appointment time is outside counselor's availability.")
@@ -5129,7 +5132,9 @@ app.get('/counselor/notifications/delete/:id', authenticateTokenCounselor, async
 
 
 
-
+app.get('/directory', authenticateToken, (req,res) => {
+  res.render('directory', {user: req.user.user});
+});
 
 
 
