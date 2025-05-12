@@ -122,66 +122,133 @@ app.use((req, res, next) => {
 // };
 
 
+// const authenticateToken = async (req, res, next) => {
+//   const token = req.cookies.jwt;
+
+//   if (!token) return res.redirect('/login');
+
+//   try {
+//       const decoded = jwt.verify(token, JWT_SECRET);
+//       req.user = decoded;
+//       res.locals.user = decoded;
+
+//       // Fetch last 5 notifications for this user
+//       const { rows: notifications } = await pool.query(
+//         `SELECT * FROM notifications
+//         WHERE user_id = $1 AND recipient_type = $2
+//         ORDER BY created_at DESC
+//         LIMIT 5`,
+//         [res.locals.user.user.id, "student"]
+//       );
+
+//       // Add "time ago" format to each notification
+//       const formatTimeAgo = (createdAt) => {
+//           const now = new Date();
+//           const timeDiff = now - new Date(createdAt); // Difference in milliseconds
+
+//           const seconds = Math.floor(timeDiff / 1000);
+//           const minutes = Math.floor(seconds / 60);
+//           const hours = Math.floor(minutes / 60);
+//           const days = Math.floor(hours / 24);
+
+//           if (days > 1) {
+//               return `${days} days ago`;
+//           } else if (days === 1) {
+//               return '1 day ago';
+//           } else if (hours > 1) {
+//               return `${hours} hours ago`;
+//           } else if (hours === 1) {
+//               return '1 hour ago';
+//           } else if (minutes > 1) {
+//               return `${minutes} minutes ago`;
+//           } else if (minutes === 1) {
+//               return '1 minute ago';
+//           } else {
+//               return 'Just now';
+//           }
+//       };
+
+//       // Add time ago info to each notification
+//       notifications.forEach(notification => {
+//           notification.timeAgo = formatTimeAgo(notification.created_at);
+//       });
+
+//       // Make available to all EJS templates
+//       res.locals.notifications = notifications;
+//       //console.log(res.locals.notifications);
+//       next(); 
+//   } catch (err) {
+//       console.error('JWT error or DB error:', err);
+//       return res.redirect('/login');
+//   }
+// };
+
+
 const authenticateToken = async (req, res, next) => {
   const token = req.cookies.jwt;
 
   if (!token) return res.redirect('/login');
 
   try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = decoded;
-      res.locals.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    res.locals.user = decoded;
 
-      // Fetch last 5 notifications for this user
-      const { rows: notifications } = await pool.query(
-        `SELECT * FROM notifications
-        WHERE user_id = $1 AND recipient_type = $2
-        ORDER BY created_at DESC
-        LIMIT 5`,
-        [res.locals.user.user.id, "student"]
-      );
+    // Get student's name
+    const { rows: userRows } = await pool.query(
+      `SELECT first_name, middle_initial, last_name FROM student WHERE id = $1`,
+      [decoded.user.id]
+    );
 
-      // Add "time ago" format to each notification
-      const formatTimeAgo = (createdAt) => {
-          const now = new Date();
-          const timeDiff = now - new Date(createdAt); // Difference in milliseconds
+    if (userRows.length === 0) return res.redirect('/login');
 
-          const seconds = Math.floor(timeDiff / 1000);
-          const minutes = Math.floor(seconds / 60);
-          const hours = Math.floor(minutes / 60);
-          const days = Math.floor(hours / 24);
+    const { first_name, middle_initial, last_name } = userRows[0];
 
-          if (days > 1) {
-              return `${days} days ago`;
-          } else if (days === 1) {
-              return '1 day ago';
-          } else if (hours > 1) {
-              return `${hours} hours ago`;
-          } else if (hours === 1) {
-              return '1 hour ago';
-          } else if (minutes > 1) {
-              return `${minutes} minutes ago`;
-          } else if (minutes === 1) {
-              return '1 minute ago';
-          } else {
-              return 'Just now';
-          }
-      };
+    // Construct and store full name
+    res.locals.fullName = middle_initial
+      ? `${first_name} ${middle_initial}. ${last_name}`
+      : `${first_name} ${last_name}`;
 
-      // Add time ago info to each notification
-      notifications.forEach(notification => {
-          notification.timeAgo = formatTimeAgo(notification.created_at);
-      });
+    // Fetch last 5 notifications
+    const { rows: notifications } = await pool.query(
+      `SELECT * FROM notifications
+       WHERE user_id = $1 AND recipient_type = $2
+       ORDER BY created_at DESC
+       LIMIT 5`,
+      [decoded.user.id, "student"]
+    );
 
-      // Make available to all EJS templates
-      res.locals.notifications = notifications;
-      //console.log(res.locals.notifications);
-      next(); 
+    const formatTimeAgo = (createdAt) => {
+      const now = new Date();
+      const timeDiff = now - new Date(createdAt);
+
+      const seconds = Math.floor(timeDiff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 1) return `${days} days ago`;
+      if (days === 1) return '1 day ago';
+      if (hours > 1) return `${hours} hours ago`;
+      if (hours === 1) return '1 hour ago';
+      if (minutes > 1) return `${minutes} minutes ago`;
+      if (minutes === 1) return '1 minute ago';
+      return 'Just now';
+    };
+
+    notifications.forEach(notification => {
+      notification.timeAgo = formatTimeAgo(notification.created_at);
+    });
+
+    res.locals.notifications = notifications;
+    next();
   } catch (err) {
-      console.error('JWT error or DB error:', err);
-      return res.redirect('/login');
+    console.error('JWT error or DB error:', err);
+    return res.redirect('/login');
   }
 };
+
+
 
 
 const authenticateTokenCounselor = async (req, res, next) => {
@@ -728,7 +795,7 @@ app.get('/messages', authenticateToken, async (req, res) => {
       ORDER BY id ASC
     `, [userid]);
 
-    res.render('messages', { appointments: messagesResult.rows, user: req.user });
+    res.render('messages', { appointments: messagesResult.rows, user: req.user.user });
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).send("Server Error");
@@ -1093,7 +1160,7 @@ app.post('/saveClassPsychotesting', authenticateTokenCounselor, async (req, res)
 
 
 app.post('/appointments/reschedule', async (req, res) => {
-  const { appointment_id, new_date } = req.body;
+  const { appointment_id, new_date, remarks } = req.body;
   console.log("reschedule")
   try {
     // Optional: Validate inputs here
@@ -1101,11 +1168,12 @@ app.post('/appointments/reschedule', async (req, res) => {
     const updateQuery = `
       UPDATE appointment
       SET appointment_date = $1,
+          remark = $2,
           update_date = NOW()
-      WHERE id = $2
+      WHERE id = $3
     `;
 
-    await pool.query(updateQuery, [new_date, appointment_id]);
+    await pool.query(updateQuery, [new_date, remarks, appointment_id]);
 
     // Redirect or send JSON depending on your app flow
     res.redirect('/appointments'); // or res.json({ success: true });
@@ -1116,7 +1184,7 @@ app.post('/appointments/reschedule', async (req, res) => {
 });
 
 app.post('/counselor/appointments/reschedule', async (req, res) => {
-  const { appointment_id, new_date, start_time, end_time } = req.body;
+  const { appointment_id, new_date, start_time, end_time, remarks } = req.body;
   console.log(appointment_id, new_date, start_time, end_time)
   if (!appointment_id || !new_date || !start_time || !end_time) {
     return res.status(400).send('Missing required fields');
@@ -1130,11 +1198,12 @@ app.post('/counselor/appointments/reschedule', async (req, res) => {
         start_time = $2,
         end_time = $3,
         update_date = NOW(),
+        remark = $4,
         turn_to_approve = 'student'
-      WHERE id = $4
+      WHERE id = $5
     `;
 
-    await pool.query(updateQuery, [new_date, start_time, end_time, appointment_id]);
+    await pool.query(updateQuery, [new_date, start_time, end_time, remarks, appointment_id]);
 
     // You can either redirect or respond with JSON
     res.redirect('/counselor/appointments'); // or res.json({ success: true });

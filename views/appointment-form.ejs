@@ -1,169 +1,179 @@
 <!DOCTYPE html>
 
-<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django"
+  data-template="vertical-menu-free">
 
-  <head>
-	<%- include('includes/head.ejs') %>
+<head>
+  <%- include('includes/head.ejs') %>
 
 
 
-  </head>
+</head>
 
-  <body>
-	<!-- Layout wrapper: Start -->
-	<div class="layout-wrapper layout-content-navbar">
-	  <div class="layout-container">
-	
-		<%- include('includes/sidebar.ejs') %>
-	
-		<!-- Layout page: Start -->
-		<div class="layout-page">
-	
-	
-		  <!-- Navbar: Start -->
-		  <%- include('includes/header.ejs') %>
-		  <!-- Navbar: End -->
-	
-	
-		  <!-- Content wrapper: Start -->
-		  <div class="content-wrapper">
-			<!-- Content: Start -->
-			<div class="container-xxl flex-grow-1 container-p-y">
+<body>
+  <!-- Layout wrapper: Start -->
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
 
-        <form id="appointment-form" method="POST">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-lg-8 mx-auto">
-                <h1>Appointment Form</h1>
-        
+      <%- include('includes/sidebar.ejs') %>
 
-                <input type="hidden" id="student_id" name="student_id" value="<%= user.id %>" required>
+        <!-- Layout page: Start -->
+        <div class="layout-page">
 
-                <div class="col-12 mb-4">
-                  <label class="form-label" for="title">Purpose</label>
-                  <textarea name="title" class="form-control" id="title" rows="2" placeholder="Enter Appointment Name" required></textarea>
-                </div>
-                
-                <div class="col-md mb-4">
-                  <label class="form-label" for="counselor_id">Appointment Type</label>
-                  <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment" required>
-                    <option selected disabled>Select Appointment Type</option>
-                      <option value="1">Online Appointment</option>
-                      <option value="0">Physical Appoinment</option>
-                  </select>
-                </div>
 
-                <div class="col-md mb-4">
-                  <label class="form-label" for="counselor_id">Counselor</label>
-                  <select id="counselor_id" class="select2 form-select" name="counselor_id" required>
-                    <option selected disabled>Select Counselor</option>
-                    <% counselors.forEach(counselor => { %>
-                      <option value="<%= counselor.id %>"><%= counselor.full_name %></option>
-                    <% }); %>
-                  </select>
-                </div>
+          <!-- Navbar: Start -->
+          <%- include('includes/header.ejs') %>
+            <!-- Navbar: End -->
 
-        
-                <div class="col-md mb-4">
-                  <div id="appointment-date-wrapper" class="d-none">
-                    <label class="form-label" for="appointment_date">Appointment Date</label>
-                    <input type="text" id="appointment_date" class="form-control" name="appointment_date" placeholder="Select A Date" required>
-                    <small id="available-days-note" class="text-muted"></small>
+
+            <!-- Content wrapper: Start -->
+            <div class="content-wrapper">
+              <!-- Content: Start -->
+              <div class="container-xxl flex-grow-1 container-p-y">
+
+                <form id="appointment-form" method="POST">
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-lg-8 mx-auto">
+                        <h1>Appointment Form</h1>
+
+
+                        <input type="hidden" id="student_id" name="student_id" value="<%= user.id %>" required>
+
+                        <div class="col-12 mb-4">
+                          <label class="form-label" for="title">Purpose</label>
+                          <textarea name="title" class="form-control" id="title" rows="2"
+                            placeholder="Enter Appointment Name" required></textarea>
+                        </div>
+
+                        <div class="col-md mb-4">
+                          <label class="form-label" for="counselor_id">Appointment Type</label>
+                          <select id="isOnlineAppointment" class="select2 form-select" name="isOnlineAppointment"
+                            required>
+                            <option selected disabled>Select Appointment Type</option>
+                            <option value="1">Online Appointment</option>
+                            <option value="0">Physical Appoinment</option>
+                          </select>
+                        </div>
+
+                        <div class="col-md mb-4">
+                          <label class="form-label" for="counselor_id">Counselor</label>
+                          <select id="counselor_id" class="select2 form-select" name="counselor_id" required>
+                            <option selected disabled>Select Counselor</option>
+                            <% counselors.forEach(counselor=> { %>
+                              <option value="<%= counselor.id %>">
+                                <%= counselor.full_name %>
+                              </option>
+                              <% }); %>
+                          </select>
+                        </div>
+
+
+                        <div class="col-md mb-4">
+                          <div id="appointment-date-wrapper" class="d-none">
+                            <label class="form-label" for="appointment_date">Appointment Date</label>
+                            <input type="text" id="appointment_date" class="form-control" name="appointment_date"
+                              placeholder="Select A Date" required>
+                            <small id="available-days-note" class="text-muted"></small>
+                          </div>
+                        </div>
+
+                        <div class="col-md mb-4">
+                          <div id="appointment-time-wrapper">
+                            <label class="form-label" for="appointment_start_time">Start Time</label>
+                            <input type="time" id="appointment_start_time" name="appointment_start_time"
+                              class="form-control" required>
+
+                            <label class="form-label mt-2" for="appointment_end_time">End Time</label>
+                            <input type="time" id="appointment_end_time" name="appointment_end_time"
+                              class="form-control" required>
+
+                            <small id="available-time-note" class="text-muted"></small>
+                          </div>
+                        </div>
+
+
+                        <button type="submit" class="btn btn-primary">Book Appointment</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+
+
+
+
+                <!-- Success Modal -->
+                <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel"
+                  aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header text-white">
+                        <h5 class="modal-title" id="successModalLabel">Appointment Booked</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body text-center">
+                        Your appointment has been successfully booked.
+                      </div>
+                      <div class="modal-footer justify-content-center">
+                        <a href="/appointment-form" class="btn btn-outline-primary rounded-pill">Make Another</a>
+                        <a href="/appointments" class="btn btn-primary rounded-pill">View Appointments</a>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                <div class="col-md mb-4">
-                  <div id="appointment-time-wrapper">
-                    <label class="form-label" for="appointment_start_time">Start Time</label>
-                    <input type="time" id="appointment_start_time" name="appointment_start_time" class="form-control" required>
-                
-                    <label class="form-label mt-2" for="appointment_end_time">End Time</label>
-                    <input type="time" id="appointment_end_time" name="appointment_end_time" class="form-control" required>
-                
-                    <small id="available-time-note" class="text-muted"></small>
+
+
+
+
+                <!-- Error Modal -->
+                <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel"
+                  aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content ">
+                      <div class="modal-header text-white">
+                        <h5 class="modal-title" id="errorModalLabel">Appointment Error</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body" id="errorModalMessage">
+                        <!-- Error message will be inserted here -->
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-        
-                <button type="submit" class="btn btn-primary">Book Appointment</button>
+
+
+
+
+                <!-- / Content: End -->
+
+                <!-- Footer: Start -->
+                <!-- Footer: End -->
+
+
+                <div class="content-backdrop fade"></div>
               </div>
+              <!--/ Content wrapper: End -->
             </div>
-          </div>
-        </form>
-        
+            <!-- / Layout page: End -->
+            <%- include('includes/footer.ejs') %>
 
+        </div>
 
-	
-<!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header text-white">
-        <h5 class="modal-title" id="successModalLabel">Appointment Booked</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        Your appointment has been successfully booked.
-      </div>
-      <div class="modal-footer justify-content-center">
-        <a href="/appointment-form" class="btn btn-outline-primary rounded-pill">Make Another</a>
-        <a href="/appointments" class="btn btn-primary rounded-pill">View Appointments</a>
-      </div>
+        <!-- Overlay -->
+        <div class="layout-overlay layout-menu-toggle"></div>
+        <!-- Drag Target Area To SlideIn Menu On Small Screens -->
+        <div class="drag-target"></div>
     </div>
-  </div>
-</div>
+    <!-- Layout wrapper: End -->
 
 
+    <%- include('includes/scripts.ejs') %>
 
-
-<!-- Error Modal -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content ">
-      <div class="modal-header text-white">
-        <h5 class="modal-title" id="errorModalLabel">Appointment Error</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="errorModalMessage">
-        <!-- Error message will be inserted here -->
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-			  <!-- / Content: End -->
-	
-			  <!-- Footer: Start -->
-			  <!-- Footer: End -->
-
-	
-			  <div class="content-backdrop fade"></div>
-			</div>
-			<!--/ Content wrapper: End -->
-		  </div>
-		  <!-- / Layout page: End -->
-		  <%- include('includes/footer.ejs') %>
-
-		</div>
-	
-		<!-- Overlay -->
-		<div class="layout-overlay layout-menu-toggle"></div>
-		<!-- Drag Target Area To SlideIn Menu On Small Screens -->
-		<div class="drag-target"></div>
-	  </div>
-	  <!-- Layout wrapper: End -->
-	
-
-	  <%- include('includes/scripts.ejs') %>
-
-    <!-- DUMMY DATA -->
-    <!-- <script>
+      <!-- DUMMY DATA -->
+      <!-- <script>
       $(document).ready(function () {
         // Dummy counselor availability
         const counselorAvailability = {
@@ -219,136 +229,136 @@
         });
       });
     </script> -->
-    
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const dayMap = {
-          "Sunday": 0,
-          "Monday": 1,
-          "Tuesday": 2,
-          "Wednesday": 3,
-          "Thursday": 4,
-          "Friday": 5,
-          "Saturday": 6
-        };
-    
-        let flatpickrInstance = null;
-    
-        function setupFlatpickr(availableDays) {
-          if (flatpickrInstance) flatpickrInstance.destroy();
-          document.getElementById('appointment_date').value = '';
 
-          flatpickrInstance = flatpickr("#appointment_date", {
-            dateFormat: "Y-m-d",
-            minDate: "today", // This prevents selecting dates before today
-            disable: [
-              function (date) {
-                // Disable dates that are either not in availableDays OR are in the past
-                return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
-              }
-            ]
-          });
-        }
-    
-        document.getElementById('counselor_id').addEventListener('change', function () {
-          const counselorId = this.value;
-          if (!counselorId) return;
-    
-          // Use relative URL for fetch (no hardcoded host)
-          fetch(`/counselors/${counselorId}/availability`)
-            .then(response => {
-              if (!response.ok) throw new Error('Network response was not ok');
-              return response.json();
-            })
-            .then(data => {
-              const days = data.available_days || [];
-              const availableDays = days.map(day => dayMap[day]);
-    
-              setupFlatpickr(availableDays);
-    
-              document.getElementById('appointment-date-wrapper').classList.remove('d-none');
-              document.getElementById('available-days-note').textContent = `Available on: ${days.join(', ')}`;
-            })
-            .catch(() => {
-              alert("Failed to fetch counselor availability.");
-              document.getElementById('appointment-date-wrapper').classList.add('d-none');
-              document.getElementById('appointment_date').value = '';
-              if (flatpickrInstance) flatpickrInstance.destroy();
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const dayMap = {
+            "Sunday": 0,
+            "Monday": 1,
+            "Tuesday": 2,
+            "Wednesday": 3,
+            "Thursday": 4,
+            "Friday": 5,
+            "Saturday": 6
+          };
+
+          let flatpickrInstance = null;
+
+          function setupFlatpickr(availableDays) {
+            if (flatpickrInstance) flatpickrInstance.destroy();
+            document.getElementById('appointment_date').value = '';
+
+            flatpickrInstance = flatpickr("#appointment_date", {
+              dateFormat: "Y-m-d",
+              minDate: "today", // This prevents selecting dates before today
+              disable: [
+                function (date) {
+                  // Disable dates that are either not in availableDays OR are in the past
+                  return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
+                }
+              ]
             });
+          }
+
+          document.getElementById('counselor_id').addEventListener('change', function () {
+            const counselorId = this.value;
+            if (!counselorId) return;
+
+            // Use relative URL for fetch (no hardcoded host)
+            fetch(`/counselors/${counselorId}/availability`)
+              .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+              })
+              .then(data => {
+                const days = data.available_days || [];
+                const availableDays = days.map(day => dayMap[day]);
+
+                setupFlatpickr(availableDays);
+
+                document.getElementById('appointment-date-wrapper').classList.remove('d-none');
+                document.getElementById('available-days-note').textContent = `Available on: ${days.join(', ')}`;
+              })
+              .catch(() => {
+                alert("Failed to fetch counselor availability.");
+                document.getElementById('appointment-date-wrapper').classList.add('d-none');
+                document.getElementById('appointment_date').value = '';
+                if (flatpickrInstance) flatpickrInstance.destroy();
+              });
+          });
         });
-      });
 
 
-      document.getElementById('appointment-form').addEventListener('submit', async function (e) {
-  e.preventDefault();
+        document.getElementById('appointment-form').addEventListener('submit', async function (e) {
+          e.preventDefault();
 
-  const title = document.getElementById('title').value.trim();
-  const isOnline = document.getElementById('isOnlineAppointment').value;
-  const counselor = document.getElementById('counselor_id').value;
-  const student = document.getElementById('student_id').value;
-  const appointmentDate = document.getElementById('appointment_date').value.trim();
-  const startTime = document.getElementById('appointment_start_time').value;
-  const endTime = document.getElementById('appointment_end_time').value;
+          const title = document.getElementById('title').value.trim();
+          const isOnline = document.getElementById('isOnlineAppointment').value;
+          const counselor = document.getElementById('counselor_id').value;
+          const student = document.getElementById('student_id').value;
+          const appointmentDate = document.getElementById('appointment_date').value.trim();
+          const startTime = document.getElementById('appointment_start_time').value;
+          const endTime = document.getElementById('appointment_end_time').value;
 
-  if (!title || !isOnline || !counselor || !appointmentDate || !startTime || !endTime) {
-    showErrorModal('Please fill in all required fields before submitting the form.');
-    return;
-  }
+          if (!title || !isOnline || !counselor || !appointmentDate || !startTime || !endTime) {
+            showErrorModal('Please fill in all required fields before submitting the form.');
+            return;
+          }
 
-  if (startTime >= endTime) {
-    showErrorModal('Start time must be before end time.');
-    return;
-  }
+          if (startTime >= endTime) {
+            showErrorModal('Start time must be before end time.');
+            return;
+          }
 
-  try {
-    const response = await fetch('/saveAppointment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        student_id: student,
-        title,
-        isOnlineAppointment: isOnline,
-        counselor_id: counselor,
-        appointment_date: appointmentDate,
-        appointment_start_time: startTime,
-        appointment_end_time: endTime
-      })
-    });
+          try {
+            const response = await fetch('/saveAppointment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                student_id: student,
+                title,
+                isOnlineAppointment: isOnline,
+                counselor_id: counselor,
+                appointment_date: appointmentDate,
+                appointment_start_time: startTime,
+                appointment_end_time: endTime
+              })
+            });
 
-    const result = await response.json();
-    if (!response.ok) {
-      // Show server-side error in modal
-      console.log("MESSAGE: ", result.message)
-      showErrorModal(result.message || 'An unexpected error occurred.');
-    } else {
-      // Success - maybe show success message or redirect
-      const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-      successModal.show();
-      // location.reload(); // Or redirect if needed
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    
-    showErrorModal('A network error occurred. Please try again.');
-  }
-});
+            const result = await response.json();
+            if (!response.ok) {
+              // Show server-side error in modal
+              console.log("MESSAGE: ", result.message)
+              showErrorModal(result.message || 'An unexpected error occurred.');
+            } else {
+              // Success - maybe show success message or redirect
+              const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+              successModal.show();
+              // location.reload(); // Or redirect if needed
+            }
+          } catch (err) {
+            console.error('Error:', err);
 
-      function showErrorModal(message) {
-        document.getElementById('errorModalMessage').textContent = message;
-        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-      }
-    </script>
-    
-    
-    
-    
-    
+            showErrorModal('A network error occurred. Please try again.');
+          }
+        });
+
+        function showErrorModal(message) {
+          document.getElementById('errorModalMessage').textContent = message;
+          const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+          errorModal.show();
+        }
+      </script>
 
 
-  </body>
+
+
+
+
+
+</body>
 
 </html>

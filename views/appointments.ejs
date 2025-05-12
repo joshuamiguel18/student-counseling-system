@@ -1,455 +1,483 @@
 <!DOCTYPE html>
-<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django" data-template="vertical-menu-free">
+<html lang="en" class="light-style layout-menu-fixed" data-assets-path="" data-base-url="" data-framework="django"
+  data-template="vertical-menu-free">
+
 <head>
   <%- include('includes/head.ejs') %>
-  <style>
-    .appointment-card:hover {
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
-      transform: scale(1.01);
-      transition: all 0.2s ease-in-out;
-    }
-  </style>
+    <style>
+      .appointment-card:hover {
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+        transform: scale(1.01);
+        transition: all 0.2s ease-in-out;
+      }
+    </style>
 </head>
+
 <body>
-<div class="layout-wrapper layout-content-navbar">
-  <div class="layout-container">
-    <%- include('includes/sidebar.ejs') %>
-    <div class="layout-page">
-      <%- include('includes/header.ejs') %>
-      <div class="content-wrapper">
-        
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      <%- include('includes/sidebar.ejs') %>
+        <div class="layout-page">
+          <%- include('includes/header.ejs') %>
+            <div class="content-wrapper">
 
-        <div class="card" style="box-shadow: none !important;">
 
-            <h5 class="card-header p-3">
-              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                <span>My Appointments</span>
-                <div class="d-flex flex-column flex-sm-row gap-2">
-                  <!-- Filter -->
-                  <select id="statusFilter" class="form-select w-auto">
-                    <option value="all">All</option>
-                    <option value="approved">Approved</option>
-                    <option value="pending" selected>Pending</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="completed">Completed</option>
-                  </select>
-            
-                  <!-- Sort -->
-                  <select id="sortByDate" class="form-select w-auto">
-                    <option value="desc">Newest First</option>
-                    <option value="asc">Oldest First</option>
-                  </select>
-                </div>
-              </div>
-            </h5>
-            
+              <div class="card" style="box-shadow: none !important;">
 
-            <div class="container p-3" id="appointmentsContainer">
-              <% if (appointments.length > 0) { %>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="appointmentList">
-                  <% appointments.forEach(appointment => { %>
-                    <div class="col appointment-card-item" data-status="<%= appointment.status %>" data-date="<%= appointment.appointment_date %>">
-                      <div class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
-                        <div class="position-absolute top-0 end-0 m-3">
-                          <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
+                <h5 class="card-header p-3">
+                  <div
+                    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                    <span>My Appointments</span>
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                      <!-- Filter -->
+                      <select id="statusFilter" class="form-select w-auto">
+                        <option value="all">All</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending" selected>Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="completed">Completed</option>
+                      </select>
+
+                      <!-- Sort -->
+                      <select id="sortByDate" class="form-select w-auto">
+                        <option value="desc">Newest First</option>
+                        <option value="asc">Oldest First</option>
+                      </select>
+                    </div>
+                  </div>
+                </h5>
+
+
+                <div class="container p-3" id="appointmentsContainer">
+                  <% if (appointments.length> 0) { %>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="appointmentList">
+                      <% appointments.forEach(appointment=> { %>
+                        <div class="col appointment-card-item" data-status="<%= appointment.status %>"
+                          data-date="<%= appointment.appointment_date %>">
+                          <div
+                            class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
+                            <div class="position-absolute top-0 end-0 m-3">
+                              <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
                             <%= appointment.status === 'approved' ? 'bg-success' :
                                 appointment.status === 'pending' ? 'bg-warning text-dark' :
                                 appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
                                 'bg-secondary' %>">
-                            <%= appointment.status.toUpperCase() %>
-                          </span>
-                        </div>
-                        <div class="card-body p-4">
-                          <h5 class="card-title mb-2 text-primary">
-                            <i class="bi bi-journal-check me-1"></i> <%= appointment.title %>
-                          </h5>
-                          <div class="mb-2">
-                            <i class="bi bi-person-circle me-1 text-muted"></i>
-                            <strong>Counselor:</strong> <%= appointment.counselor_first_name %> <%= appointment.counselor_last_name %>
-                          </div>
-                          <div class="mb-2">
-                            <i class="bi bi-calendar-event me-1 text-muted"></i>
-                            <strong>Date:</strong> 
-                            <%= new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-                              year: 'numeric', month: 'long', day: 'numeric'
-                            }) %>
-                          </div>
-                          <div class="mb-2">
-                            <i class="bi bi-clock me-1 text-muted"></i>
-                            <strong>Time:</strong> 
-                            <%= new Date('1970-01-01T' + appointment.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %> 
-                            to 
-                            <%= new Date('1970-01-01T' + appointment.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
-                          </div>
-                          
-                          
-
-                          <div class="mb-2">
-                            <i class="bi bi-laptop me-1 text-muted"></i>
-                            <strong>Type:</strong> <%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %>
-                          </div>
-                          <div class="mb-3">
-                            <i class="bi bi-hash me-1 text-muted"></i>
-                            <strong>Appointment #:</strong> <%= appointment.appointment_number %>
-                          </div>
-                          <div class="mb-3">
-  <i class="bi bi-x-octagon-fill me-1 text-danger"></i>
-  <strong>Remarks:</strong> 
-  <span class="text-danger"><%= appointment.remark %></span>
-</div>
-
-
-                        </div>
-                        <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                          <% if (appointment.status !== 'cancelled' && appointment.status !== 'completed') { %>
-                            <div class="dropdown">
-                              <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-gear-fill me-1"></i> Actions
-                              </button>
-                              <ul class="dropdown-menu w-100 shadow-sm rounded-3">
-                                <% if (appointment.status == 'pending') { %>
-                                <li>
-                                  <button class="dropdown-item"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#rescheduleModal"
-                                    data-appointment-id="<%= appointment.id %>"
-                                    data-current-date="<%= appointment.appointment_date %>"
-                                    data-counselor-id="<%= appointment.counselor_id %>">
-                                    <i class="bi bi-calendar2-plus me-2"></i>Reschedule
-                                  </button>
-
-                                </li>
-                                <% } %>
-                                
-                                <% if (appointment.status == 'pending' && appointment.turn_to_approve == 'student') { %>
-                                  <li>
-                                    <a class="dropdown-item text-success" href="/student/appointments/approve/<%= appointment.id %>">
-                                      <i class="bi bi-x-circle me-2"></i>Approve
-                                    </a>
-                                    
-                                  </li>
-                                <% } %>
-
-
-
-                                <% if (appointment.status != 'completed') { %>
-                                <li>
-                                  <button 
-                                    class="dropdown-item text-danger" 
-                                    onclick="openCancelModal(<%= appointment.id %>)" 
-                                    type="button"
-                                  >
-                                    <i class="bi bi-x-circle me-2"></i>Cancel
-                                  </button>
-                                </li>
-                                <% } %>
-                              </ul>
+                                <%= appointment.status.toUpperCase() %>
+                              </span>
                             </div>
-                           <% } else if (appointment.status === 'cancelled' && appointment.status === 'rejected') { %> 
-                              <!-- <form action="/appointments/delete/<%= appointment.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                            <div class="card-body p-4">
+                              <h5 class="card-title mb-2 text-primary">
+                                <i class="bi bi-journal-check me-1"></i>
+                                <%= appointment.title %>
+                              </h5>
+                              <div class="mb-2">
+                                <i class="bi bi-person-circle me-1 text-muted"></i>
+                                <strong>Counselor:</strong>
+                                <%= appointment.counselor_first_name %>
+                                  <%= appointment.counselor_last_name %>
+                              </div>
+                              <div class="mb-2">
+                                <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                <strong>Date:</strong>
+                                <%= new Date(appointment.appointment_date).toLocaleDateString('en-US', { year: 'numeric'
+                                  , month: 'long' , day: 'numeric' }) %>
+                              </div>
+                              <div class="mb-2">
+                                <i class="bi bi-clock me-1 text-muted"></i>
+                                <strong>Time:</strong>
+                                <%= new Date('1970-01-01T' + appointment.start_time).toLocaleTimeString('en-US', {
+                                  hour: 'numeric' , minute: '2-digit' }) %>
+                                  to
+                                  <%= new Date('1970-01-01T' + appointment.end_time).toLocaleTimeString('en-US', {
+                                    hour: 'numeric' , minute: '2-digit' }) %>
+                              </div>
+
+
+
+                              <div class="mb-2">
+                                <i class="bi bi-laptop me-1 text-muted"></i>
+                                <strong>Type:</strong>
+                                <%= appointment.is_online_appointment ? 'Online' : 'Face-to-Face' %>
+                              </div>
+                              <div class="mb-3">
+                                <i class="bi bi-hash me-1 text-muted"></i>
+                                <strong>Appointment #:</strong>
+                                <%= appointment.appointment_number %>
+                              </div>
+                              <div class="mb-3">
+                                <i class="bi bi-x-octagon-fill me-1 text-danger"></i>
+                                <strong>Remarks:</strong>
+                                <span class="text-danger">
+                                  <%= appointment.remark %>
+                                </span>
+                              </div>
+
+
+                            </div>
+                            <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+                              <% if (appointment.status !=='cancelled' && appointment.status !=='completed' ) { %>
+                                <div class="dropdown">
+                                  <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear-fill me-1"></i> Actions
+                                  </button>
+                                  <ul class="dropdown-menu w-100 shadow-sm rounded-3">
+                                    <% if (appointment.status ==='pending' || appointment.status === 'approved') { %>
+                                      <li>
+                                        <button class="dropdown-item" data-bs-toggle="modal"
+                                          data-bs-target="#rescheduleModal" data-appointment-id="<%= appointment.id %>"
+                                          data-current-date="<%= appointment.appointment_date %>"
+                                          data-counselor-id="<%= appointment.counselor_id %>">
+                                          <i class="bi bi-calendar2-plus me-2"></i>Reschedule
+                                        </button>
+
+                                      </li>
+                                      <% } %>
+
+                                        <% if (appointment.status=='pending' && appointment.turn_to_approve=='student' )
+                                          { %>
+                                          <li>
+                                            <a class="dropdown-item text-success"
+                                              href="/student/appointments/approve/<%= appointment.id %>">
+                                              <i class="bi bi-x-circle me-2"></i>Approve
+                                            </a>
+
+                                          </li>
+                                          <% } %>
+
+
+
+                                            <% if (appointment.status !='completed' ) { %>
+                                              <li>
+                                                <button class="dropdown-item text-danger"
+                                                  onclick="openCancelModal(<%= appointment.id %>)" type="button">
+                                                  <i class="bi bi-x-circle me-2"></i>Cancel
+                                                </button>
+                                              </li>
+                                              <% } %>
+                                  </ul>
+                                </div>
+                                <% } else if (appointment.status==='cancelled' && appointment.status==='rejected' ) { %>
+                                  <!-- <form action="/appointments/delete/<%= appointment.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
                                 <button class="btn btn-outline-danger w-100 rounded-pill">
                                   <i class="bi bi-trash-fill me-1"></i> Delete
                                 </button>
                               </form>  -->
-                              <% } else { %>
-                                <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>
-                              <% } %>
-                              
-                            
+                                  <% } else { %>
+                                    <p class="text-center text-muted mt-2 mb-0 small">No available actions</p>
+                                    <% } %>
+
+
+                            </div>
+                          </div>
                         </div>
+                        <% }) %>
+                    </div>
+                    <% } else { %>
+                      <div class="text-center mt-5">
+                        <i class="bi bi-emoji-frown display-4 text-secondary"></i>
+                        <p class="mt-3 fs-5 text-muted">No appointments found.</p>
+                      </div>
+                      <% } %>
+                </div>
+
+              </div>
+
+
+              <!-- Reschedule Modal -->
+              <!-- Reschedule Modal -->
+              <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                  <form method="POST" action="/appointments/reschedule" onsubmit="return validateRescheduleForm(event)">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="rescheduleModalLabel">
+                          <i class="bi bi-calendar2-plus me-1"></i> Reschedule Appointment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <input type="hidden" name="appointment_id" id="modalAppointmentId">
+                        <input type="hidden" name="counselor_id" id="modalCounselorId">
+
+                        <div class="mb-3">
+                          <label for="newDate" class="form-label">New Date</label>
+                          <input type="date" class="form-control" id="newDate" name="new_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="startTime" class="form-label">Start Time</label>
+                          <input type="time" class="form-control" id="startTime" name="start_time" required>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="endTime" class="form-label">End Time</label>
+                          <input type="time" class="form-control" id="endTime" name="end_time" required>
+                          <div id="timeError" class="text-danger small mt-1 d-none">
+                            <i class="bi bi-exclamation-circle"></i> End time must be later than start time
+                          </div>
+                        </div>
+
+                        <!-- Added Reason for Reschedule field -->
+                        <div class="mb-3">
+                          <label for="rescheduleReason" class="form-label">Reason for Reschedule</label>
+                          <textarea class="form-control" id="rescheduleReason" name="remarks" rows="3"
+                            required></textarea>
+                          <small class="text-muted">Please explain why you need to reschedule this appointment.</small>
+                        </div>
+
+                        <div id="availabilityFeedback" class="text-danger small d-none">Selected schedule is not
+                          available or invalid.</div>
+                      </div>
+
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Reschedule</button>
                       </div>
                     </div>
-                  <% }) %>
+                  </form>
                 </div>
-              <% } else { %>
-                <div class="text-center mt-5">
-                  <i class="bi bi-emoji-frown display-4 text-secondary"></i>
-                  <p class="mt-3 fs-5 text-muted">No appointments found.</p>
+              </div>
+
+
+
+              <!-- Cancel Success Modal -->
+              <div class="modal fade" id="cancelSuccessModal" tabindex="-1" aria-labelledby="cancelSuccessModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content border-success">
+                    <div class="modal-header bg-success text-white">
+                      <h5 class="modal-title" id="cancelSuccessModalLabel">Appointment Cancelled</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                      <p class="mt-3 mb-0">Your appointment has been cancelled successfully.</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                      <a href="/appointments" class="btn btn-outline-success rounded-pill">View Appointments</a>
+                      <button type="button" class="btn btn-success rounded-pill" data-bs-dismiss="modal">Close</button>
+                    </div>
+                  </div>
                 </div>
-              <% } %>
+              </div>
+
+
+
+              <!-- Cancel Appointment Modal -->
+              <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                  <form id="cancelAppointmentForm">
+                    <div class="modal-content">
+                      <div class="modal-header text-white">
+                        <h5 class="modal-title" id="cancelModalLabel">Cancel Appointment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+
+                      <div class="modal-body">
+                        <input type="hidden" id="cancelAppointmentId" name="appointment_id">
+                        <p>Are you sure you want to cancel this appointment?</p>
+                        <div class="mb-3">
+                          <label for="cancelRemark" class="form-label">Reason for Cancellation</label>
+                          <textarea class="form-control" id="cancelRemark" name="remark" rows="3" required></textarea>
+                        </div>
+                      </div>
+
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+
+
+              <div class="content-backdrop fade"></div>
             </div>
-          
-          </div>
-        
-
-        <!-- Reschedule Modal -->
-<!-- Reschedule Modal -->
-<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" action="/appointments/reschedule" onsubmit="return checkAvailability(event)">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="rescheduleModalLabel">
-            <i class="bi bi-calendar2-plus me-1"></i> Reschedule Appointment
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <%- include('includes/footer.ejs') %>
         </div>
-        <div class="modal-body">
-          <input type="hidden" name="appointment_id" id="modalAppointmentId">
-          <input type="hidden" name="counselor_id" id="modalCounselorId">
-
-          <div class="mb-3">
-            <label for="newDate" class="form-label">New Date</label>
-            <input type="date" class="form-control" id="newDate" name="new_date" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="startTime" class="form-label">Start Time</label>
-            <input type="time" class="form-control" id="startTime" name="start_time" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="endTime" class="form-label">End Time</label>
-            <input type="time" class="form-control" id="endTime" name="end_time" required>
-          </div>
-
-          <div id="availabilityFeedback" class="text-danger small d-none">Selected schedule is not available or invalid.</div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Reschedule</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-
-
-<!-- Cancel Success Modal -->
-<div class="modal fade" id="cancelSuccessModal" tabindex="-1" aria-labelledby="cancelSuccessModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-success">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title" id="cancelSuccessModalLabel">Appointment Cancelled</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-        <p class="mt-3 mb-0">Your appointment has been cancelled successfully.</p>
-      </div>
-      <div class="modal-footer justify-content-center">
-        <a href="/appointments" class="btn btn-outline-success rounded-pill">View Appointments</a>
-        <button type="button" class="btn btn-success rounded-pill" data-bs-dismiss="modal">Close</button>
-      </div>
+        <div class="layout-overlay layout-menu-toggle"></div>
+        <div class="drag-target"></div>
     </div>
   </div>
-</div>
+
+  <%- include('includes/scripts.ejs') %>
 
 
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // Create a variable to store flatpickr instance for cleanup
+        let flatpickrInstance = null;
 
-<!-- Cancel Appointment Modal -->
-<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="cancelAppointmentForm">
-      <div class="modal-content">
-        <div class="modal-header text-white">
-          <h5 class="modal-title" id="cancelModalLabel">Cancel Appointment</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
+        // Map days of the week to numbers for disabling in flatpickr
+        const dayMap = {
+          "Sunday": 0,
+          "Monday": 1,
+          "Tuesday": 2,
+          "Wednesday": 3,
+          "Thursday": 4,
+          "Friday": 5,
+          "Saturday": 6
+        };
 
-        <div class="modal-body">
-          <input type="hidden" id="cancelAppointmentId" name="appointment_id">
-          <p>Are you sure you want to cancel this appointment?</p>
-          <div class="mb-3">
-            <label for="cancelRemark" class="form-label">Reason for Cancellation</label>
-            <textarea class="form-control" id="cancelRemark" name="remark" rows="3" required></textarea>
-          </div>
-        </div>
+        // Function to setup flatpickr with the available days
+        function setupFlatpickr(availableDays) {
+          if (flatpickrInstance) flatpickrInstance.destroy(); // Destroy previous instance
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-danger">Confirm Cancel</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+          flatpickrInstance = flatpickr("#newDate", {
+            dateFormat: "Y-m-d",
+            minDate: "today", // Disable past dates
+            disable: [
+              function (date) {
+                // Disable dates that are not available or in the past
+                return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
+              }
+            ]
+          });
+        }
 
-        
+        // Event listener for opening the reschedule modal and fetching availability
+        document.getElementById('appointmentList').addEventListener('click', function (e) {
+          if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
+            const appointmentId = e.target.dataset.appointmentId;
+            const currentDate = e.target.dataset.currentDate;
+            const counselorId = e.target.dataset.counselorId;
 
-        <div class="content-backdrop fade"></div>
-      </div>
-      <%- include('includes/footer.ejs') %>
-    </div>
-    <div class="layout-overlay layout-menu-toggle"></div>
-    <div class="drag-target"></div>
-  </div>
-</div>
+            // Populate modal fields
+            document.getElementById('modalAppointmentId').value = appointmentId;
+            document.getElementById('newDate').value = getLocalDateInputValue(currentDate);
+            document.getElementById('modalCounselorId').value = counselorId;
 
-<%- include('includes/scripts.ejs') %>
-
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Create a variable to store flatpickr instance for cleanup
-    let flatpickrInstance = null;
-
-    // Map days of the week to numbers for disabling in flatpickr
-    const dayMap = {
-      "Sunday": 0,
-      "Monday": 1,
-      "Tuesday": 2,
-      "Wednesday": 3,
-      "Thursday": 4,
-      "Friday": 5,
-      "Saturday": 6
-    };
-
-    // Function to setup flatpickr with the available days
-    function setupFlatpickr(availableDays) {
-      if (flatpickrInstance) flatpickrInstance.destroy(); // Destroy previous instance
-
-      flatpickrInstance = flatpickr("#newDate", {
-        dateFormat: "Y-m-d",
-        minDate: "today", // Disable past dates
-        disable: [
-          function (date) {
-            // Disable dates that are not available or in the past
-            return !availableDays.includes(date.getDay()) || date < new Date().setHours(0, 0, 0, 0);
+            // Fetch the availability of the counselor using the counselorId
+            fetch(`/counselors/${counselorId}/availability`)
+              .then(response => response.json())
+              .then(data => {
+                // Assuming the API returns the available days as an array, e.g., ["Monday", "Wednesday"]
+                const availableDays = data.available_days.map(day => dayMap[day]);
+                setupFlatpickr(availableDays);
+              })
+              .catch(err => console.error('Failed to fetch counselor availability:', err));
           }
-        ]
+        });
+
+        // Function to convert ISO string to local date format (YYYY-MM-DD)
+        function getLocalDateInputValue(isoString) {
+          const date = new Date(isoString);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+
+        // Optional: Setup event listener for modal open (to fetch availability)
+        const rescheduleModal = document.getElementById('rescheduleModal');
+        rescheduleModal.addEventListener('shown.bs.modal', function () {
+          const counselorId = document.getElementById('modalCounselorId').value;
+          if (counselorId) {
+            fetch(`/counselors/${counselorId}/availability`)
+              .then(response => response.json())
+              .then(data => {
+                const availableDays = data.available_days.map(day => dayMap[day]);
+                setupFlatpickr(availableDays);
+              })
+              .catch(err => console.error('Error fetching counselor availability:', err));
+          }
+        });
       });
-    }
+    </script>
 
-    // Event listener for opening the reschedule modal and fetching availability
-    document.getElementById('appointmentList').addEventListener('click', function (e) {
-      if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
-        const appointmentId = e.target.dataset.appointmentId;
-        const currentDate = e.target.dataset.currentDate;
-        const counselorId = e.target.dataset.counselorId;
 
-        // Populate modal fields
-        document.getElementById('modalAppointmentId').value = appointmentId;
-        document.getElementById('newDate').value = getLocalDateInputValue(currentDate);
-        document.getElementById('modalCounselorId').value = counselorId;
 
-        // Fetch the availability of the counselor using the counselorId
-        fetch(`/counselors/${counselorId}/availability`)
+    <script>
+      const filterSelect = document.getElementById('statusFilter');
+      const sortSelect = document.getElementById('sortByDate');
+      const appointmentList = document.getElementById('appointmentList');
+
+
+      const getLocalDateInputValue = (isoString) => {
+        const date = new Date(isoString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`; // format: YYYY-MM-DD
+      };
+
+
+
+      appointmentList.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
+          const appointmentId = e.target.dataset.appointmentId;
+          const currentDate = e.target.dataset.currentDate;
+          const counselorId = e.target.dataset.counselorId;
+
+          console.log("Clicked dropdown-item to reschedule:");
+          console.log("Appointment ID:", appointmentId);
+          console.log("Current Date:", currentDate);
+          console.log("Counselor ID:", counselorId);
+
+          document.getElementById('modalAppointmentId').value = appointmentId;
+          document.getElementById('newDate').value = getLocalDateInputValue(currentDate);
+          document.getElementById('modalCounselorId').value = counselorId;
+        }
+      });
+
+
+
+
+
+
+      // Function to send request to server with filter and sort parameters
+      function applyFilters() {
+        const status = filterSelect.value;
+        const sort = sortSelect.value;
+        console.log("APPLYING FILTERS")
+        // Create URLSearchParams for the query
+        const params = new URLSearchParams();
+
+        if (status && status !== 'all') {
+          params.append('status', status);  // Filter by status
+        }
+
+        if (sort) {
+          params.append('sort', sort);  // Sort by date (ascending/descending)
+        }
+
+        // Send the request to the server
+        fetch(`/getAppointments?${params.toString()}`)
           .then(response => response.json())
           .then(data => {
-            // Assuming the API returns the available days as an array, e.g., ["Monday", "Wednesday"]
-            const availableDays = data.available_days.map(day => dayMap[day]);
-            setupFlatpickr(availableDays);
-          })
-          .catch(err => console.error('Failed to fetch counselor availability:', err));
-      }
-    });
+            appointmentList.innerHTML = '';
+            data.appointments.forEach(appointment => {
+              const item = document.createElement('div');
+              item.classList.add('appointment-card-item');
+              item.dataset.status = appointment.status;
+              item.dataset.date = appointment.appointment_date;
 
-    // Function to convert ISO string to local date format (YYYY-MM-DD)
-    function getLocalDateInputValue(isoString) {
-      const date = new Date(isoString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
+              // Format time strings in JS (not using EJS)
+              const startTime = new Date(`1970-01-01T${appointment.start_time}`).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+              });
+              const endTime = new Date(`1970-01-01T${appointment.end_time}`).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+              });
 
-    // Optional: Setup event listener for modal open (to fetch availability)
-    const rescheduleModal = document.getElementById('rescheduleModal');
-    rescheduleModal.addEventListener('shown.bs.modal', function () {
-      const counselorId = document.getElementById('modalCounselorId').value;
-      if (counselorId) {
-        fetch(`/counselors/${counselorId}/availability`)
-          .then(response => response.json())
-          .then(data => {
-            const availableDays = data.available_days.map(day => dayMap[day]);
-            setupFlatpickr(availableDays);
-          })
-          .catch(err => console.error('Error fetching counselor availability:', err));
-      }
-    });
-  });
-</script>
-
-
-
-<script>
-  const filterSelect = document.getElementById('statusFilter');
-  const sortSelect = document.getElementById('sortByDate');
-  const appointmentList = document.getElementById('appointmentList');
-
-
-  const getLocalDateInputValue = (isoString) => {
-  const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`; // format: YYYY-MM-DD
-};
-
-
-
-appointmentList.addEventListener('click', function(e) {
-  if (e.target && e.target.classList.contains('dropdown-item') && e.target.dataset.bsTarget === '#rescheduleModal') {
-    const appointmentId = e.target.dataset.appointmentId;
-    const currentDate = e.target.dataset.currentDate;
-    const counselorId = e.target.dataset.counselorId;
-
-    console.log("Clicked dropdown-item to reschedule:");
-    console.log("Appointment ID:", appointmentId);
-    console.log("Current Date:", currentDate);
-    console.log("Counselor ID:", counselorId);
-
-    document.getElementById('modalAppointmentId').value = appointmentId;
-    document.getElementById('newDate').value = getLocalDateInputValue(currentDate);
-    document.getElementById('modalCounselorId').value = counselorId;
-  }
-});
-
-
-
-
-
-
-  // Function to send request to server with filter and sort parameters
-  function applyFilters() {
-    const status = filterSelect.value;
-    const sort = sortSelect.value;
-    console.log("APPLYING FILTERS")
-    // Create URLSearchParams for the query
-    const params = new URLSearchParams();
-
-    if (status && status !== 'all') {
-      params.append('status', status);  // Filter by status
-    }
-
-    if (sort) {
-      params.append('sort', sort);  // Sort by date (ascending/descending)
-    }
-
-    // Send the request to the server
-    fetch(`/getAppointments?${params.toString()}`)
-  .then(response => response.json())
-  .then(data => {
-    appointmentList.innerHTML = '';
-    data.appointments.forEach(appointment => {
-      const item = document.createElement('div');
-      item.classList.add('appointment-card-item');
-      item.dataset.status = appointment.status;
-      item.dataset.date = appointment.appointment_date;
-
-      // Format time strings in JS (not using EJS)
-      const startTime = new Date(`1970-01-01T${appointment.start_time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-      const endTime = new Date(`1970-01-01T${appointment.end_time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-
-      item.innerHTML = `
+              item.innerHTML = `
         <div class="card border-1 shadow-sm h-100 rounded-4 bg-white appointment-card position-relative overflow-hidden p-2">
           <div class="position-absolute top-0 end-0 m-3">
             <span class="badge rounded-pill px-3 py-2 fs-6 text-white 
               ${appointment.status === 'approved' ? 'bg-success' :
-                appointment.status === 'pending' ? 'bg-warning text-dark' :
-                appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
-                'bg-secondary'}">
+                  appointment.status === 'pending' ? 'bg-warning text-dark' :
+                    appointment.status === 'rejected' || appointment.status === 'cancelled' ? 'bg-danger' :
+                      'bg-secondary'}">
               ${appointment.status.toUpperCase()}
             </span>
           </div>
@@ -464,10 +492,10 @@ appointmentList.addEventListener('click', function(e) {
             <div class="mb-2">
               <i class="bi bi-calendar-event me-1 text-muted"></i>
               <strong>Date:</strong> ${new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                      })}
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
             </div>
             <div class="mb-2">
               <i class="bi bi-clock me-1 text-muted"></i>
@@ -491,7 +519,7 @@ appointmentList.addEventListener('click', function(e) {
           </div>
           <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
             ${appointment.status === 'cancelled' || appointment.status === 'rejected' ? '' :
-              `<div class="dropdown">
+                  `<div class="dropdown">
                 <button class="btn btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
                   <i class="bi bi-gear-fill me-1"></i> Actions
                 </button>
@@ -523,120 +551,160 @@ appointmentList.addEventListener('click', function(e) {
         </div>
       `;
 
-      appointmentList.appendChild(item);
-    });
-  })
-  .catch(err => console.error('Error fetching appointments:', err));
+              appointmentList.appendChild(item);
+            });
+          })
+          .catch(err => console.error('Error fetching appointments:', err));
 
-  }
+      }
 
-  // Add event listeners for filter and sort dropdowns
-  filterSelect.addEventListener('change', applyFilters);
-  sortSelect.addEventListener('change', applyFilters);
-
-  
-</script>
-<script>
-  async function checkAvailability(event) {
-  event.preventDefault();
-
-  const appointmentId = document.getElementById('modalAppointmentId').value;
-  const counselorId = document.getElementById('modalCounselorId').value;
-  const date = document.getElementById('newDate').value;
-  const startTime = document.getElementById('startTime').value;
-  const endTime = document.getElementById('endTime').value;
-  const feedback = document.getElementById('availabilityFeedback');
+      // Add event listeners for filter and sort dropdowns
+      filterSelect.addEventListener('change', applyFilters);
+      sortSelect.addEventListener('change', applyFilters);
 
 
+    </script>
+    <script>
+      async function checkAvailability(event) {
+        event.preventDefault();
 
-  feedback.classList.add('d-none');
+        const appointmentId = document.getElementById('modalAppointmentId').value;
+        const counselorId = document.getElementById('modalCounselorId').value;
+        const date = document.getElementById('newDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const feedback = document.getElementById('availabilityFeedback');
 
-  if (startTime >= endTime) {
-    feedback.textContent = 'Start time must be before end time.';
-    feedback.classList.remove('d-none');
-    return false;
-  }
 
-  const response = await fetch('/student/appointments/reschedule', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      appointment_id: appointmentId,
-      counselor_id: counselorId,
-      date,
-      start_time: startTime,
-      end_time: endTime
-    })
-  });
 
-  const result = await response.json();
+        feedback.classList.add('d-none');
 
-  if (result.available) {
-    event.target.submit();
-  } else {
-    feedback.textContent = result.reason || 'The selected schedule is unavailable.';
-    feedback.classList.remove('d-none');
-  }
+        if (startTime >= endTime) {
+          feedback.textContent = 'Start time must be before end time.';
+          feedback.classList.remove('d-none');
+          return false;
+        }
 
-  return false;
-}
+        const response = await fetch('/student/appointments/reschedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointment_id: appointmentId,
+            counselor_id: counselorId,
+            date,
+            start_time: startTime,
+            end_time: endTime
+          })
+        });
 
-</script>
-<script>
-  function openCancelModal(appointmentId) {
-    document.getElementById('cancelAppointmentId').value = appointmentId;
-    document.getElementById('cancelRemark').value = "";
-    const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
-    cancelModal.show();
-  }
-
-  document.getElementById('cancelAppointmentForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-
-  const appointmentId = document.getElementById('cancelAppointmentId').value;
-  const remark = document.getElementById('cancelRemark').value.trim();
-
-  if (!remark) {
-    alert("Please provide a reason for cancellation.");
-    return;
-  }
-
-  try {
-    const response = await fetch(`/appointments/cancel/${appointmentId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ remark })
-    });
-
-    const contentType = response.headers.get("content-type");
-    
-    if (response.ok) {
-      if (contentType && contentType.includes("application/json")) {
         const result = await response.json();
-        alert(result.message || "Appointment cancelled successfully.");
-      } else {
-        alert("Appointment cancelled successfully.");
+
+        if (result.available) {
+          event.target.submit();
+        } else {
+          feedback.textContent = result.reason || 'The selected schedule is unavailable.';
+          feedback.classList.remove('d-none');
+        }
+
+        return false;
       }
-      location.reload();
-    } else {
-      if (contentType && contentType.includes("application/json")) {
-        const error = await response.json();
-        alert(error.message || "Failed to cancel appointment.");
-      } else {
-        alert("Failed to cancel appointment.");
+
+    </script>
+    <script>
+      function openCancelModal(appointmentId) {
+        document.getElementById('cancelAppointmentId').value = appointmentId;
+        document.getElementById('cancelRemark').value = "";
+        const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+        cancelModal.show();
       }
-    }
-  } catch (error) {
-    console.error("Cancel error:", error);
-    alert("An error occurred. Please try again.");
-  }
-});
+
+      document.getElementById('cancelAppointmentForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const appointmentId = document.getElementById('cancelAppointmentId').value;
+        const remark = document.getElementById('cancelRemark').value.trim();
+
+        if (!remark) {
+          alert("Please provide a reason for cancellation.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/appointments/cancel/${appointmentId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ remark })
+          });
+
+          const contentType = response.headers.get("content-type");
+
+          if (response.ok) {
+            if (contentType && contentType.includes("application/json")) {
+              const result = await response.json();
+              alert(result.message || "Appointment cancelled successfully.");
+            } else {
+              alert("Appointment cancelled successfully.");
+            }
+            location.reload();
+          } else {
+            if (contentType && contentType.includes("application/json")) {
+              const error = await response.json();
+              alert(error.message || "Failed to cancel appointment.");
+            } else {
+              alert("Failed to cancel appointment.");
+            }
+          }
+        } catch (error) {
+          console.error("Cancel error:", error);
+          alert("An error occurred. Please try again.");
+        }
+      });
 
 
-</script>
+    </script>
 
+    <script>
+      function validateRescheduleForm(event) {
+        // First check time validation
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const timeError = document.getElementById('timeError');
+
+        if (startTime && endTime && startTime >= endTime) {
+          timeError.classList.remove('d-none');
+          event.preventDefault();
+          return false;
+        } else {
+          timeError.classList.add('d-none');
+        }
+
+        // Then check availability (your existing checkAvailability function)
+        return checkAvailability(event);
+      }
+
+      // Add real-time validation for time inputs
+      document.getElementById('startTime').addEventListener('change', function () {
+        validateTimeInputs();
+      });
+      document.getElementById('endTime').addEventListener('change', function () {
+        validateTimeInputs();
+      });
+
+      function validateTimeInputs() {
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        const timeError = document.getElementById('timeError');
+
+        if (startTime && endTime && startTime >= endTime) {
+          timeError.classList.remove('d-none');
+        } else {
+          timeError.classList.add('d-none');
+        }
+      }
+    </script>
 
 </body>
+
 </html>
