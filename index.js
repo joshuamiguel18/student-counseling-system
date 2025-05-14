@@ -16,7 +16,8 @@ const cors = require('cors');
 const stream = require('stream');
 const fs = require('fs');
 const csv = require('csv-parser');
-
+const exceljs = require('exceljs');
+const PdfPrinter = require('pdfmake');
 
 // Use memory storage instead of disk
 const storage = multer.memoryStorage(); // Store files in memory (for buffer use)
@@ -1800,34 +1801,117 @@ app.get('/forums', authenticateToken, async (req, res) => {
   
 
 
-  app.get('/admin-app', authenticateTokenAdmin, async (req, res) => {
-    try {
-        // Get total number of students
-        const studentsResult = await pool.query('SELECT COUNT(*) FROM student');
-        const totalStudents = studentsResult.rows[0].count;
+//   app.get('/admin-app', authenticateTokenAdmin, async (req, res) => {
+//     try {
+//         // Get total number of students
+//         const studentsResult = await pool.query('SELECT COUNT(*) FROM student');
+//         const totalStudents = studentsResult.rows[0].count;
 
-        // Get total number of counselors
-        const counselorsResult = await pool.query('SELECT COUNT(*) FROM counselor');
-        const totalCounselors = counselorsResult.rows[0].count;
+//         // Get total number of counselors
+//         const counselorsResult = await pool.query('SELECT COUNT(*) FROM counselor');
+//         const totalCounselors = counselorsResult.rows[0].count;
 
-        // Get total number of appointments
-        const appointmentsResult = await pool.query('SELECT COUNT(*) FROM appointment');
-        const totalAppointments = appointmentsResult.rows[0].count;
+//         // Get total number of appointments
+//         const appointmentsResult = await pool.query('SELECT COUNT(*) FROM appointment');
+//         const totalAppointments = appointmentsResult.rows[0].count;
 
-        // Pass the totals to the view
-        res.render('adminPages/admin-app', {
-            totalStudents,
-            totalCounselors,
-            totalAppointments,
-            user: req.user.user,
-        });
-    } catch (err) {
-        console.error('Error fetching totals:', err);
-        res.status(500).send('Server Error');
-    }
-});
+//         // Pass the totals to the view
+//         res.render('adminPages/admin-app', {
+//             totalStudents,
+//             totalCounselors,
+//             totalAppointments,
+//             user: req.user.user,
+//         });
+//     } catch (err) {
+//         console.error('Error fetching totals:', err);
+//         res.status(500).send('Server Error');
+//     }
+// });
 
 //FOR ADMINS
+
+
+app.get('/admin-app', authenticateTokenAdmin, async (req, res) => {
+  try {
+    // Get basic counts (students, counselors, appointments)
+    const [studentsResult, counselorsResult, appointmentsResult] = await Promise.all([
+      pool.query('SELECT COUNT(*) FROM student'),
+      pool.query('SELECT COUNT(*) FROM counselor'),
+      pool.query('SELECT COUNT(*) FROM appointment')
+    ]);
+
+    const totalStudents = studentsResult.rows[0].count;
+    const totalCounselors = counselorsResult.rows[0].count;
+    const totalAppointments = appointmentsResult.rows[0].count;
+
+    // Get appointment summary data
+    const today = moment().startOf('day').toDate();
+    const thisWeek = moment().startOf('isoWeek').toDate();
+    const thisMonth = moment().startOf('month').toDate();
+
+    const summaryQuery = `
+      SELECT
+        COUNT(*) FILTER (WHERE appointment_date >= $1) AS today,
+        COUNT(*) FILTER (WHERE appointment_date >= $2) AS thisWeek,
+        COUNT(*) FILTER (WHERE appointment_date >= $3) AS thisMonth
+      FROM appointment
+      WHERE status != 'cancelled'
+    `;
+    const { rows: [summary] } = await pool.query(summaryQuery, [today, thisWeek, thisMonth]);
+
+    // Get counselor stats
+    const counselorQuery = `
+      SELECT
+        c.id,
+        CONCAT(c.first_name, ' ', c.last_name) AS name,
+        COUNT(a.*) AS total
+      FROM counselor c
+      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.status != 'cancelled'
+      GROUP BY c.id
+      ORDER BY name
+    `;
+    const { rows: counselorStats } = await pool.query(counselorQuery);
+
+    // Get daily counts for current week
+    const dailyCounts = [];
+    const dayLabels = [];
+    for (let i = 0; i < 7; i++) {
+      const day = moment().startOf('isoWeek').add(i, 'days');
+      const start = day.startOf('day').toDate();
+      const end = day.endOf('day').toDate();
+      const result = await pool.query(`
+        SELECT COUNT(*) FROM appointment
+        WHERE appointment_date BETWEEN $1 AND $2 AND status != 'cancelled'
+      `, [start, end]);
+      dayLabels.push(day.format('ddd'));
+      dailyCounts.push(parseInt(result.rows[0].count));
+    }
+
+    // Prepare pie chart data
+    const counselorNames = counselorStats.map(c => c.name);
+    const counselorCounts = counselorStats.map(c => parseInt(c.total));
+    
+    res.render('adminPages/admin-app', {
+      totalStudents,
+      totalCounselors,
+      totalAppointments,
+      user: req.user.user,
+      summary,
+      counselorStats,
+      chartData: {
+        days: dayLabels,
+        dailyCounts,
+        counselorNames,
+        counselorCounts
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching admin data:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 app.get('/admin/register', (req, res) => {
     res.render('adminPages/register-admin', { error: null, username: '', email: '' }); 
 });
@@ -2700,6 +2784,78 @@ app.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Error logging in user:', err);
     res.status(500).render('login', { error: 'Internal server error', username });
+  }
+});
+
+app.post('/check-password', authenticateToken, async (req, res) => {
+  const { currentPassword } = req.body;
+
+  if (!currentPassword) {
+    return res.status(400).json({ success: false, message: 'Password is required' });
+  }
+
+  try {
+    const userId = req.user.user.id;
+    const result = await pool.query('SELECT password FROM student WHERE id = $1', [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, result.rows[0].password);
+
+    if (!isMatch) {
+      return res.json({ success: false, message: 'Incorrect current password' });
+    }
+
+    res.json({ success: true, message: 'Password is correct' });
+  } catch (err) {
+    console.error('Error verifying password:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+app.post('/change-password', authenticateToken ,async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).send('All fields are required.');
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).send('New passwords do not match.');
+  }
+
+  try {
+    const userId = req.user.user.id;
+
+    // Get user data from DB
+    const result = await pool.query('SELECT * FROM student WHERE id = $1', [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('User not found.');
+    }
+
+    const user = result.rows[0];
+
+    // Verify current password
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
+      return res.status(401).send('Current password is incorrect.');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in DB
+    await pool.query('UPDATE student SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+
+    // res.status(200).send('Password updated successfully.');
+    res.redirect('/login')
+  } catch (err) {
+    console.error('Error changing password:', err);
+    res.status(500).send('Internal server error.');
   }
 });
 
@@ -5933,72 +6089,470 @@ app.get('/counselor/logout', (req, res) => {
 });
 
 
-app.get('/admin-summary', async (req, res) => {
+// app.get('/admin-summary', async (req, res) => {
+//   try {
+//     // Get date from query or default to today
+//     const selectedDate = req.query.date 
+//       ? moment(req.query.date, 'YYYY-MM-DD').startOf('day').toDate()
+//       : moment().startOf('day').toDate();
+    
+//     // Date range for the selected day
+//     const startDate = moment(selectedDate).startOf('day').toDate();
+//     const endDate = moment(selectedDate).endOf('day').toDate();
+
+//     // Get summary statistics
+//     const summaryQuery = `
+//       SELECT 
+//         COUNT(*) as total,
+//         COUNT(*) FILTER (WHERE status = 'completed') as completed,
+//         COUNT(*) FILTER (WHERE status = 'pending') as pending,
+//         COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
+//       FROM appointment
+//       WHERE appointment_date BETWEEN $1 AND $2
+//     `;
+//     const { rows: [summary] } = await pool.query(summaryQuery, [startDate, endDate]);
+
+//     // Get detailed records
+//     const recordsQuery = `
+//       SELECT 
+//         a.id,
+//         CONCAT(c.first_name, ' ', c.last_name) as counselor_name,
+//         CONCAT(s.first_name, ' ', s.last_name) as student_name,
+//         a.appointment_date,
+//         a.status,
+//         a.notes
+//       FROM appointment a
+//       JOIN counselor c ON a.counselor_id = c.id
+//       JOIN student s ON a.student_id = s.id
+//       WHERE a.appointment_date BETWEEN $1 AND $2
+//       ORDER BY a.appointment_date
+//     `;
+//     const { rows: records } = await pool.query(recordsQuery, [startDate, endDate]);
+
+//     // Get statistics by counselor
+//     const counselorQuery = `
+//       SELECT
+//         c.id,
+//         CONCAT(c.first_name, ' ', c.last_name) AS name,
+//         COUNT(a.*) as total,
+//         COUNT(a.*) FILTER (WHERE a.status = 'completed') as completed,
+//         COUNT(a.*) FILTER (WHERE a.status = 'pending') as pending,
+//         COUNT(a.*) FILTER (WHERE a.status = 'cancelled') as cancelled
+//       FROM counselor c
+//       LEFT JOIN appointment a ON a.counselor_id = c.id 
+//         AND a.appointment_date BETWEEN $1 AND $2
+//       GROUP BY c.id
+//       ORDER BY name
+//     `;
+//     const { rows: counselorStats } = await pool.query(counselorQuery, [startDate, endDate]);
+
+//     res.render('adminPages/admin-reports', {
+//       selectedDate: moment(selectedDate).format('YYYY-MM-DD'),
+//       formattedDate: moment(selectedDate).format('MMMM D, YYYY'),
+//       summary,
+//       records,
+//       counselorStats,
+//       hasRecords: records.length > 0
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Failed to load reports');
+//   }
+// });
+
+// Start server
+
+
+
+
+
+
+
+
+
+app.get('/admin-summary', authenticateTokenAdmin, async (req, res) => {
   try {
-    const today = moment().startOf('day').toDate();
-    const thisWeek = moment().startOf('isoWeek').toDate();
-    const thisMonth = moment().startOf('month').toDate();
-
-    // Summary
-    const summaryQuery = `
-      SELECT
-        COUNT(*) FILTER (WHERE appointment_date >= $1) AS today,
-        COUNT(*) FILTER (WHERE appointment_date >= $2) AS thisWeek,
-        COUNT(*) FILTER (WHERE appointment_date >= $3) AS thisMonth
-      FROM appointment
-      WHERE status != 'cancelled'
-    `;
-    const { rows: [summary] } = await pool.query(summaryQuery, [today, thisWeek, thisMonth]);
-
-    // Per Counselor
-    const counselorQuery = `
-      SELECT
-        c.id,
-        CONCAT(c.first_name, ' ', c.last_name) AS name,
-        COUNT(a.*) AS total
-      FROM counselor c
-      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.status != 'cancelled'
-      GROUP BY c.id
-      ORDER BY name
-    `;
-    const { rows: counselorStats } = await pool.query(counselorQuery);
-
-    // Chart data: daily counts for current week
-    const dailyCounts = [];
-    const dayLabels = [];
-    for (let i = 0; i < 7; i++) {
-      const day = moment().startOf('isoWeek').add(i, 'days');
-      const start = day.startOf('day').toDate();
-      const end = day.endOf('day').toDate();
-      const result = await pool.query(`
-        SELECT COUNT(*) FROM appointment
-        WHERE appointment_date BETWEEN $1 AND $2 AND status != 'cancelled'
-      `, [start, end]);
-      dayLabels.push(day.format('ddd'));
-      dailyCounts.push(parseInt(result.rows[0].count));
+    // Date handling - default to today if no range provided
+    let startDate, endDate;
+    
+    if (req.query.startDate && req.query.endDate) {
+      startDate = moment(req.query.startDate, 'YYYY-MM-DD').startOf('day').toDate();
+      endDate = moment(req.query.endDate, 'YYYY-MM-DD').endOf('day').toDate();
+    } else {
+      // Default to today's date
+      startDate = moment().startOf('day').toDate();
+      endDate = moment().endOf('day').toDate();
     }
 
-    // Pie chart: counselor counts
-    const counselorNames = counselorStats.map(c => c.name);
-    const counselorCounts = counselorStats.map(c => parseInt(c.total));
-    
+    // Get summary statistics
+    const summaryQuery = `
+      SELECT 
+        COUNT(*) as total_appointments,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_appointments,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending_appointments,
+        COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_appointments,
+        (SELECT COUNT(*) FROM psycho_tests WHERE test_date BETWEEN $1 AND $2) as total_tests,
+        (SELECT COUNT(*) FROM psycho_tests WHERE status = 'completed' AND test_date BETWEEN $1 AND $2) as completed_tests
+      FROM appointment
+      WHERE appointment_date BETWEEN $1 AND $2
+    `;
+    const { rows: [summary] } = await pool.query(summaryQuery, [startDate, endDate]);
+
+    // Get counselor data with appointments and tests
+    const counselorsQuery = `
+      SELECT 
+        c.id,
+        CONCAT(c.first_name, ' ', c.last_name) AS counselor_name,
+        c.position,
+        d.name AS department,
+        COUNT(a.id) as appointment_count,
+        COUNT(a.id) FILTER (WHERE a.status = 'completed') as completed_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'pending') as pending_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'cancelled') as cancelled_appointments,
+        COUNT(pt.id) as test_count,
+        COUNT(pt.id) FILTER (WHERE pt.status = 'completed') as completed_tests
+      FROM counselor c
+      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.appointment_date BETWEEN $1 AND $2
+      LEFT JOIN psycho_tests pt ON pt.counselor_id = c.id AND pt.test_date BETWEEN $1 AND $2
+      LEFT JOIN departments d ON c.department_id = d.id
+      GROUP BY c.id, d.name
+      ORDER BY c.last_name, c.first_name
+    `;
+    const { rows: counselors } = await pool.query(counselorsQuery, [startDate, endDate]);
+
     res.render('adminPages/admin-reports', {
+      startDate: moment(startDate).format('YYYY-MM-DD'),
+      endDate: moment(endDate).format('YYYY-MM-DD'),
+      formattedStartDate: moment(startDate).format('MMMM D, YYYY'),
+      formattedEndDate: moment(endDate).format('MMMM D, YYYY'),
       summary,
-      counselorStats,
-      chartData: {
-        days: dayLabels,
-        dailyCounts,
-        counselorNames,
-        counselorCounts
-      }
+      counselors,
+      isSingleDay: moment(startDate).isSame(endDate, 'day')
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Failed to load reports');
+    console.error('Error generating reports:', err);
+    res.status(500).render('error', { message: 'Failed to generate reports' });
   }
 });
 
-// Start server
+// Export to Excel
+app.get('/export-counselor-excel', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const start = moment(startDate, 'YYYY-MM-DD').startOf('day').toDate();
+    const end = moment(endDate, 'YYYY-MM-DD').endOf('day').toDate();
+
+    // Get the same data as the main report
+    const counselorsQuery = `
+      SELECT 
+        CONCAT(c.first_name, ' ', c.last_name) AS counselor_name,
+        c.position,
+        d.name AS department,
+        COUNT(a.id) as appointment_count,
+        COUNT(a.id) FILTER (WHERE a.status = 'completed') as completed_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'pending') as pending_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'cancelled') as cancelled_appointments,
+        COUNT(pt.id) as test_count,
+        COUNT(pt.id) FILTER (WHERE pt.status = 'completed') as completed_tests
+      FROM counselor c
+      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.appointment_date BETWEEN $1 AND $2
+      LEFT JOIN psycho_tests pt ON pt.counselor_id = c.id AND pt.test_date BETWEEN $1 AND $2
+      LEFT JOIN departments d ON c.department_id = d.id
+      GROUP BY c.id, d.name
+      ORDER BY c.last_name, c.first_name
+    `;
+    const { rows: counselors } = await pool.query(counselorsQuery, [start, end]);
+
+    // Create Excel workbook
+    const workbook = new exceljs.Workbook();
+    const worksheet = workbook.addWorksheet('Counselor Report');
+
+    // Add headers
+    worksheet.columns = [
+      { header: 'Counselor Name', key: 'name', width: 25 },
+      { header: 'Position', key: 'position', width: 20 },
+      { header: 'Department', key: 'department', width: 20 },
+      { header: 'Total Appointments', key: 'appointments', width: 18 },
+      { header: 'Completed', key: 'completed', width: 12 },
+      { header: 'Pending', key: 'pending', width: 12 },
+      { header: 'Cancelled', key: 'cancelled', width: 12 },
+      { header: 'Total Tests', key: 'tests', width: 15 },
+      { header: 'Completed Tests', key: 'completed_tests', width: 18 }
+    ];
+
+    // Add data
+    counselors.forEach(counselor => {
+      worksheet.addRow({
+        name: counselor.counselor_name,
+        position: counselor.position,
+        department: counselor.department,
+        appointments: counselor.appointment_count,
+        completed: counselor.completed_appointments,
+        pending: counselor.pending_appointments,
+        cancelled: counselor.cancelled_appointments,
+        tests: counselor.test_count,
+        completed_tests: counselor.completed_tests
+      });
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=counselor-report-${moment(start).format('YYYY-MM-DD')}-${moment(end).format('YYYY-MM-DD')}.xlsx`
+    );
+
+    // Send the workbook
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Error exporting Excel:', err);
+    res.status(500).send('Failed to export Excel report');
+  }
+});
+
+// Export to PDF (fixed version)
+app.get('/export-counselor-pdf', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const start = moment(startDate, 'YYYY-MM-DD').startOf('day').toDate();
+    const end = moment(endDate, 'YYYY-MM-DD').endOf('day').toDate();
+
+    // Get the data (same as before)
+    const summaryQuery = `
+      SELECT 
+        COUNT(*) as total_appointments,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_appointments,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending_appointments,
+        COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_appointments,
+        (SELECT COUNT(*) FROM psycho_tests WHERE test_date BETWEEN $1 AND $2) as total_tests,
+        (SELECT COUNT(*) FROM psycho_tests WHERE status = 'completed' AND test_date BETWEEN $1 AND $2) as completed_tests
+      FROM appointment
+      WHERE appointment_date BETWEEN $1 AND $2
+    `;
+    const { rows: [summary] } = await pool.query(summaryQuery, [start, end]);
+
+    const counselorsQuery = `
+      SELECT 
+        CONCAT(c.first_name, ' ', c.last_name) AS counselor_name,
+        c.position,
+        d.name AS department,
+        COUNT(a.id) as appointment_count,
+        COUNT(a.id) FILTER (WHERE a.status = 'completed') as completed_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'pending') as pending_appointments,
+        COUNT(a.id) FILTER (WHERE a.status = 'cancelled') as cancelled_appointments,
+        COUNT(pt.id) as test_count,
+        COUNT(pt.id) FILTER (WHERE pt.status = 'completed') as completed_tests
+      FROM counselor c
+      LEFT JOIN appointment a ON a.counselor_id = c.id AND a.appointment_date BETWEEN $1 AND $2
+      LEFT JOIN psycho_tests pt ON pt.counselor_id = c.id AND pt.test_date BETWEEN $1 AND $2
+      LEFT JOIN departments d ON c.department_id = d.id
+      GROUP BY c.id, d.name
+      ORDER BY c.last_name, c.first_name
+    `;
+    const { rows: counselors } = await pool.query(counselorsQuery, [start, end]);
+
+    // PDF content definition with fixed widths
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const printer = new PdfPrinter(fonts);
+    
+    const docDefinition = {
+      pageSize: 'A4',
+      pageMargins: [40, 60, 40, 60],
+      content: [
+        {
+          text: 'Counselor Activity Report',
+          style: 'header'
+        },
+        {
+          text: `Date Range: ${moment(start).format('MMMM D, YYYY')} - ${moment(end).format('MMMM D, YYYY')}`,
+          style: 'subheader'
+        },
+        { text: '\n' },
+        {
+          text: 'Summary Statistics',
+          style: 'sectionHeader'
+        },
+        {
+          table: {
+            widths: ['*', '*', '*', '*'],
+            body: [
+              [
+                { text: 'Total Appointments', style: 'tableHeader' },
+                { text: 'Completed', style: 'tableHeader' },
+                { text: 'Pending', style: 'tableHeader' },
+                { text: 'Cancelled', style: 'tableHeader' }
+              ],
+              [
+                summary.total_appointments.toString(),
+                summary.completed_appointments.toString(),
+                summary.pending_appointments.toString(),
+                summary.cancelled_appointments.toString()
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: function(i, node) { return 0.5; },
+            vLineWidth: function(i, node) { return 0.5; },
+            hLineColor: function(i, node) { return '#aaa'; },
+            vLineColor: function(i, node) { return '#aaa'; },
+            paddingLeft: function(i, node) { return 4; },
+            paddingRight: function(i, node) { return 4; },
+            paddingTop: function(i, node) { return 2; },
+            paddingBottom: function(i, node) { return 2; }
+          }
+        },
+        { text: '\n' },
+        {
+          table: {
+            widths: ['*', '*'],
+            body: [
+              [
+                { text: 'Total Psychological Tests', style: 'tableHeader' },
+                { text: 'Completed Tests', style: 'tableHeader' }
+              ],
+              [
+                summary.total_tests.toString(),
+                summary.completed_tests.toString()
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: function(i, node) { return 0.5; },
+            vLineWidth: function(i, node) { return 0.5; },
+            hLineColor: function(i, node) { return '#aaa'; },
+            vLineColor: function(i, node) { return '#aaa'; },
+            paddingLeft: function(i, node) { return 4; },
+            paddingRight: function(i, node) { return 4; },
+            paddingTop: function(i, node) { return 2; },
+            paddingBottom: function(i, node) { return 2; }
+          }
+        },
+        { text: '\n\n' },
+        {
+          text: 'Counselor Details',
+          style: 'sectionHeader'
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Counselor', style: 'tableHeader' },
+                { text: 'Department', style: 'tableHeader' },
+                { text: 'Appointments', style: 'tableHeader' },
+                { text: 'Completed', style: 'tableHeader' },
+                { text: 'Pending', style: 'tableHeader' },
+                { text: 'Cancelled', style: 'tableHeader' },
+                { text: 'Tests', style: 'tableHeader' },
+                { text: 'Completed Tests', style: 'tableHeader' }
+              ],
+              ...counselors.map(c => [
+                { text: c.counselor_name || '-', style: 'tableCell' },
+                { text: c.department || '-', style: 'tableCell' },
+                { text: c.appointment_count.toString(), style: 'tableCell' },
+                { text: c.completed_appointments.toString(), style: 'tableCellSuccess' },
+                { text: c.pending_appointments.toString(), style: 'tableCellWarning' },
+                { text: c.cancelled_appointments.toString(), style: 'tableCellDanger' },
+                { text: c.test_count.toString(), style: 'tableCell' },
+                { text: c.completed_tests.toString(), style: 'tableCellSuccess' }
+              ])
+            ]
+          },
+          layout: {
+            hLineWidth: function(i, node) { return i === 0 || i === node.table.body.length ? 1 : 0.5; },
+            vLineWidth: function(i, node) { return 0.5; },
+            hLineColor: function(i, node) { return '#aaa'; },
+            vLineColor: function(i, node) { return '#aaa'; },
+            paddingLeft: function(i, node) { return 4; },
+            paddingRight: function(i, node) { return 4; },
+            paddingTop: function(i, node) { return 2; },
+            paddingBottom: function(i, node) { return 2; }
+          }
+        }
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          alignment: 'center',
+          margin: [0, 0, 0, 10]
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          alignment: 'center',
+          margin: [0, 0, 0, 20]
+        },
+        sectionHeader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5]
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 10,
+          color: 'black',
+          fillColor: '#f5f5f5'
+        },
+        tableCell: {
+          fontSize: 9
+        },
+        tableCellSuccess: {
+          fontSize: 9,
+          color: '#28a745' // Green for success/completed
+        },
+        tableCellWarning: {
+          fontSize: 9,
+          color: '#ffc107' // Yellow for warning/pending
+        },
+        tableCellDanger: {
+          fontSize: 9,
+          color: '#dc3545' // Red for danger/cancelled
+        }
+      },
+      defaultStyle: {
+        font: 'Helvetica',
+        fontSize: 10
+      }
+    };
+
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=counselor-report-${moment(start).format('YYYY-MM-DD')}-${moment(end).format('YYYY-MM-DD')}.pdf`
+    );
+
+    pdfDoc.pipe(res);
+    pdfDoc.end();
+  } catch (err) {
+    console.error('Error exporting PDF:', err);
+    res.status(500).send('Failed to export PDF report');
+  }
+});
+
+
+
+
+
+
+
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

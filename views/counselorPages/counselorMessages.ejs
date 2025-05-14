@@ -197,6 +197,7 @@
       
         // ✅ Send a message
         function sendMessage(appointmentId, message) {
+          messageInput.value = '';
           fetch('/counselor/messages/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -209,7 +210,8 @@
             .then(res => res.json())
             .then(result => {
               if (result.success) {
-                messageInput.value = ''; // Clear input
+                console.log("MESSAGE SENT!");
+                 // Clear input
                 fetchMessages(appointmentId); // Refresh chat
                 setTimeout(() => {
                   chatBox.scrollTop = chatBox.scrollHeight; // Scroll after DOM update

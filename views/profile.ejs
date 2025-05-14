@@ -218,6 +218,57 @@
                 </div>
               </div>
             
+
+
+              <div class="card mt-6">
+              <h5 class="card-header">Change Password</h5>
+              <div class="card-body pt-1">
+                <form id="formAccountSettings" method="POST" action="/change-password">
+                  <div class="row">
+                    <div class="mb-6 col-md-6 form-password-toggle fv-plugins-icon-container">
+                      <label class="form-label" for="currentPassword">Current Password</label>
+                      <div class="input-group input-group-merge has-validation">
+                        <input class="form-control" type="password" name="currentPassword" id="currentPassword" placeholder="············" required>
+                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                      </div><div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="mb-6 col-md-6 form-password-toggle fv-plugins-icon-container">
+                      <label class="form-label" for="newPassword">New Password</label>
+                      <div class="input-group input-group-merge has-validation">
+                        <input class="form-control" type="password" id="newPassword" name="newPassword" placeholder="············" required>
+                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                      </div><div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-6 col-md-6 form-password-toggle fv-plugins-icon-container">
+                      <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                      <div class="input-group input-group-merge has-validation">
+                        <input class="form-control" type="password" name="confirmPassword" id="confirmPassword" placeholder="············" required>
+                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                      </div><div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                    </div>
+                  </div>
+                  <h6 class="text-body">Password Requirements:</h6>
+
+<ul class="ps-4 mb-0">
+            <li class="mb-4">Minimum 8 characters long - the more, the better</li>
+            <li class="mb-4">At least one lowercase character</li>
+            <li>At least one number, symbol, or whitespace character</li>
+          </ul>
+
+                  <div class="mt-6">
+                    <button type="submit" class="btn btn-primary me-3" fdprocessedid="4yw3ug">Save changes</button>
+                    <button type="reset" class="btn btn-label-secondary" fdprocessedid="9haqr">Reset</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+
+
+
           </div>
         </div>
         <!--/ Content wrapper: End -->
@@ -230,5 +281,89 @@
   <!-- Layout wrapper: End -->
 
   <%- include('includes/scripts.ejs') %>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentPasswordInput = document.getElementById('currentPassword');
+
+    currentPasswordInput.addEventListener('input', async () => {
+      const password = currentPasswordInput.value;
+
+      if (!password) {
+        currentPasswordInput.setCustomValidity("Current password is required.");
+        currentPasswordInput.reportValidity();
+        return;
+      }
+
+      try {
+        const response = await fetch('/check-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ currentPassword: password })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          currentPasswordInput.setCustomValidity(data.message);
+        } else {
+          currentPasswordInput.setCustomValidity('');
+        }
+
+        currentPasswordInput.reportValidity();
+      } catch (err) {
+        console.error('Error checking password:', err);
+      }
+    });
+  });
+</script>
+
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const currentPassword = document.getElementById('currentPassword');
+
+    // Real-time validation for New Password
+    newPassword.addEventListener('input', () => {
+      const value = newPassword.value;
+      let message = '';
+
+      if (value.length < 8) {
+        message = 'Password must be at least 8 characters.';
+      } else if (!/[a-z]/.test(value)) {
+        message = 'Include at least one lowercase letter.';
+      } else if (!/[0-9\s\W]/.test(value)) {
+        message = 'Include at least one number, symbol, or whitespace.';
+      }
+
+      newPassword.setCustomValidity(message);
+      newPassword.reportValidity();
+    });
+
+    // Real-time match validation
+    confirmPassword.addEventListener('input', () => {
+      if (confirmPassword.value !== newPassword.value) {
+        confirmPassword.setCustomValidity("Passwords do not match.");
+      } else {
+        confirmPassword.setCustomValidity('');
+      }
+      confirmPassword.reportValidity();
+    });
+
+    // Optional: Require current password (for clarity)
+    currentPassword.addEventListener('input', () => {
+      if (!currentPassword.value.trim()) {
+        currentPassword.setCustomValidity("Current password is required.");
+      } else {
+        currentPassword.setCustomValidity('');
+      }
+      currentPassword.reportValidity();
+    });
+  });
+</script>
+
 </body>
 </html>

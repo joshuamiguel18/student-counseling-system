@@ -16,57 +16,62 @@
           
 
 <div class="container py-5">
-              <h2 class="mb-4 fw-bold">Guidance Staff Directory</h2>
+  <h2 class="mb-4 fw-bold">Guidance Staff Directory</h2>
 
-              <!-- Head of Guidance -->
-              <div class="text-center mb-5">
-                <div class="card p-4 shadow-sm d-inline-block">
-                  <img src="/uploads/default-avatar.png" class="profile-img mb-3">
-                  <h5 class="mb-1">Dr. Maria Santos</h5>
-                  <p class="text-muted mb-0">Head of Guidance</p>
-                  <small class="text-muted"><i class="bx bx-envelope"></i> maria.santos@guidance.edu</small>
-                </div>
-              </div>
+  <!-- Head of Guidance -->
+  <div class="text-center mb-5">
+    <div class="card p-4 shadow-sm d-inline-block">
+      <img src="/uploads/default-avatar.png" class="profile-img mb-3">
+      <h5 class="mb-1">Dr. Sylvia Leigh L. Quigao, RGC</h5>
+      <p class="text-muted mb-0">Campus Guidance Coordinator</p>
+      <small class="text-muted"><i class="bx bx-envelope"></i> sylvia.quigao@guidance.edu</small>
+    </div>
+  </div>
 
-              <!-- Counselors -->
-              <h5 class="section-title">Guidance Counselors</h5>
-              <div class="row mb-5">
-                <% const counselors = [
-                  { name: "Mr. John Dela Cruz", email: "john.delacruz@guidance.edu" },
-                  { name: "Ms. Ana Reyes", email: "ana.reyes@guidance.edu" },
-                  { name: "Mr. Mark Tan", email: "mark.tan@guidance.edu" }
-                ]; %>
-                <% counselors.forEach(c => { %>
-                  <div class="col-md-4 mb-4">
-                    <div class="card p-3 shadow-sm h-100 text-center">
-                      <img src="/uploads/default-avatar.png" class="profile-img mb-2">
-                      <h6><%= c.name %></h6>
-                      <p class="text-muted small mb-1">Guidance Counselor</p>
-                      <small class="text-muted"><i class="bx bx-envelope"></i> <%= c.email %></small>
-                    </div>
-                  </div>
-                <% }) %>
-              </div>
+  <!-- Counselors -->
+  <h5 class="section-title">Guidance Counselors</h5>
+  <div class="row mb-5">
+    <% const counselors = [
+      {
+        name: "Voltaire T. Soriano, RGC",
+        email: "voltair.soriano@guidance.edu",
+        role: "Campus Guidance Counselor",
+        colleges: "Information & Computing Sciences, Engineering & Architecture, Veterinary Medicine"
+      },
+      {
+        name: "Kristine Joy B. Pamittan, CHRA",
+        email: "kristine.pamittan@guidance.edu",
+        role: "Campus Guidance Personnel",
+        colleges: "College of Industrial Technology"
+      },
+      {
+        name: "Ayn S. Rodriguez, RPM",
+        email: "ayn.rodriguez@guidance.edu",
+        role: "Campus Guidance Personnel",
+        colleges: "Humanities and Social Sciences, Natural Sciences and Mathematics, Medicine, Law, Graduate School"
+      },
+      {
+        name: "Erwin C. Ternora, CHRA",
+        email: "erwin.texora@guidance.edu",
+        role: "Campus Guidance Personnel",
+        colleges: "Human Kinetics, Public Administration"
+      }
+    ]; %>
 
-              <!-- Staff -->
-              <h5 class="section-title">Support Staff</h5>
-              <div class="row">
-                <% const staff = [
-                  { name: "Ms. Jane Villanueva", email: "jane.v@guidance.edu", role: "Office Assistant" },
-                  { name: "Mr. Carlo Lim", email: "carlo.lim@guidance.edu", role: "Administrative Aide" }
-                ]; %>
-                <% staff.forEach(s => { %>
-                  <div class="col-md-3 mb-4">
-                    <div class="card p-3 shadow-sm h-100 text-center">
-                      <img src="/uploads/default-avatar.png" class="profile-img mb-2">
-                      <h6><%= s.name %></h6>
-                      <p class="text-muted small mb-1"><%= s.role %></p>
-                      <small class="text-muted"><i class="bx bx-envelope"></i> <%= s.email %></small>
-                    </div>
-                  </div>
-                <% }) %>
-              </div>
-            </div>
+    <% counselors.forEach(c => { %>
+      <div class="col-md-4 mb-4">
+        <div class="card p-3 shadow-sm h-100 text-center">
+          <img src="/uploads/default-avatar.png" class="profile-img mb-2">
+          <h6><%= c.name %></h6>
+          <p class="text-muted small mb-1"><%= c.role %></p>
+          <p class="text-muted small mb-1"><strong>In charge of:</strong> <%= c.colleges %></p>
+          
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
 
 
      
