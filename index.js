@@ -260,10 +260,31 @@ const authenticateTokenCounselor = async (req, res, next) => {
     return res.redirect('/counselor/login');
   }
 
+
+
+
+  
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     res.locals.user = decoded;
+
+
+    const { rows: userRows } = await pool.query(
+      `SELECT first_name, middle_name, last_name FROM counselor WHERE id = $1`,
+      [decoded.user.id]
+    );
+
+    if (userRows.length === 0) return res.redirect('/login');
+
+    const { first_name, middle_name, last_name } = userRows[0];
+
+
+     res.locals.fullName = middle_name
+      ? `${first_name} ${middle_name}. ${last_name}`
+      : `${first_name} ${last_name}`;
+
+
 
     // Fetch last 5 notifications for this counselor
     const { rows: notifications } = await pool.query(
