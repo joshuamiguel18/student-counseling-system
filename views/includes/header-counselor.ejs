@@ -40,9 +40,9 @@
       <h6 class="mb-0">Notifications</h6>
       <div class="d-flex align-items-center">
         <span class="badge bg-primary me-2"><%= notifications2.length %> New</span>
-        <a href="/notifications/mark-all-read" class="text-muted" title="Mark all as read">
+        <!-- <a href="/notifications/mark-all-read" class="text-muted" title="Mark all as read">
           <i class="bx bx-envelope-open bx-sm"></i>
-        </a>
+        </a> -->
       </div>
     </li>
 
@@ -65,15 +65,15 @@
               </button>
               <ul class="dropdown-menu dropdown-menu-end">
                 <% if (!notification.read_status) { %>
-                  <li><a class="dropdown-item" href="/notifications/mark-read/<%= notification.id %>">Mark as Read</a></li>
+                  <li><a class="dropdown-item" href="/counselor/notifications/mark-read/<%= notification.id %>">Mark as Read</a></li>
                 <% } else { %>
-                  <li><a class="dropdown-item" href="/notifications/mark-unread/<%= notification.id %>">Mark as Unread</a></li>
+                  <li><a class="dropdown-item" href="/counselor/notifications/mark-unread/<%= notification.id %>">Mark as Unread</a></li>
                 <% } %>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
                 <li>
-                  <a class="dropdown-item text-danger" href="/notifications/delete/<%= notification.id %>" onclick="return confirm('Delete this notification?')">Delete</a>
+                  <a class="dropdown-item text-danger" href="/counselor/notifications/delete/<%= notification.id %>" onclick="return confirm('Delete this notification?')">Delete</a>
                 </li>
               </ul>
             </div>

@@ -178,7 +178,7 @@
       </div>
       <div>
         <p class="mb-0 fw-medium text-muted">Available Psycho Tests</p>
-        <h4 class="text-danger mb-0"><%= appointmentStats.psychoTests || 0 %></h4>
+        <h4 class="text-danger mb-0"><%= classPsychoTestsCount || 0 %></h4>
       </div>
     </div>
   </div>
@@ -253,8 +253,6 @@
                     month: 'numeric', 
                     day: 'numeric', 
                     year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
                   }) %></p>
                 </div>
                 <span class="badge bg-<%= appt.status === 'completed' ? 'success' : appt.status === 'pending' ? 'warning' : 'primary' %>">
