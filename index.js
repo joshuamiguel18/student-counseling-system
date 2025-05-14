@@ -1071,15 +1071,116 @@ app.get('/', authenticateToken, (req, res) => {
 // });
 
 
+// app.get('/student-app', authenticateToken, async (req, res) => {
+//   try {
+//     const studentId = req.user.user.id;
+
+//     // 1. Get all appointments for the student
+//     const appointmentResult = await pool.query(
+//       'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC LIMIT 4',
+//       [studentId]
+//     );
+
+//     // 2. Get today's mood
+//     const moodResult = await pool.query(`
+//       SELECT emotion, create_date 
+//       FROM mood 
+//       WHERE student_id = $1 
+//         AND DATE(create_date) = CURRENT_DATE
+//       ORDER BY create_date DESC 
+//       LIMIT 1;
+//     `, [studentId]);
+
+//     const todayMood = moodResult.rows.length > 0 ? moodResult.rows[0] : null;
+
+//     // 3. Check if student is class mayor
+//     const mayorResult = await pool.query(
+//       'SELECT is_class_mayor FROM student WHERE id = $1',
+//       [studentId]
+//     );
+
+//     const isClassMayor = mayorResult.rows[0]?.is_class_mayor || false;
+
+//     // 4. Count appointment statuses
+//     const countResult = await pool.query(`
+//       SELECT 
+//         COUNT(*) AS total,
+//         COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+//         COUNT(*) FILTER (WHERE status = 'completed') AS completed
+//       FROM appointment
+//       WHERE student_id = $1
+//     `, [studentId]);
+
+//     const counts = countResult.rows[0];
+
+//     // 5. Get the two latest readings/resources
+//     const readingsResult = await pool.query(`
+//       SELECT r.id, r.title, r.description, c.name AS category, r.read_time AS duration
+//       FROM resources r
+//       LEFT JOIN categories c ON r.category_id = c.id
+//       ORDER BY r.created_at DESC
+//       LIMIT 2;
+//     `);
+
+//     const recommendedReadings = readingsResult.rows;
+
+//     // 6. Render the view
+//     res.render('student-app', {
+//       user: req.user.user,
+//       appointments: appointmentResult.rows,
+//       todayMood,
+//       isClassMayor,
+//       appointmentStats: {
+//         total: parseInt(counts.total),
+//         pending: parseInt(counts.pending),
+//         completed: parseInt(counts.completed)
+//       },
+//       recommendedReadings
+//     });
+
+//   } catch (err) {
+//     console.error('Error loading student app:', err);
+//     res.status(500).render('student-app', {
+//       error: 'Error fetching data',
+//       user: req.user.user,
+//       appointments: [],
+//       todayMood: null,
+//       isClassMayor: false,
+//       appointmentStats: {
+//         total: 0,
+//         pending: 0,
+//         completed: 0
+//       },
+//       recommendedReadings: []
+//     });
+//   }
+// });
+
+
+
 app.get('/student-app', authenticateToken, async (req, res) => {
   try {
     const studentId = req.user.user.id;
 
-    // 1. Get all appointments for the student
+    // 1. Get all appointments for the student with counselor names
     const appointmentResult = await pool.query(
-      'SELECT * FROM appointment WHERE student_id = $1 ORDER BY appointment_date DESC LIMIT 4',
+      `SELECT a.*, 
+              c.first_name AS counselor_first_name, 
+              c.last_name AS counselor_last_name,
+              c.position AS counselor_position
+       FROM appointment a
+       JOIN counselor c ON a.counselor_id = c.id
+       WHERE a.student_id = $1 
+       ORDER BY a.appointment_date DESC 
+       LIMIT 4`,
       [studentId]
     );
+
+    // Map the results to include a combined counselor name field
+    const appointments = appointmentResult.rows.map(appointment => ({
+      ...appointment,
+      counselor_name: `${appointment.counselor_first_name} ${appointment.counselor_last_name}`
+    }));
 
     // 2. Get today's mood
     const moodResult = await pool.query(`
@@ -1127,7 +1228,7 @@ app.get('/student-app', authenticateToken, async (req, res) => {
     // 6. Render the view
     res.render('student-app', {
       user: req.user.user,
-      appointments: appointmentResult.rows,
+      appointments,
       todayMood,
       isClassMayor,
       appointmentStats: {
@@ -1155,9 +1256,6 @@ app.get('/student-app', authenticateToken, async (req, res) => {
     });
   }
 });
-
-
-
 
 
 app.get('/source-materials',authenticateToken, (req, res) => {

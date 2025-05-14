@@ -247,8 +247,8 @@
                   <i class='bx bx-calendar-check fs-4 text-primary'></i>
                 </div>
                 <div class="appointment-details flex-grow-1">
-                  <h6 class="mb-1 text-primary"><%= appt.concern %></h6>
-                  <p class="mb-1 small"><strong>Counselor:</strong> <%= appt.counselor %></p>
+                  <h6 class="mb-1 text-primary"><%= appt.title %></h6>
+                  <p class="mb-1 small"><strong>Counselor:</strong> <%= appt.counselor_name %></p>
                   <p class="mb-0 small"><strong>Date:</strong> <%= new Date(appt.appointment_date).toLocaleDateString('en-US', { 
                     month: 'numeric', 
                     day: 'numeric', 
