@@ -5303,6 +5303,88 @@ app.post('/savePsychotesting', async (req, res) => {
 // });
 
 
+// app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).json({ success: false, message: 'No file uploaded' });
+//   }
+
+//   const students = [];
+
+//   try {
+//     const readable = new stream.Readable();
+//     readable._read = () => {}; // No-op
+//     readable.push(req.file.buffer);
+//     readable.push(null); // End of stream
+
+//     readable
+//       .pipe(csv())
+//       .on('data', (row) => {
+//         students.push(row);
+//       })
+//       .on('end', async () => {
+//         try {
+//           for (const student of students) {
+//             // Hash password
+//             const hashedPassword = await bcrypt.hash(student.password, 10);
+
+//             // Insert student
+//             await pool.query(
+//               `INSERT INTO student (
+//                 username, password, email, first_name, middle_name, last_name,
+//                 is_class_mayor, class_id, create_date, update_date, student_id_image,
+//                 id_num, middle_initial, year_level, sex, contact_number, address,
+//                 department_id, program_id, is_verified
+//               ) VALUES (
+//                 $1, $2, $3, $4, $5, $6,
+//                 $7, $8, $9, $10, $11,
+//                 $12, $13, $14, $15, $16, $17,
+//                 $18, $19, $20
+//               )`,
+//               [
+//                 student.username,
+//                 hashedPassword,
+//                 student.email,
+//                 student.first_name,
+//                 student.middle_name || null,
+//                 student.last_name,
+//                 student.is_class_mayor?.toLowerCase() === 'true',
+//                 parseInt(student.class_id) || null,
+//                 student.create_date || new Date(),
+//                 student.update_date || new Date(),
+//                 student.student_id_image,
+//                 student.id_num,
+//                 student.middle_initial || null,
+//                 parseInt(student.year_level) || null,
+//                 student.sex,
+//                 student.contact_number,
+//                 student.address,
+//                 parseInt(student.department_id) || null,
+//                 parseInt(student.program_id) || null,
+//                 true
+//               ]
+//             );
+
+//             // Send account credentials email (raw password)
+//             await sendAccountCredentialsEmail(student.email, student.username, student.password);
+//           }
+
+//           res.redirect('/import');
+//         } catch (err) {
+//           console.error('Error inserting students:', err);
+//           return res.status(500).json({ success: false, message: 'Database insert failed' });
+//         }
+//       })
+//       .on('error', (err) => {
+//         console.error('CSV parsing error:', err);
+//         return res.status(400).json({ success: false, message: 'Invalid CSV format' });
+//       });
+//   } catch (err) {
+//     console.error('Unexpected error:', err);
+//     return res.status(500).json({ success: false, message: 'Server error' });
+//   }
+// });
+
+
 app.post('/admin/students/import', upload.single('csvFile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -5312,9 +5394,9 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
 
   try {
     const readable = new stream.Readable();
-    readable._read = () => {}; // No-op
+    readable._read = () => {};
     readable.push(req.file.buffer);
-    readable.push(null); // End of stream
+    readable.push(null);
 
     readable
       .pipe(csv())
@@ -5324,10 +5406,37 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
       .on('end', async () => {
         try {
           for (const student of students) {
+            const classId = parseInt(student.class_id) || null;
+
+            let programId = null;
+            let departmentId = null;
+
+            // Step 1: Get program_id from class table
+            if (classId) {
+              const { rows: classRows } = await pool.query(
+                'SELECT program_id FROM class WHERE id = $1',
+                [classId]
+              );
+
+              if (classRows.length > 0) {
+                programId = classRows[0].program_id;
+
+                // Step 2: Get department_id from program table
+                const { rows: programRows } = await pool.query(
+                  'SELECT department_id FROM programs WHERE id = $1',
+                  [programId]
+                );
+
+                if (programRows.length > 0) {
+                  departmentId = programRows[0].department_id;
+                }
+              }
+            }
+
             // Hash password
             const hashedPassword = await bcrypt.hash(student.password, 10);
 
-            // Insert student
+            // Insert student with derived program_id and department_id
             await pool.query(
               `INSERT INTO student (
                 username, password, email, first_name, middle_name, last_name,
@@ -5348,7 +5457,7 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
                 student.middle_name || null,
                 student.last_name,
                 student.is_class_mayor?.toLowerCase() === 'true',
-                parseInt(student.class_id) || null,
+                classId,
                 student.create_date || new Date(),
                 student.update_date || new Date(),
                 student.student_id_image,
@@ -5358,17 +5467,17 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
                 student.sex,
                 student.contact_number,
                 student.address,
-                parseInt(student.department_id) || null,
-                parseInt(student.program_id) || null,
+                departmentId,
+                programId,
                 true
               ]
             );
 
-            // Send account credentials email (raw password)
+            // Send credentials email with raw password
             await sendAccountCredentialsEmail(student.email, student.username, student.password);
           }
 
-          res.redirect('/import');
+          res.redirect('/import?successupload=true');
         } catch (err) {
           console.error('Error inserting students:', err);
           return res.status(500).json({ success: false, message: 'Database insert failed' });
@@ -5383,6 +5492,8 @@ app.post('/admin/students/import', upload.single('csvFile'), async (req, res) =>
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
+
 
 
 

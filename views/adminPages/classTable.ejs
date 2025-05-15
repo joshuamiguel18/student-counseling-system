@@ -27,6 +27,7 @@
                      <table id="table" class="table table-bordered">
                       <thead>
                         <tr>
+                          <th>Class Id</th>
                           <th>Class Name</th>
                           <th>Program</th>
                           <th>Actions</th> <!-- ✅ Added this -->
@@ -35,6 +36,7 @@
                       <tbody>
                         <% classes.forEach((cls, index) => { %>
                           <tr>
+                            <td><%= cls.id %></td>
                             <td><%= cls.class_name %></td>
                             <td><%= cls.program_name %></td>
                             <td>

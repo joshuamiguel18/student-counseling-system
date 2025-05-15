@@ -22,3 +22,17 @@
 <script>
 
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const currentPath = window.location.pathname;
+
+    // Loop through each menu link
+    document.querySelectorAll('.menu-link').forEach(link => {
+      // If the currentPath matches or starts with the link's href
+      if (currentPath === link.getAttribute('href') || currentPath.startsWith(link.getAttribute('href'))) {
+        link.parentElement.classList.add('active');
+      }
+    });
+  });
+</script>

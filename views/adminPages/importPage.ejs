@@ -70,6 +70,23 @@
             </div>
             <!-- / Content: End -->
     
+            <div class="modal fade" id="uploadSuccessModal" tabindex="-1" aria-labelledby="uploadSuccessModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-success">
+                  <div class="modal-header text-white">
+                    <h5 class="modal-title" id="uploadSuccessModalLabel">🎉 Upload Successful</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    Your CSV file has been successfully processed and student records have been imported.
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Okay</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="content-backdrop fade"></div>
           </div>
           <!-- / Layout page: End -->
@@ -86,8 +103,17 @@
     
       <%- include('../includes/scripts.ejs') %>
 
+
+
       <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+          const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('successupload') === 'true') {
+              const modal = new bootstrap.Modal(document.getElementById('uploadSuccessModal'));
+              modal.show();
+            }
+
           const form = document.getElementById('csv-upload-form');
           const feedback = document.getElementById('feedback');
           const submitBtn = document.getElementById('submit-btn');
@@ -177,6 +203,8 @@
             }
           });
 
+
+          
           function showFeedback(message, type) {
             feedback.innerHTML = message;
             feedback.className = 'mt-3'; // Reset classes
