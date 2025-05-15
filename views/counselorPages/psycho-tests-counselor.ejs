@@ -185,10 +185,15 @@
 
                                       <% } %>
                                         <% if (test.status==='approved' ) { %>
-                                          <button class="btn btn-outline-warning btn-sm w-100 rounded-pill"
+
+                                          <form method="POST" action="/psycho-tests/complete/<%= test.id %>">
+                                    <button type="submit"
+                                      class="btn btn-outline-warning btn-sm w-100 rounded-pill">Complete Test</button>
+                                  </form>
+                                          <!-- <button class="btn btn-outline-warning btn-sm w-100 rounded-pill"
                                             data-bs-toggle="modal" data-bs-target="#actionModal"
-                                            onclick="setModal('Complete', '/psycho-tests/complete/<%= test.id %>')">Complete
-                                            Test</button>
+                                            onclick="setModadl('Complete', '/psycho-tests/complete/<%= test.id %>')">Complete
+                                            Test</button> -->
 
                                           <% } %>
                                             <% if (test.status !=='completed' && test.status !=='cancelled' ) { %>

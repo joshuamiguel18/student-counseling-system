@@ -57,6 +57,8 @@ app.use(cors({
     credentials: true // if you use cookies/sessions
 }));
 
+
+
 const JWT_SECRET = 'studentCounseling'; // Make sure to use the same secret as in the login route
 
 app.use((req, res, next) => {
@@ -64,6 +66,17 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');
     next();
   });
+
+app.use((req, res, next) => {
+  res.set({
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Surrogate-Control': 'no-store'
+});
+  next();
+});
+
 
 
   const getSignedS3Url = async (fileName) => {
@@ -5813,7 +5826,7 @@ app.post('/counselor/psycho-tests/:id/accept', authenticateTokenCounselor, async
 
 
 
-app.get('/psycho-tests/complete/:id', authenticateTokenCounselor, async (req, res) => {
+app.post('/psycho-tests/complete/:id', authenticateTokenCounselor, async (req, res) => {
   const testId = req.params.id;
 
   try {
@@ -6425,17 +6438,42 @@ app.get('/import', authenticateTokenAdmin, (req,res) => {
 app.get('/logout', (req, res) => {
     // Clear the JWT cookie by setting it to an empty value and making it expired
     res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+res.clearCookie('connect.sid'); // Clear session cookie
+res.set({
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Surrogate-Control': 'no-store'
+});
+
 
     // Redirect to the login page or home page after logging out
     res.redirect('/login');
 });
 app.get('/admin/logout', (req, res) => {
   res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+res.clearCookie('connect.sid'); // Clear session cookie
+res.set({
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Surrogate-Control': 'no-store'
+});
+
+
   res.redirect('/admin/login'); // or wherever your admin login page is
 });
 
 app.get('/counselor/logout', (req, res) => {
   res.clearCookie('jwt', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+res.clearCookie('connect.sid'); // Clear session cookie
+  res.set({
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Surrogate-Control': 'no-store'
+});
+
   res.redirect('/counselor/login'); // or wherever your counselor login page is
 });
 
