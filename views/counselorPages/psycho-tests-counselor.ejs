@@ -240,7 +240,7 @@
 
 
 
-                                                <% if (test.status==='completed' && test.already_had_feedback === true) {
+                                                <% if (test.status==='completed' && test.already_had_feedback !== true) {
                                                   %>
                                                   <!-- <a href="/counselor/psycho-tests/<%= test.id %>/results" class="btn btn-outline-primary btn-sm w-100 rounded-pill">View Results</a> -->
                                                   <button class="btn btn-outline-info btn-sm w-100 rounded-pill"
