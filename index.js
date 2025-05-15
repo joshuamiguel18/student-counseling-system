@@ -5763,6 +5763,7 @@ app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) 
           pt.test_number,
           pt.turn_to_approve,
           pt.is_online_test,
+          pt.already_added_new_session,
           pt.remark,
           counselor.first_name AS counselor_first_name,
           counselor.last_name AS counselor_last_name
