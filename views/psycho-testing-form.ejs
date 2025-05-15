@@ -64,9 +64,12 @@
 
 
       flatpickr("#test_date", {
-        dateFormat: "Y-m-d",  // Format as yyyy-mm-dd
-        minDate: "today",     // Prevent selection of past dates
-      });
+  enableTime: true,          // Enable time picker
+  dateFormat: "Y-m-d H:i",   // Format as yyyy-mm-dd HH:mm (24-hour)
+            // Use 24-hour format (optional, default is 12-hour)
+  minDate: "today",          // Prevent selection of past dates
+});
+
 
       // Fetch classes when a program is selected
       document.getElementById('program_id').addEventListener('change', function () {
