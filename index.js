@@ -5774,7 +5774,7 @@ app.get('/counselor/psycho-tests', authenticateTokenCounselor, async (req, res) 
   }
 });
 
-app.post('/psycho-tests/:id/accept', authenticateTokenCounselor, async (req, res) => {
+app.post('/psycho-tests/:id/accept', authenticateToken, async (req, res) => {
   const testId = req.params.id;
 
   try {
@@ -5944,7 +5944,7 @@ app.post('/counselor/psycho-tests/:id/cancel', authenticateTokenCounselor, async
     res.status(500).send('Internal Server Error');
   }
 });
-app.post('/psycho-tests/:id/cancel', authenticateTokenCounselor, async (req, res) => {
+app.post('/psycho-tests/:id/cancel', authenticateToken, async (req, res) => {
   const testId = req.params.id;
   const { remark } = req.body;
   try {
